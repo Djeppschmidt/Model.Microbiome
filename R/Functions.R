@@ -139,7 +139,7 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
     output$raw$comm<-make.rarefy2(output$model$comm, sample)         # do normalizations!!
 
     output$eRare$comm<-make.rarefy2(output$raw$comm, min(sample_sums(output$raw$comm)))
-    output$pRare$comm<-make.rarefy2(output$raw$comm, D*sample_sums(output$raw$comm)/mean(sample_sums(output$raw$comm)))
+    output$pRare$comm<-make.rarefy2(output$raw$comm, min(sample_sums(output$raw$comm))*sample_sums(output$raw$comm)/mean(sample_sums(output$raw$comm)))
     output$scaled$comm<-make.scaled2(output$raw$comm, val=D*sample_sums(output$model$comm)/mean(sample_sums(output$model$comm)), scale=D)
     output$deseqVST$comm<-make.deseqVST(output$raw$comm, "Factor", l=1)
     output$limma$comm<-make.limmaVST(output$raw$comm, "Factor")
