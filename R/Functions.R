@@ -162,12 +162,13 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
     output$limma$LII<-LII(output$model$comm, output$limma$comm)
   # add in any additional methods we want to add
 
-    output$raw$SVI<-SVI(output$model$comm, output$raw$comm)                  # show over-fitting of model
-    output$eRare$SVI<-SVI(output$model$comm, output$eRare$comm)
-    output$pRare$SVI<-SVI(output$model$comm, output$pRare$comm)
-    output$scaled$SVI<-SVI(output$model$comm, output$scaled$comm)
-    output$deseqVST$SVI<-SVI(output$model$comm, output$deseqVST$comm)
-    output$limma$SVI<-SVI(output$model$comm, output$limma$comm)
+  #this function doesnt work very well because doesn't account for taxa lost ...
+ #output$raw$SVI<-SVI(output$model$comm, output$raw$comm)                  # show over-fitting of model
+ #output$eRare$SVI<-SVI(output$model$comm, output$eRare$comm)
+ #output$pRare$SVI<-SVI(output$model$comm, output$pRare$comm)
+ #output$scaled$SVI<-SVI(output$model$comm, output$scaled$comm)
+ #output$deseqVST$SVI<-SVI(output$model$comm, output$deseqVST$comm)
+ #output$limma$SVI<-SVI(output$model$comm, output$limma$comm)
 
     output
 }
