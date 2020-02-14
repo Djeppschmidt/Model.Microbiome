@@ -1,5 +1,5 @@
 Package: Model.Microbiome
-Title: Model Microbiome: Environment And Community Simulation Package
+Title: Environment And Community Simulation Package
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Dietrich",
@@ -7,10 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "djeppschmidt@gmail.com",
            comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: This package provides a modeling framework for benchmarking statistical analyses of meta barcoding studies in environmental microbiology and microbiome research. It is particularly designed to address community structure and sparsity that occurs at different biogeographical scales in soils.
-
-[more details-Under development]
-
+Description: This package provides a modeling framework for benchmarking statistical analyses of meta barcoding studies in environmental microbiology and microbiome research. It is particularly designed to address community structure and sparsity that occurs at different biogeographical scales in soils.[more details-Under development]
 License: Unlicense
 Encoding: UTF-8
 LazyData: true
