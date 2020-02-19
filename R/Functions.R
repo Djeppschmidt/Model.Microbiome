@@ -162,13 +162,13 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
     output$limma$LII<-LII(output$model$comm, output$limma$comm)
   # add in any additional methods we want to add
 
-  #this function doesnt work very well because doesn't account for taxa lost ...
- #output$raw$SVI<-SVI(output$model$comm, output$raw$comm)                  # show over-fitting of model
- #output$eRare$SVI<-SVI(output$model$comm, output$eRare$comm)
- #output$pRare$SVI<-SVI(output$model$comm, output$pRare$comm)
- #output$scaled$SVI<-SVI(output$model$comm, output$scaled$comm)
- #output$deseqVST$SVI<-SVI(output$model$comm, output$deseqVST$comm)
- #output$limma$SVI<-SVI(output$model$comm, output$limma$comm)
+   # show over-fitting of model
+   output$raw$OI<-OI(output$model$comm, output$raw$comm)
+   output$eRare$OI<-OI(output$model$comm, output$eRare$comm)
+   output$pRare$OI<-OI(output$model$comm, output$pRare$comm)
+   output$scaled$OI<-OI(output$model$comm, output$scaled$comm)
+   output$deseqVST$OI<-OI(output$model$comm, output$deseqVST$comm)
+   output$limma$OI<-OI(output$model$comm, output$limma$comm)
 
     output
 }
@@ -458,16 +458,17 @@ make.PERMANOVA<-function(ps){
 ext.PERMANOVA<-function(tst){
 out<-list("raw"=c(rep(NA, length(tst))), "scaled"=c(rep(NA, length(tst))), "pRare"=c(rep(NA, length(tst))), "eRare"=c(rep(NA, length(tst))), "deseqVST"=c(rep(NA, length(tst))), "limmaVST"=c(rep(NA, length(tst))))
 
-  for(i in 1:length(tst)) {out$raw[i]<-test.script[[i]]$raw$PERMANOVA$aov.tab$R2[7]}
-  for(i in 1:length(tst)) {out$scaled[i]<-test.script[[i]]$scaled$PERMANOVA$aov.tab$R2[7]}
-  for(i in 1:length(tst)) {out$pRare[i]<-test.script[[i]]$pRare$PERMANOVA$aov.tab$R2[7]}
-  for(i in 1:length(tst)) {out$eRare[i]<-test.script[[i]]$eRare$PERMANOVA$aov.tab$R2[7]}
-  for(i in 1:length(tst)) {out$deseqVST[i]<-test.script[[i]]$deseqVST$PERMANOVA$aov.tab$R2[7]}
-  for(i in 1:length(tst)) {out$limmaVST[i]<-test.script[[i]]$limma$PERMANOVA$aov.tab$R2[7]}
+  for(i in 1:length(tst)) {out$raw[i]<-tst[[i]]$raw$PERMANOVA$aov.tab$R2[7]}
+  for(i in 1:length(tst)) {out$scaled[i]<-tst[[i]]$scaled$PERMANOVA$aov.tab$R2[7]}
+  for(i in 1:length(tst)) {out$pRare[i]<-tst[[i]]$pRare$PERMANOVA$aov.tab$R2[7]}
+  for(i in 1:length(tst)) {out$eRare[i]<-tst[[i]]$eRare$PERMANOVA$aov.tab$R2[7]}
+  for(i in 1:length(tst)) {out$deseqVST[i]<-tst[[i]]$deseqVST$PERMANOVA$aov.tab$R2[7]}
+  for(i in 1:length(tst)) {out$limmaVST[i]<-tst[[i]]$limma$PERMANOVA$aov.tab$R2[7]}
   out1<-as.data.frame(out)
-  out2<-boxplot(out1)
-  out4<-c("table"=out1,"plot"=out2)
-  out4
+  out1
+  #out2<-boxplot(out1)
+  #out4<-c("table"=out1,"plot"=out2)
+  #out4
 }
 
 #' extract Lost Information Index values from a benchmarked object
@@ -479,13 +480,17 @@ out<-list("raw"=c(rep(NA, length(tst))), "scaled"=c(rep(NA, length(tst))), "pRar
 #' LII()
 LII <-function(ps1.R, ps2.T){
   reference<-as.matrix(as.data.frame(t(as.matrix(otu_table(Delta.sppcount(ps1.R, ps1.R, method=0))))))
+  reference<-reference[order(rownames(reference)),]
   reference2<-as.matrix(as.data.frame(t(as.matrix(otu_table(Delta.sppcount(ps1.R, ps1.R, method=0))))))
+  reference2<-reference2[order(rownames(reference2)),]
   treatment<-as.matrix(as.data.frame(t(as.matrix(otu_table(Delta.sppcount(ps2.T, ps1.R, method=0))))))
-
+  treatment<-treatment[order(rownames(treatment)),]
+if(identical(rownames(reference), rownames(treatment))){
   Ci<-sapply(seq.int(dim(reference)[1]), function(i) summary(lm(reference[i,] ~ treatment[i,]))$r.squared)
   Ci2<-sapply(seq.int(dim(reference)[1]), function(i) summary(lm(reference[i,] ~ reference2[i,]))$r.squared)
   out<-sum(Ci2-Ci)
-  out
+  out} else {print("species do not match")}
+
 }
 
 #' extract Lost Information Index values from a benchmarked object
@@ -497,12 +502,30 @@ LII <-function(ps1.R, ps2.T){
 ext.LII<-function(tst){
 out<-list("raw"=c(rep(NA, length(tst))), "scaled"=c(rep(NA, length(tst))), "pRare"=c(rep(NA, length(tst))), "eRare"=c(rep(NA, length(tst))), "deseqVST"=c(rep(NA, length(tst))), "limmaVST"=c(rep(NA, length(tst))))
 
-  for(i in 1:length(tst)) {out$raw[i]<-test.script[[i]]$raw$LII}
-  for(i in 1:length(tst)) {out$scaled[i]<-test.script[[i]]$scaled$LII}
-  for(i in 1:length(tst)) {out$pRare[i]<-test.script[[i]]$pRare$LII}
-  for(i in 1:length(tst)) {out$eRare[i]<-test.script[[i]]$eRare$LII}
-  for(i in 1:length(tst)) {out$deseqVST[i]<-test.script[[i]]$deseqVST$LII}
-  for(i in 1:length(tst)) {out$limmaVST[i]<-test.script[[i]]$limma$LII}
+  for(i in 1:length(tst)) {out$raw[i]<-tst[[i]]$raw$LII}
+  for(i in 1:length(tst)) {out$scaled[i]<-tst[[i]]$scaled$LII}
+  for(i in 1:length(tst)) {out$pRare[i]<-tst[[i]]$pRare$LII}
+  for(i in 1:length(tst)) {out$eRare[i]<-tst[[i]]$eRare$LII}
+  for(i in 1:length(tst)) {out$deseqVST[i]<-tst[[i]]$deseqVST$LII}
+  for(i in 1:length(tst)) {out$limmaVST[i]<-tst[[i]]$limma$LII}
+  out1<-as.data.frame(out)
+  out1
+}
+#' extract Overmodeling Index values from a benchmarked object
+#' @param tst product object from benchmark.MM()
+#' @keywords LII lost information index extract r squared
+#' @export
+#' @examples
+#' ext.LII()
+ext.OI<-function(tst){
+out<-list("raw"=c(rep(NA, length(tst))), "scaled"=c(rep(NA, length(tst))), "pRare"=c(rep(NA, length(tst))), "eRare"=c(rep(NA, length(tst))), "deseqVST"=c(rep(NA, length(tst))), "limmaVST"=c(rep(NA, length(tst))))
+
+  for(i in 1:length(tst)) {out$raw[i]<-tst[[i]]$raw$OI}
+  for(i in 1:length(tst)) {out$scaled[i]<-tst[[i]]$scaled$OI}
+  for(i in 1:length(tst)) {out$pRare[i]<-tst[[i]]$pRare$OI}
+  for(i in 1:length(tst)) {out$eRare[i]<-tst[[i]]$eRare$OI}
+  for(i in 1:length(tst)) {out$deseqVST[i]<-tst[[i]]$deseqVST$OI}
+  for(i in 1:length(tst)) {out$limmaVST[i]<-tst[[i]]$limma$OI}
   out1<-as.data.frame(out)
   out1
 }
@@ -518,6 +541,18 @@ SVI<-function(ps1, ps2){
   reference<-lm.test(ps1)
   trt<-lm.test(ps2)
   o<-reference$lm-trt$lm
+  o
+}
+
+#' Index of overmodeling
+#' @param ps1 product object from benchmark.MM()
+#' @keywords linear model Species Variance Index
+#' @export
+#' @examples
+#' OI()
+OI<-function(ps1, ps2){
+  o<-SVI(ps1,ps2)
+  o<-sum(abs(o[o<0]))
   o
 }
 
