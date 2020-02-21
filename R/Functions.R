@@ -129,29 +129,44 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
 
     #output$model<-NULL
     output$spplist<-rando.spp
+
     output$model$comm<-make.refcomm(rando.spp, Factors) # output a phyloseq object... will make a list of phyloseq objects
+    print("spp selection complete")
     sample_data(output$model$comm)$Density<-sample_sums(output$model$comm)# add sample sums
     sample_data(output$model$comm)$DensityF<-sample_sums(output$model$comm)/mean(sample_sums(output$model$comm))
     sample_data(output$model$comm)$Factor<-as.factor(c(rep("one",5),rep("two",5),rep("three",5),rep("four",5),rep("five",5),rep("six",5)))
     sample_data(output$model$comm)$Factor2<-as.factor(c(rep(1,5),rep(2,5),rep(3,5),rep(4,5),rep(5,5),rep(6,5)))
+    print("metadata complete")
 
     sample<-set.seqDepth(D,V)
     output$raw$comm<-make.rarefy2(output$model$comm, sample)         # do normalizations!!
-
+    print("subsampling complete")
+    print(sample_sums(output$raw$comm))
     output$eRare$comm<-make.rarefy2(output$raw$comm, min(sample_sums(output$raw$comm)))
+    print("erare complete")
     output$pRare$comm<-make.rarefy2(output$raw$comm, min(sample_sums(output$raw$comm))*sample_sums(output$raw$comm)/mean(sample_sums(output$raw$comm)))
-    output$scaled$comm<-make.scaled2(output$raw$comm, val=D*sample_sums(output$model$comm)/mean(sample_sums(output$model$comm)), scale=D)
+    print("prare complete")
+    output$scaled$comm<-make.scaled2(output$raw$comm, val=sample_sums(output$model$comm)/mean(sample_sums(output$model$comm)), scale=D)
+    print("scaling complete")
     output$deseqVST$comm<-make.deseqVST(output$raw$comm, "Factor", l=1)
+    print("deseq complete")
     output$limma$comm<-make.limmaVST(output$raw$comm, "Factor")
-    print(output$limma$comm)
+    print("limma complete")
   # add in any additional methods we want to add
 
-    output$raw$PERMANOVA<-make.PERMANOVA(output$raw$comm)   # make permanova tables
+    output$raw$PERMANOVA<-make.PERMANOVA(output$raw$comm)
+    print("permanova raw")# make permanova tables
     output$eRare$PERMANOVA<-make.PERMANOVA(output$eRare$comm)
+    print("permanova eRare")
     output$pRare$PERMANOVA<-make.PERMANOVA(output$pRare$comm)
+    print("permanova pRare")
     output$scaled$PERMANOVA<-make.PERMANOVA(output$scaled$comm)
+    print("permanova scaled")
     output$deseqVST$PERMANOVA<-make.PERMANOVA(output$deseqVST$comm)
+    print("permanova deseq")
     output$limma$PERMANOVA<-make.PERMANOVA(output$limma$comm)
+    print("permanova limma")
+    print("PERMANOVA complete")
   # add in any additional methods we want to add
 
     output$raw$LII<-LII(output$model$comm, output$raw$comm)                    # show amount of information retained after corrections
@@ -160,9 +175,9 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
     output$scaled$LII<-LII(output$model$comm, output$scaled$comm)
     output$deseqVST$LII<-LII(output$model$comm, output$deseqVST$comm)
     output$limma$LII<-LII(output$model$comm, output$limma$comm)
+    print("LII complete")
   # add in any additional methods we want to add
 
-   # show over-fitting of model
    output$raw$OI<-OI(output$model$comm, output$raw$comm)
    output$eRare$OI<-OI(output$model$comm, output$eRare$comm)
    output$pRare$OI<-OI(output$model$comm, output$pRare$comm)
@@ -775,6 +790,46 @@ make.table<-function(comm, r){
         #names(m)[names(m)=="Var2"]<-paste0("Sample", r,)
         rownames(m)<-m$Var2
         m
+  }
+
+  #' summarize data for plotting mean/ se
+  #' @param data data frame with data to be summarized
+  #' @param varname name of variable with values
+  #' @param groupnames names of variables for grouping then summarizing
+  #' @keywords linear model Species Variance Index
+  #' @export
+  #' @examples
+  #' data_summary()
+  data_summary <- function(data, varname, groupnames){
+    require(plyr)
+    summary_func <- function(x, col){
+      c(mean = mean(x[[col]], na.rm=TRUE),
+        sd = sd(x[[col]], na.rm=TRUE))
+    }
+    data_sum<-ddply(data, groupnames, .fun=summary_func,
+                    varname)
+    data_sum <- rename(data_sum, c("mean" = varname))
+   return(data_sum)
+  }
+  #' summarize data for plotting media + min/max
+  #' @param data data frame with data to be summarized
+  #' @param varname name of variable with values
+  #' @param groupnames names of variables for grouping then summarizing
+  #' @keywords linear model Species Variance Index
+  #' @export
+  #' @examples
+  #' data_summary2()
+  data_summary2 <- function(data, varname, groupnames){
+    require(plyr)
+    summary_func <- function(x, col){
+      c(median = median(x[[col]], na.rm=TRUE),
+        low = min(x[[col]], na.rm=TRUE),
+        high = max(x[[col]], na.rm=TRUE))
+    }
+    data_sum<-ddply(data, groupnames, .fun=summary_func,
+                    varname)
+    data_sum <- rename(data_sum, c("median" = varname))
+   return(data_sum)
   }
 
 #' species function
