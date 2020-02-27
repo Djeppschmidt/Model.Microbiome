@@ -139,7 +139,7 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
     print("metadata complete")
 
     sample<-set.seqDepth(D,V)
-    output$raw$comm<-make.rarefy2(output$model$comm, sample)         # do normalizations!!
+    output$raw$comm<-model.rarefy(output$model$comm, sample, D, V)         # do normalizations!!
     print("subsampling complete")
     print(sample_sums(output$raw$comm))
     output$eRare$comm<-make.rarefy2(output$raw$comm, min(sample_sums(output$raw$comm)))
@@ -222,6 +222,7 @@ l1[l1<0]<-0
 otu<-otu_table(l1, taxa_are_rows = T)
 Sa<-sample_data(Factors)
 out<-phyloseq(otu, Sa)
+out<-filter_taxa(out, function(x) sum(x)>0, T)
 out
 }
 
@@ -276,6 +277,102 @@ for(i in 1:length(Comm1)) {
    otu[row,i]<-do.call(Comm1[[i]], list(Factors[row,1],Factors[row,2],Factors[row,3],Factors[row,4],Factors[row,5]))
       }
 }
+}
+#' subsample community
+#' @param comm1 phyloseq object
+#' @param sample vector of arbitrary sampling depth set by set.seqDepth()
+#' @keywords reference community model microbiome
+#' @export
+#' @examples
+#' make.table()
+make.table<-function(comm1, sample){
+  comm2<-comm1
+  otu<-as.data.frame(as.matrix(otu_table(comm1)))
+  otu[]<-0
+  comm<-as.data.frame(as.matrix(otu_table(comm1)))
+  otu_table(comm2)<-otu_table(otu, taxa_are_rows=TRUE)
+  #print("setup")
+  m<-as.data.frame(t(table(sample(rownames(comm), sample[1], replace=T, prob=comm[,1]/sum(comm[,1])))))
+   m<-m[,colnames(m)!="Var1"]
+   colnames(m)[colnames(m)=="Freq"]<-paste("Site", 1, sep="")
+   #print("step one")
+    m2<-as.data.frame(t(table(sample(rownames(comm),sample[2], replace=T, prob=comm[,2]/sum(comm[,2])))))
+   m<-merge(m, m2, by="Var2", all=T)
+   #print("step two")
+    m<-m[,colnames(m)!="Var1"]
+    colnames(m)[colnames(m)=="Freq"]<-paste("Site", 2, sep="")
+    for(i in 3:ncol(comm)){
+     a<-as.data.frame(t(table(sample(rownames(comm), sample[i], replace=T, prob=comm[,i]/sum(comm[,i])))))
+     a<-a[,colnames(a)!="Var1"]
+     m<-merge(m,a, by="Var2", all=T)
+      m<-m[,colnames(m)!="Var1"]
+      colnames(m)[colnames(m)=="Freq"]<-paste("Site", i, sep="")
+
+    }
+    #colnames(m)<-c("Var1", paste0("site",c(1:12), r, sep="."))
+      #names(m)[names(m)=="Var2"]<-paste0("Sample", r,)
+      rownames(m)<-m$Var2
+      m<-m[,-1]
+      #print(m)
+      m[is.na(m)]<-0
+      otu_table(comm1)<-otu_table(m, taxa_are_rows=T)
+      comm3<-merge_phyloseq(comm1, comm2)
+      comm3
+    }
+
+#' subsample community
+#' @param comm1 phyloseq object
+#' @param sample vector specifying sampling depth
+#' @param b depth
+#' @param v variation
+#' @keywords reference community model microbiome
+#' @export
+#' @examples
+#' model.rarefy()
+model.rarefy<-function(comm1, sample, b, c){
+  if(any(sample_sums(comm1)>sample)){
+   while(any(sample_sums(comm1)<sample)){
+    sample<-set.seqDepth(b,c)
+    sample
+  }}
+  #print(sample)
+  a<-make.table(comm1, sample)
+  a
+ }
+
+#' subsample community
+#' @param x phyloseq object
+#' @param level single value or vector specifying sampling depth
+#' @keywords reference community model microbiome
+#' @export
+#' @examples
+#' make.rarefy1()
+make.rarefy1<-function(x, level){
+  require(phyloseq)
+  require(vegan)
+
+  sample_data(x)$adj<-level
+
+  if (length(level)==1){
+     p<-prune_samples(sample_sums(x)>level, x) # define samples we want to keep, discard rest
+
+  if (nsamples(x)>nsamples(p)){warning(as.character(nsamples(x)-nsamples(p)), " samples have been removed because they are lower than rarefaction limit")}
+
+  r<-as.data.frame(as.matrix(otu_table(p)))
+  meta<-sample_data(p)
+  rr<-rrarefy2(t(r), meta$adj, replace=TRUE)
+  ps<-phyloseq(otu_table(t(rr), taxa_are_rows = T), sample_data(meta))
+  ps} else {
+
+     p<-prune_samples(sample_sums(x)>level, x)
+  if (nsamples(x)>nsamples(p)){warning(as.character(nsamples(x)-nsamples(p)), " samples have been removed because they are lower than rarefaction limit")}
+
+    r<-as.data.frame(as.matrix(otu_table(p)))
+  meta<-sample_data(p)
+  rr<-rrarefy2(t(r), meta$adj, replace=T)
+  ps<-phyloseq(otu_table(t(rr), taxa_are_rows = T), sample_data(meta))
+  ps
+  }
 }
 
 #' subsample community
@@ -451,6 +548,9 @@ Delta.sppcount<-function(ps,ref, method=0){
 make.PERMANOVA<-function(ps){
   require(vegan)
   require(phyloseq)
+  otu<-as.matrix(otu_table(ps))
+  otu[otu<0]<-0
+  otu_table(ps)<-otu_table(otu, taxa_are_rows=T)
   ps<-filter_taxa(ps, function(x) sum(x)>0, T)
   x<-as.data.frame(t(as.matrix(otu_table(ps))))
   y<-data.frame(as.matrix(sample_data(ps)))
@@ -496,10 +596,13 @@ out<-list("raw"=c(rep(NA, length(tst))), "scaled"=c(rep(NA, length(tst))), "pRar
 LII <-function(ps1.R, ps2.T){
   reference<-as.matrix(as.data.frame(t(as.matrix(otu_table(Delta.sppcount(ps1.R, ps1.R, method=0))))))
   reference<-reference[order(rownames(reference)),]
+
   reference2<-as.matrix(as.data.frame(t(as.matrix(otu_table(Delta.sppcount(ps1.R, ps1.R, method=0))))))
   reference2<-reference2[order(rownames(reference2)),]
+
   treatment<-as.matrix(as.data.frame(t(as.matrix(otu_table(Delta.sppcount(ps2.T, ps1.R, method=0))))))
   treatment<-treatment[order(rownames(treatment)),]
+
 if(identical(rownames(reference), rownames(treatment))){
   Ci<-sapply(seq.int(dim(reference)[1]), function(i) summary(lm(reference[i,] ~ treatment[i,]))$r.squared)
   Ci2<-sapply(seq.int(dim(reference)[1]), function(i) summary(lm(reference[i,] ~ reference2[i,]))$r.squared)
@@ -585,6 +688,17 @@ anova.env$F2<-as.numeric(as.character(anova.env$F2))
 anova.env$F3<-as.numeric(as.character(anova.env$F3))
 anova.env$F4<-as.numeric(as.character(anova.env$F4))
 anova.env$F5<-as.numeric(as.character(anova.env$F5))
+
+testlm<-apply(anova.otu, 2, function(x) {
+  #l1=summary(lm(x~anova.env$Factor+anova.env$F1+anova.env$F2+anova.env$F3+anova.env$F4+anova.env$F5))
+  l1=summary(lm(x~anova.env$F1+anova.env$F2+anova.env$F3+anova.env$F4+anova.env$F5))
+  return(l1$r.squared)
+  })
+testlm[is.na(testlm)]<-0
+lost<-length(testlm[testlm==0])
+out<-list("lm"=testlm, "lost"=lost)
+out
+
 }
 
 #' test difference of linear model r2 values
@@ -768,8 +882,8 @@ filter.limma<-function(ps){
 #' @keywords linear model Species Variance Index
 #' @export
 #' @examples
-#' make.table()
-make.table<-function(comm, r){
+#' make.table2()
+make.table2<-function(comm, r){
 
     m<-as.data.frame(t(table(sample(rownames(comm),rnorm(1, 250, 75), replace=T, prob=comm[,1]/sum(comm[,1])))))
      m<-m[,colnames(m)!="Var1"]
