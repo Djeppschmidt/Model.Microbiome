@@ -29,6 +29,10 @@ library()
 ```{r}
 # mostly universal taxa
 # benchmark with total = 75; different sequencing depth (low sparsity)
+#Test runs:
+C.D500<-suppressWarnings(benchmark.MM(reps=1, commonN=73, groupN=1, singleN=1, D=500, V=250))
+
+#
 C.D500<-suppressWarnings(benchmark.MM(reps=100, commonN=73, groupN=1, singleN=1, D=500, V=250))
 C.D1000<-suppressWarnings(benchmark.MM(reps=100, commonN=73, groupN=1, singleN=1, D=1000, V=500))
 C.D2000<-suppressWarnings(benchmark.MM(reps=100, commonN=73, groupN=1, singleN=1, D=2000, V=1000))
@@ -62,7 +66,19 @@ V.D1000<-suppressWarnings(benchmark.MM(reps=100, commonN=10, groupN=15, singleN=
 V.D2000<-suppressWarnings(benchmark.MM(reps=100, commonN=10, groupN=15, singleN=50, D=2000, V=1000))
 V.D10000<-suppressWarnings(benchmark.MM(reps=100, commonN=10, groupN=15, singleN=50, D=10000, V=5000))
 ```
+```{R}
+# boxplot of R squared from model
+box.df<-data.frame("reference"=C.D500$rep1$model$R$lm,"deseqVST"=C.D500$rep1$deseqVST$OI$R$lm,"limmaVST"=C.D500$rep1$limma$OI$R$lm,"RA"=C.D500$rep1$RA$OI$R$lm,"erare"=C.D500$rep1$eRare$OI$R$lm,"scaled"=C.D500$rep1$scaled$OI$R$lm)
+box.df$names<-rownames(box.df)
+m.box<-melt(data=box.df, id.vars="names", measure.vars = c("reference", "RA", "scaled", "erare", "limmaVST", "deseqVST"))
 
+ggplot(m.box, aes(x=variable, y=value))+
+  #geom_violin() +
+  geom_boxplot()+
+  geom_jitter()+
+  theme_classic()
+    
+```
 
 
 ```{R}
@@ -127,19 +143,45 @@ P_V.D500$Level<-c(rep(500, 100))
 P_V.D1000$Level<-c(rep(1000, 100))
 P_V.D2000$Level<-c(rep(2000, 100))
 P_V.D10000$Level<-c(rep(10000, 100))
+
+#rep
+P_C.D500$rep<-c(1:100)
+P_C.D1000$rep<-c(101:200)
+P_C.D2000$rep<-c(201:300)
+P_C.D10000$rep<-c(301:400)
+
+P_G.D500$rep<-c(501:600)
+P_G.D1000$rep<-c(601:700)
+P_G.D2000$rep<-c(701:800)
+P_G.D10000$rep<-c(801:900)
+
+P_E.D500$rep<-c(901:1000)
+P_E.D1000$rep<-c(1001:1100)
+P_E.D2000$rep<-c(1101:1200)
+P_E.D10000$rep<-c(1201:1300)
+
+P_S.D500$rep<-c(1301:1400)
+P_S.D1000$rep<-c(1401:1500)
+P_S.D2000$rep<-c(1501:1600)
+P_S.D10000$rep<-c(1601:1700)
+
+P_V.D500$rep<-c(1701:1800)
+P_V.D1000$rep<-c(1801:1900)
+P_V.D2000$rep<-c(1901:2000)
+P_V.D10000$rep<-c(2001:2100)
 ```
 
 ```{r}
 # permanova plots
 
 Permanova.C<-do.call("rbind", list(P_C.D500,P_C.D1000,P_C.D2000,P_C.D10000))
-Permanova.C<-melt(data=Permanova.C, id.vars="Level", measure.vars = c("raw", "scaled", "eRare", "pRare", "limmaVST", "deseqVST"))
+Permanova.C2<-melt(data=Permanova.C, id.vars="Level", measure.vars = c("raw", "RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
 library(ggplot2)
 
-Permanova.C2<-data_summary2(Permanova.C, varname="value", groupnames=c("Level", "variable"))
-Permanova.C<-data_summary(Permanova.C, varname="value", groupnames=c("Level", "variable"))
+Permanova.C3<-data_summary2(Permanova.C2, varname="value", groupnames=c("Level", "variable"))
+Permanova.C2<-data_summary(Permanova.C2, varname="value", groupnames=c("Level", "variable"))
 
-ggplot(Permanova.C, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(Permanova.C2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(300)) +
   geom_line(position=position_dodge(300))+
   geom_point(position=position_dodge(300))+
@@ -148,7 +190,7 @@ ggplot(Permanova.C, aes(x=Level, y=value, group = variable, color=variable))+
   theme_classic()
 
 
-ggplot(Permanova.C2, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(Permanova.C3, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(300)) +
   geom_line(position=position_dodge(300))+
   geom_point(position=position_dodge(300))+
@@ -161,12 +203,12 @@ ggplot(Permanova.C2, aes(x=Level, y=value, group = variable, color=variable))+
 # permanova plots
 
 Permanova.G<-do.call("rbind", list(P_G.D500,P_G.D1000,P_G.D2000,P_G.D10000))
-Permanova.G<-melt(data=Permanova.G, id.vars="Level", measure.vars = c("raw", "scaled", "eRare", "pRare", "limmaVST", "deseqVST"))
+Permanova.G2<-melt(data=Permanova.G, id.vars="Level", measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
 
-Permanova.G2<-data_summary2(Permanova.G, varname="value", groupnames=c("Level", "variable"))
-Permanova.G<-data_summary(Permanova.G, varname="value", groupnames=c("Level", "variable"))
+Permanova.G3<-data_summary2(Permanova.G2, varname="value", groupnames=c("Level", "variable"))
+Permanova.G2<-data_summary(Permanova.G2, varname="value", groupnames=c("Level", "variable"))
 
-ggplot(Permanova.G, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(Permanova.G2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(300)) +
   geom_line(position=position_dodge(300))+
   geom_point(position=position_dodge(300))+
@@ -175,7 +217,7 @@ ggplot(Permanova.G, aes(x=Level, y=value, group = variable, color=variable))+
   theme_classic()
 
 
-ggplot(Permanova.G2, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(Permanova.G3, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(300)) +
   geom_line(position=position_dodge(300))+
   geom_point(position=position_dodge(300))+
@@ -188,12 +230,12 @@ ggplot(Permanova.G2, aes(x=Level, y=value, group = variable, color=variable))+
 # permanova plots
 
 Permanova.E<-do.call("rbind", list(P_E.D500,P_E.D1000,P_E.D2000,P_E.D10000))
-Permanova.E<-melt(data=Permanova.E, id.vars="Level", measure.vars = c("raw", "scaled", "eRare", "pRare", "limmaVST", "deseqVST"))
+Permanova.E2<-melt(data=Permanova.E, id.vars="Level", measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
 
-Permanova.E2<-data_summary2(Permanova.E, varname="value", groupnames=c("Level", "variable"))
-Permanova.E<-data_summary(Permanova.E, varname="value", groupnames=c("Level", "variable"))
+Permanova.E3<-data_summary2(Permanova.E2, varname="value", groupnames=c("Level", "variable"))
+Permanova.E2<-data_summary(Permanova.E2, varname="value", groupnames=c("Level", "variable"))
 
-ggplot(Permanova.E, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(Permanova.E2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(300)) +
   geom_line(position=position_dodge(300))+
   geom_point(position=position_dodge(300))+
@@ -202,7 +244,7 @@ ggplot(Permanova.E, aes(x=Level, y=value, group = variable, color=variable))+
   theme_classic()
 
 
-ggplot(Permanova.E2, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(Permanova.E3, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(300)) +
   geom_line(position=position_dodge(300))+
   geom_point(position=position_dodge(300))+
@@ -215,12 +257,12 @@ ggplot(Permanova.E2, aes(x=Level, y=value, group = variable, color=variable))+
 # permanova plots
 
 Permanova.S<-do.call("rbind", list(P_S.D500,P_S.D1000,P_S.D2000,P_S.D10000))
-Permanova.S<-melt(data=Permanova.S, id.vars="Level", measure.vars = c("raw", "scaled", "eRare", "pRare", "limmaVST", "deseqVST"))
+Permanova.S2<-melt(data=Permanova.S, id.vars="Level", measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
 
-Permanova.S2<-data_summary2(Permanova.S, varname="value", groupnames=c("Level", "variable"))
-Permanova.S<-data_summary(Permanova.S, varname="value", groupnames=c("Level", "variable"))
+Permanova.S3<-data_summary2(Permanova.S2, varname="value", groupnames=c("Level", "variable"))
+Permanova.S2<-data_summary(Permanova.S2, varname="value", groupnames=c("Level", "variable"))
 
-ggplot(Permanova.S, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(Permanova.S2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(300)) +
   geom_line(position=position_dodge(300))+
   geom_point(position=position_dodge(300))+
@@ -229,7 +271,7 @@ ggplot(Permanova.S, aes(x=Level, y=value, group = variable, color=variable))+
   theme_classic()
 
 
-ggplot(Permanova.S2, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(Permanova.S3, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(300)) +
   geom_line(position=position_dodge(300))+
   geom_point(position=position_dodge(300))+
@@ -243,12 +285,12 @@ ggplot(Permanova.S2, aes(x=Level, y=value, group = variable, color=variable))+
 # permanova plots
 
 Permanova.V<-do.call("rbind", list(P_V.D500,P_V.D1000,P_V.D2000,P_V.D10000))
-Permanova.V<-melt(data=Permanova.V, id.vars="Level", measure.vars = c("raw", "scaled", "eRare", "pRare", "limmaVST", "deseqVST"))
+Permanova.V2<-melt(data=Permanova.V, id.vars="Level", measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
 
-Permanova.V2<-data_summary2(Permanova.V, varname="value", groupnames=c("Level", "variable"))
-Permanova.V<-data_summary(Permanova.V, varname="value", groupnames=c("Level", "variable"))
+Permanova.V3<-data_summary2(Permanova.V2, varname="value", groupnames=c("Level", "variable"))
+Permanova.V2<-data_summary(Permanova.V2, varname="value", groupnames=c("Level", "variable"))
 
-ggplot(Permanova.V, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(Permanova.V2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(300)) +
   geom_line(position=position_dodge(300))+
   geom_point(position=position_dodge(300))+
@@ -257,7 +299,7 @@ ggplot(Permanova.V, aes(x=Level, y=value, group = variable, color=variable))+
   theme_classic()
 
 
-ggplot(Permanova.V2, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(Permanova.V3, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(300)) +
   geom_line(position=position_dodge(300))+
   geom_point(position=position_dodge(300))+
@@ -266,16 +308,20 @@ ggplot(Permanova.V2, aes(x=Level, y=value, group = variable, color=variable))+
   theme_classic()
 ```
 ```{r}
-Permanova.C$sparsity<-c(rep(1, 24))
-Permanova.E$sparsity<-c(rep(3, 24))
-Permanova.G$sparsity<-c(rep(2, 24))
-Permanova.S$sparsity<-c(rep(4, 24))
-Permanova.V$sparsity<-c(rep(5, 24))
+Permanova.C$sparsity<-c(rep(1, 400))
+Permanova.E$sparsity<-c(rep(3, 400))
+Permanova.G$sparsity<-c(rep(2, 400))
+Permanova.S$sparsity<-c(rep(4, 400))
+Permanova.V$sparsity<-c(rep(5, 400))
 
 Permanova.stats<-do.call("rbind", list(Permanova.C, Permanova.E, Permanova.G, Permanova.S, Permanova.V))
 Permanova.stats$sparsity<-as.factor(Permanova.stats$sparsity)
-with(Permanova.stats, summary(aov(value~variable*sparsity)))
-with(Permanova.stats, TukeyHSD(aov(value~variable*sparsity)))
+Permanova.stats$rep<-as.factor(Permanova.stats$rep)
+#Permanova.stats$sparsity<-as.factor(Permanova.stats$sparsity)
+P.stats<-melt(data=Permanova.stats, id.vars=c("Level","rep", "sparsity"), measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
+
+summary(aov(value~variable*sparsity+variable:rep, data=P.stats))
+TukeyHSD(aov(value~variable*sparsity+variable:rep, data=P.stats))
 ```
 
 
@@ -340,13 +386,39 @@ L_V.D1000$Level<-c(rep(1000, 100))
 L_V.D2000$Level<-c(rep(2000, 100))
 L_V.D10000$Level<-c(rep(10000, 100))
 
+# rep
+L_C.D500$rep<-c(1:100)
+L_C.D1000$rep<-c(101:200)
+L_C.D2000$rep<-c(201:300)
+L_C.D10000$rep<-c(301:400)
+
+L_G.D500$rep<-c(401:500)
+L_G.D1000$rep<-c(501:600)
+L_G.D2000$rep<-c(601:700)
+L_G.D10000$rep<-c(701:800)
+
+L_E.D500$rep<-c(801:900)
+L_E.D1000$rep<-c(901:1000)
+L_E.D2000$rep<-c(1001:1100)
+L_E.D10000$rep<-c(1101:1200)
+
+L_S.D500$rep<-c(1201:1300)
+L_S.D1000$rep<-c(1301:1400)
+L_S.D2000$rep<-c(1401:1500)
+L_S.D10000$rep<-c(1601:1700)
+
+L_V.D500$rep<-c(1801:1900)
+L_V.D1000$rep<-c(2001:2100)
+L_V.D2000$rep<-c(2101:2200)
+L_V.D10000$rep<-c(2201:2300)
+
 ```
 
 ```{R}
 # plot LII ####
 LII.C<-do.call("rbind", list(L_C.D500,L_C.D1000,L_C.D2000,L_C.D10000))
-LII.C<-melt(data=LII.C, id.vars="Level", measure.vars = c("raw", "scaled", "eRare", "pRare", "limmaVST", "deseqVST"))
-LII.C<-data_summary2(LII.C, varname="value", groupnames=c("Level", "variable"))
+LII.C2<-melt(data=LII.C, id.vars="Level", measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
+LII.C2<-data_summary2(LII.C, varname="value", groupnames=c("Level", "variable"))
 
 LII.C500<-LII.C[LII.C$Level==500,]
 LII.C1000<-LII.C[LII.C$Level==1000,]
@@ -367,8 +439,8 @@ ggplot(LII.C, aes(x=Level, y=value, group = variable, color=variable))+
 
 
 LII.G<-do.call("rbind", list(L_G.D500,L_G.D1000,L_G.D2000,L_G.D10000))
-LII.G<-melt(data=LII.G, id.vars="Level", measure.vars = c("raw", "scaled", "eRare", "pRare", "limmaVST", "deseqVST"))
-LII.G<-data_summary2(LII.G, varname="value", groupnames=c("Level", "variable"))
+LII.G2<-melt(data=LII.G, id.vars="Level", measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
+LII.G2<-data_summary2(LII.G2, varname="value", groupnames=c("Level", "variable"))
 
 LII.G500<-LII.G[LII.G$Level==500,]
 LII.G1000<-LII.G[LII.G$Level==1000,]
@@ -388,8 +460,8 @@ ggplot(LII.G, aes(x=Level, y=value, group = variable, color=variable))+
 ```{R}
 
 LII.E<-do.call("rbind", list(L_E.D500,L_E.D1000,L_E.D2000,L_E.D10000))
-LII.E<-melt(data=LII.E, id.vars="Level", measure.vars = c("raw", "scaled", "eRare", "pRare", "limmaVST", "deseqVST"))
-LII.E<-data_summary2(LII.E, varname="value", groupnames=c("Level", "variable"))
+LII.E2<-melt(data=LII.E, id.vars="Level", measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
+LII.E2<-data_summary2(LII.E2, varname="value", groupnames=c("Level", "variable"))
 
 LII.E500<-LII.E[LII.E$Level==500,]
 LII.E1000<-LII.E[LII.E$Level==1000,]
@@ -409,8 +481,8 @@ ggplot(LII.E, aes(x=Level, y=value, group = variable, color=variable))+
 ```{R}
 
 LII.S<-do.call("rbind", list(L_S.D500,L_S.D1000,L_S.D2000,L_S.D10000))
-LII.S<-melt(data=LII.S, id.vars="Level", measure.vars = c("raw", "scaled", "eRare", "pRare", "limmaVST", "deseqVST"))
-LII.S<-data_summary2(LII.S, varname="value", groupnames=c("Level", "variable"))
+LII.S2<-melt(data=LII.S, id.vars="Level", measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
+LII.S2<-data_summary2(LII.S2, varname="value", groupnames=c("Level", "variable"))
 
 LII.S500<-LII.S[LII.S$Level==500,]
 LII.S1000<-LII.S[LII.S$Level==1000,]
@@ -430,8 +502,8 @@ ggplot(LII.S, aes(x=Level, y=value, group = variable, color=variable))+
 ```{R}
 
 LII.V<-do.call("rbind", list(L_V.D500,L_V.D1000,L_V.D2000,L_V.D10000))
-LII.V<-melt(data=LII.V, id.vars="Level", measure.vars = c("raw", "scaled", "eRare", "pRare", "limmaVST", "deseqVST"))
-LII.V<-data_summary2(LII.V, varname="value", groupnames=c("Level", "variable"))
+LII.V2<-melt(data=LII.V, id.vars="Level", measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
+LII.V2<-data_summary2(LII.V2, varname="value", groupnames=c("Level", "variable"))
 
 LII.V500<-LII.V[LII.V$Level==500,]
 LII.V1000<-LII.V[LII.V$Level==1000,]
@@ -455,16 +527,17 @@ with(LII.V, plot())
 
 
 ```{r}
-LII.C$sparsity<-c(rep(1, 24))
-LII.E$sparsity<-c(rep(3, 24))
-LII.G$sparsity<-c(rep(2, 24))
-LII.S$sparsity<-c(rep(4, 24))
-LII.V$sparsity<-c(rep(5, 24))
+LII.C$sparsity<-c(rep(1, 400))
+LII.E$sparsity<-c(rep(3, 400))
+LII.G$sparsity<-c(rep(2, 400))
+LII.S$sparsity<-c(rep(4, 400))
+LII.V$sparsity<-c(rep(5, 400))
 
 L.stats<-do.call("rbind", list(LII.C, LII.E, LII.G, LII.S, LII.V))
-L.stats$sparsity<-as.factor(L.stats$sparsity)
-with(L.stats, summary(aov(value~variable*sparsity)))
-with(L.stats, TukeyHSD(aov(value~variable*sparsity)))
+L.stats<-melt(data=L.stats, id.vars=c("Level","rep", "sparsity"), measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
+
+summary(aov(value~variable*sparsity+variable:rep, data=L.stats))
+TukeyHSD(aov(value~variable*sparsity+variable:rep, data=L.stats))
 ```
 
 ```{r}
@@ -519,13 +592,39 @@ O_V.D1000$Level<-c(rep(1000, 100))
 O_V.D2000$Level<-c(rep(2000, 100))
 O_V.D10000$Level<-c(rep(10000, 100))
 
+# rep
+
+O_C.D500$rep<-c(1:100)
+O_C.D1000$rep<-c(101:200)
+O_C.D2000$rep<-c(201:300)
+O_C.D10000$rep<-c(301:400)
+
+O_G.D500$rep<-c(401:500)
+O_G.D1000$rep<-c(601:700)
+O_G.D2000$rep<-c(701:800)
+O_G.D10000$rep<-c(801:900)
+
+O_E.D500$rep<-c(901:1000)
+O_E.D1000$rep<-c(1001:1100)
+O_E.D2000$rep<-c(1101:1200)
+O_E.D10000$rep<-c(1201:1300)
+
+O_S.D500$rep<-c(1301:1400)
+O_S.D1000$rep<-c(1401:1500)
+O_S.D2000$rep<-c(1501:1600)
+O_S.D10000$rep<-c(1601:1700)
+
+O_V.D500$rep<-c(1701:1800)
+O_V.D1000$rep<-c(1801:1900)
+O_V.D2000$rep<-c(1901:2000)
+O_V.D10000$rep<-c(2001:2100)
 ```
 
 ```{r}
 # plot overmodeling index ####
 OI.C<-do.call("rbind", list(O_C.D500,O_C.D1000,O_C.D2000,O_C.D10000))
-OI.C<-melt(data=OI.C, id.vars="Level", measure.vars = c("raw", "scaled", "eRare", "pRare", "limmaVST", "deseqVST"))
-OI.C<-data_summary2(OI.C, varname="value", groupnames=c("Level", "variable"))
+OI.C2<-melt(data=OI.C, id.vars="Level", measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
+OI.C2<-data_summary2(OI.C2, varname="value", groupnames=c("Level", "variable"))
 
 ggplot(OI.C, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(300)) +
@@ -538,8 +637,8 @@ ggplot(OI.C, aes(x=Level, y=value, group = variable, color=variable))+
 
 ```{r}
 OI.G<-do.call("rbind", list(O_G.D500,O_G.D1000,O_G.D2000,O_G.D10000))
-OI.G<-melt(data=OI.G, id.vars="Level", measure.vars = c("raw", "scaled", "eRare", "pRare", "limmaVST", "deseqVST"))
-OI.G<-data_summary2(OI.G, varname="value", groupnames=c("Level", "variable"))
+OI.G2<-melt(data=OI.G, id.vars="Level", measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
+OI.G2<-data_summary2(OI.G2, varname="value", groupnames=c("Level", "variable"))
 
 ggplot(OI.G, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(300)) +
@@ -553,8 +652,8 @@ ggplot(OI.G, aes(x=Level, y=value, group = variable, color=variable))+
 
 ```{r}
 OI.E<-do.call("rbind", list(O_E.D500,O_E.D1000,O_E.D2000,O_E.D10000))
-OI.E<-melt(data=OI.E, id.vars="Level", measure.vars = c("raw", "scaled", "eRare", "pRare", "limmaVST", "deseqVST"))
-OI.E<-data_summary2(OI.E, varname="value", groupnames=c("Level", "variable"))
+OI.E2<-melt(data=OI.E, id.vars="Level", measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
+OI.E2<-data_summary2(OI.E2, varname="value", groupnames=c("Level", "variable"))
 
 ggplot(OI.E, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(300)) +
@@ -567,8 +666,8 @@ ggplot(OI.E, aes(x=Level, y=value, group = variable, color=variable))+
 
 ```{r}
 OI.S<-do.call("rbind", list(O_S.D500,O_S.D1000,O_S.D2000,O_S.D10000))
-OI.S<-melt(data=OI.S, id.vars="Level", measure.vars = c("raw", "scaled", "eRare", "pRare", "limmaVST", "deseqVST"))
-OI.S<-data_summary2(OI.S, varname="value", groupnames=c("Level", "variable"))
+OI.S2<-melt(data=OI.S, id.vars="Level", measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
+OI.S2<-data_summary2(OI.S2, varname="value", groupnames=c("Level", "variable"))
 
 ggplot(OI.S, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(300)) +
@@ -581,8 +680,8 @@ ggplot(OI.S, aes(x=Level, y=value, group = variable, color=variable))+
 
 ```{r}
 OI.V<-do.call("rbind", list(O_V.D500,O_V.D1000,O_V.D2000,O_V.D10000))
-OI.V<-melt(data=OI.V, id.vars="Level", measure.vars = c("raw", "scaled", "eRare", "pRare", "limmaVST", "deseqVST"))
-OI.V<-data_summary2(OI.V, varname="value", groupnames=c("Level", "variable"))
+OI.V2<-melt(data=OI.V, id.vars="Level", measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
+OI.V2<-data_summary2(OI.V2, varname="value", groupnames=c("Level", "variable"))
 
 ggplot(OI.C, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(300)) +
@@ -598,15 +697,17 @@ with(plot())
 ```
 
 ```{r}
-OI.C$sparsity<-c(rep(1, 24))
-OI.E$sparsity<-c(rep(3, 24))
-OI.G$sparsity<-c(rep(2, 24))
-OI.S$sparsity<-c(rep(4, 24))
-OI.V$sparsity<-c(rep(5, 24))
+OI.C$sparsity<-c(rep(1, 400))
+OI.E$sparsity<-c(rep(3, 400))
+OI.G$sparsity<-c(rep(2, 400))
+OI.S$sparsity<-c(rep(4, 400))
+OI.V$sparsity<-c(rep(5, 400))
 
 O.stats<-do.call("rbind", list(OI.C, OI.E, OI.G, OI.S, OI.V))
-O.stats$sparsity<-as.factor(O.stats$sparsity)
-with(O.stats, summary(aov(value~variable*sparsity)))
-with(O.stats, TukeyHSD(aov(value~variable*sparsity)))
+#O.stats$sparsity<-as.factor(O.stats$sparsity)
+O.stats<-melt(data=O.stats, id.vars=c("Level", "rep", "sparsity"), measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
+
+summary(aov(value~variable*sparsity+variable:rep, data=O.stats))
+TukeyHSD(aov(value~variable*sparsity+variable:rep, data=O.stats))
 ```
 

@@ -125,12 +125,14 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
     rownames(Factors)<-Sites
     colnames(Factors)<-c("F1","F2","F3","F4","F5")
 
-    output<-list("model"=NULL, "spplist"=NULL, "raw"=NULL, "eRare"=NULL, "pRare"=NULL, "scaled"=NULL, "deseqVST"=NULL, "limma"=NULL)
+    output<-list("model"=NULL, "spplist"=NULL, "raw"=NULL, "RA"=NULL, "eRare"=NULL, "pRare"=NULL, "scaled"=NULL, "deseqVST"=NULL, "deseqVST_scaled"=NULL, "limma"=NULL)
 
     #output$model<-NULL
     output$spplist<-rando.spp
 
     output$model$comm<-make.refcomm(rando.spp, Factors) # output a phyloseq object... will make a list of phyloseq objects
+    output$model$R<-lm.test(output$model$comm)
+    output$model$div<-div(output$model$comm)
     print("spp selection complete")
     sample_data(output$model$comm)$Density<-sample_sums(output$model$comm)# add sample sums
     sample_data(output$model$comm)$DensityF<-sample_sums(output$model$comm)/mean(sample_sums(output$model$comm))
@@ -142,6 +144,7 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
     output$raw$comm<-model.rarefy(output$model$comm, sample, D, V)         # do normalizations!!
     print("subsampling complete")
     print(sample_sums(output$raw$comm))
+    output$RA$comm<-transform_sample_counts(output$raw$comm, function(x) x / sum(x) )
     output$eRare$comm<-make.rarefy2(output$raw$comm, min(sample_sums(output$raw$comm)))
     print("erare complete")
     output$pRare$comm<-make.rarefy2(output$raw$comm, min(sample_sums(output$raw$comm))*sample_sums(output$raw$comm)/mean(sample_sums(output$raw$comm)))
@@ -150,12 +153,15 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
     print("scaling complete")
     output$deseqVST$comm<-make.deseqVST(output$raw$comm, "Factor", l=1)
     print("deseq complete")
+    output$deseqVST_scaled$comm<-make.deseqVST(output$scaled$comm, "Factor", l=1)
     output$limma$comm<-make.limmaVST(output$raw$comm, "Factor")
     print("limma complete")
   # add in any additional methods we want to add
 
     output$raw$PERMANOVA<-make.PERMANOVA(output$raw$comm)
     print("permanova raw")# make permanova tables
+    output$RA$PERMANOVA<-make.PERMANOVA(output$RA$comm)
+    print("permanova RA")# make permanova tables
     output$eRare$PERMANOVA<-make.PERMANOVA(output$eRare$comm)
     print("permanova eRare")
     output$pRare$PERMANOVA<-make.PERMANOVA(output$pRare$comm)
@@ -163,27 +169,42 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
     output$scaled$PERMANOVA<-make.PERMANOVA(output$scaled$comm)
     print("permanova scaled")
     output$deseqVST$PERMANOVA<-make.PERMANOVA(output$deseqVST$comm)
+    output$deseqVST_scaled$PERMANOVA<-make.PERMANOVA(output$deseqVST_scaled$comm)
     print("permanova deseq")
     output$limma$PERMANOVA<-make.PERMANOVA(output$limma$comm)
     print("permanova limma")
     print("PERMANOVA complete")
   # add in any additional methods we want to add
 
-    output$raw$LII<-LII(output$model$comm, output$raw$comm)                    # show amount of information retained after corrections
+    output$raw$LII<-LII(output$model$comm, output$raw$comm)
+    output$RA$LII<-LII(output$model$comm, output$RA$comm)  # show amount of information retained after corrections
     output$eRare$LII<-LII(output$model$comm, output$eRare$comm)
     output$pRare$LII<-LII(output$model$comm, output$pRare$comm)
     output$scaled$LII<-LII(output$model$comm, output$scaled$comm)
     output$deseqVST$LII<-LII(output$model$comm, output$deseqVST$comm)
+    output$deseqVST_scaled$LII<-LII(output$model$comm, output$deseqVST_scaled$comm)
     output$limma$LII<-LII(output$model$comm, output$limma$comm)
     print("LII complete")
   # add in any additional methods we want to add
 
    output$raw$OI<-OI(output$model$comm, output$raw$comm)
+   output$RA$OI<-OI(output$model$comm, output$RA$comm)
    output$eRare$OI<-OI(output$model$comm, output$eRare$comm)
    output$pRare$OI<-OI(output$model$comm, output$pRare$comm)
    output$scaled$OI<-OI(output$model$comm, output$scaled$comm)
    output$deseqVST$OI<-OI(output$model$comm, output$deseqVST$comm)
+   output$deseqVST_scaled$OI<-OI(output$model$comm, output$deseqVST_scaled$comm)
    output$limma$OI<-OI(output$model$comm, output$limma$comm)
+
+   output$raw$div<-div(output$raw$comm)
+   output$RA$div<-div(output$RA$comm)
+   output$eRare$div<-div(output$eRare$comm)
+   output$pRare$div<-div(output$pRare$comm)
+   output$scaled$div<-div(output$scaled$comm)
+   output$deseqVST$div<-div(output$deseqVST$comm)
+   output$deseqVST_scaled$div<-div(output$deseqVST_scaled$comm)
+   output$limma$div<-div(output$limma$comm)
+
 
     output
 }
@@ -571,13 +592,15 @@ make.PERMANOVA<-function(ps){
 #' @examples
 #' ext.PERMANOVA()
 ext.PERMANOVA<-function(tst){
-out<-list("raw"=c(rep(NA, length(tst))), "scaled"=c(rep(NA, length(tst))), "pRare"=c(rep(NA, length(tst))), "eRare"=c(rep(NA, length(tst))), "deseqVST"=c(rep(NA, length(tst))), "limmaVST"=c(rep(NA, length(tst))))
+out<-list("raw"=c(rep(NA, length(tst))),"RA"=c(rep(NA, length(tst))), "scaled"=c(rep(NA, length(tst))), "pRare"=c(rep(NA, length(tst))), "eRare"=c(rep(NA, length(tst))), "deseqVST"=c(rep(NA, length(tst))),"deseqVST_scaled"=c(rep(NA, length(tst))), "limmaVST"=c(rep(NA, length(tst))))
 
   for(i in 1:length(tst)) {out$raw[i]<-tst[[i]]$raw$PERMANOVA$aov.tab$R2[7]}
+  for(i in 1:length(tst)) {out$RA[i]<-tst[[i]]$RA$PERMANOVA$aov.tab$R2[7]}
   for(i in 1:length(tst)) {out$scaled[i]<-tst[[i]]$scaled$PERMANOVA$aov.tab$R2[7]}
   for(i in 1:length(tst)) {out$pRare[i]<-tst[[i]]$pRare$PERMANOVA$aov.tab$R2[7]}
   for(i in 1:length(tst)) {out$eRare[i]<-tst[[i]]$eRare$PERMANOVA$aov.tab$R2[7]}
   for(i in 1:length(tst)) {out$deseqVST[i]<-tst[[i]]$deseqVST$PERMANOVA$aov.tab$R2[7]}
+  for(i in 1:length(tst)) {out$deseqVST_scaled[i]<-tst[[i]]$deseqVST_scaled$PERMANOVA$aov.tab$R2[7]}
   for(i in 1:length(tst)) {out$limmaVST[i]<-tst[[i]]$limma$PERMANOVA$aov.tab$R2[7]}
   out1<-as.data.frame(out)
   out1
@@ -594,6 +617,7 @@ out<-list("raw"=c(rep(NA, length(tst))), "scaled"=c(rep(NA, length(tst))), "pRar
 #' @examples
 #' LII()
 LII <-function(ps1.R, ps2.T){
+  out<-NULL
   reference<-as.matrix(as.data.frame(t(as.matrix(otu_table(Delta.sppcount(ps1.R, ps1.R, method=0))))))
   reference<-reference[order(rownames(reference)),]
 
@@ -606,7 +630,8 @@ LII <-function(ps1.R, ps2.T){
 if(identical(rownames(reference), rownames(treatment))){
   Ci<-sapply(seq.int(dim(reference)[1]), function(i) summary(lm(reference[i,] ~ treatment[i,]))$r.squared)
   Ci2<-sapply(seq.int(dim(reference)[1]), function(i) summary(lm(reference[i,] ~ reference2[i,]))$r.squared)
-  out<-sum(Ci2-Ci)
+  out$Index<-sum(Ci2-Ci)
+  out$R<-Ci
   out} else {print("species do not match")}
 
 }
@@ -618,14 +643,16 @@ if(identical(rownames(reference), rownames(treatment))){
 #' @examples
 #' ext.LII()
 ext.LII<-function(tst){
-out<-list("raw"=c(rep(NA, length(tst))), "scaled"=c(rep(NA, length(tst))), "pRare"=c(rep(NA, length(tst))), "eRare"=c(rep(NA, length(tst))), "deseqVST"=c(rep(NA, length(tst))), "limmaVST"=c(rep(NA, length(tst))))
+out<-list("raw"=c(rep(NA, length(tst))), "RA"=c(rep(NA, length(tst))),"scaled"=c(rep(NA, length(tst))), "pRare"=c(rep(NA, length(tst))), "eRare"=c(rep(NA, length(tst))), "deseqVST"=c(rep(NA, length(tst))),"deseqVST_scaled"=c(rep(NA, length(tst))), "limmaVST"=c(rep(NA, length(tst))))
 
-  for(i in 1:length(tst)) {out$raw[i]<-tst[[i]]$raw$LII}
-  for(i in 1:length(tst)) {out$scaled[i]<-tst[[i]]$scaled$LII}
-  for(i in 1:length(tst)) {out$pRare[i]<-tst[[i]]$pRare$LII}
-  for(i in 1:length(tst)) {out$eRare[i]<-tst[[i]]$eRare$LII}
-  for(i in 1:length(tst)) {out$deseqVST[i]<-tst[[i]]$deseqVST$LII}
-  for(i in 1:length(tst)) {out$limmaVST[i]<-tst[[i]]$limma$LII}
+  for(i in 1:length(tst)) {out$raw[i]<-tst[[i]]$raw$LII$Index}
+  for(i in 1:length(tst)) {out$RA[i]<-tst[[i]]$RA$LII$Index}
+  for(i in 1:length(tst)) {out$scaled[i]<-tst[[i]]$scaled$LII$Index}
+  for(i in 1:length(tst)) {out$pRare[i]<-tst[[i]]$pRare$LII$Index}
+  for(i in 1:length(tst)) {out$eRare[i]<-tst[[i]]$eRare$LII$Index}
+  for(i in 1:length(tst)) {out$deseqVST[i]<-tst[[i]]$deseqVST$LII$Index}
+  for(i in 1:length(tst)) {out$deseqVST_scaled[i]<-tst[[i]]$deseqVST_scaled$LII$Index}
+  for(i in 1:length(tst)) {out$limmaVST[i]<-tst[[i]]$limma$LII$Index}
   out1<-as.data.frame(out)
   out1
 }
@@ -636,14 +663,16 @@ out<-list("raw"=c(rep(NA, length(tst))), "scaled"=c(rep(NA, length(tst))), "pRar
 #' @examples
 #' ext.LII()
 ext.OI<-function(tst){
-out<-list("raw"=c(rep(NA, length(tst))), "scaled"=c(rep(NA, length(tst))), "pRare"=c(rep(NA, length(tst))), "eRare"=c(rep(NA, length(tst))), "deseqVST"=c(rep(NA, length(tst))), "limmaVST"=c(rep(NA, length(tst))))
+out<-list("raw"=c(rep(NA, length(tst))), "RA"=c(rep(NA, length(tst))),"scaled"=c(rep(NA, length(tst))), "pRare"=c(rep(NA, length(tst))), "eRare"=c(rep(NA, length(tst))), "deseqVST"=c(rep(NA, length(tst))),"deseqVST_scaled"=c(rep(NA, length(tst))), "limmaVST"=c(rep(NA, length(tst))))
 
-  for(i in 1:length(tst)) {out$raw[i]<-tst[[i]]$raw$OI}
-  for(i in 1:length(tst)) {out$scaled[i]<-tst[[i]]$scaled$OI}
-  for(i in 1:length(tst)) {out$pRare[i]<-tst[[i]]$pRare$OI}
-  for(i in 1:length(tst)) {out$eRare[i]<-tst[[i]]$eRare$OI}
-  for(i in 1:length(tst)) {out$deseqVST[i]<-tst[[i]]$deseqVST$OI}
-  for(i in 1:length(tst)) {out$limmaVST[i]<-tst[[i]]$limma$OI}
+  for(i in 1:length(tst)) {out$raw[i]<-tst[[i]]$raw$OI$Index$Index}
+  for(i in 1:length(tst)) {out$RA[i]<-tst[[i]]$RA$OI$Index}
+  for(i in 1:length(tst)) {out$scaled[i]<-tst[[i]]$scaled$OI$Index}
+  for(i in 1:length(tst)) {out$pRare[i]<-tst[[i]]$pRare$OI$Index}
+  for(i in 1:length(tst)) {out$eRare[i]<-tst[[i]]$eRare$OI$Index}
+  for(i in 1:length(tst)) {out$deseqVST[i]<-tst[[i]]$deseqVST$OI$Index}
+  for(i in 1:length(tst)) {out$deseqVST_scaled[i]<-tst[[i]]$deseqVST_scaled$OI$Index}
+  for(i in 1:length(tst)) {out$limmaVST[i]<-tst[[i]]$limma$OI$Index}
   out1<-as.data.frame(out)
   out1
 }
@@ -669,8 +698,10 @@ SVI<-function(ps1, ps2){
 #' @examples
 #' OI()
 OI<-function(ps1, ps2){
-  o<-SVI(ps1,ps2)
-  o<-sum(abs(o[o<0]))
+  o<-NULL
+  o$SVI<-SVI(ps1,ps2)
+  o$Index<-sum(abs(o$SVI[o$SVI<0]))
+  o$R<-lm.test(ps2)
   o
 }
 
@@ -695,6 +726,7 @@ testlm<-apply(anova.otu, 2, function(x) {
   return(l1$r.squared)
   })
 testlm[is.na(testlm)]<-0
+testlm<-testlm[order(names(testlm))]
 lost<-length(testlm[testlm==0])
 out<-list("lm"=testlm, "lost"=lost)
 out
@@ -714,6 +746,25 @@ SVI2 <-function(ps1.R, ps2.T){
   Ci<-sapply(seq.int(dim(reference)[1]), function(i) sum(abs(reference[i,] - treatment[i,])))
   names(Ci)<-rownames(reference)
   Ci
+}
+
+#' Calculate diversity and skew metrics
+#' @param ps1.T phyloseq object of  community
+#' @keywords linear model Species Variance Index
+#' @export
+#' @examples
+#' div()
+div <-function(ps2.T){
+  require(phylose)
+  require(vegan)
+  require(asbio)
+
+  out<-NULL
+  tab<-as.matrix(otu_table(ps2.T))
+  out$alpha<-diversity(tab, index="shannon", margin=1)
+  out$evenness<-evenness(tab)
+  out$skew<-lapply(tab, skewness)
+  out
 }
 
 #' make indicators from deseq
