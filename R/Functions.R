@@ -156,6 +156,26 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
 
     sample<-set.seqDepth(D,V)
     output$raw$comm<-model.rarefy(output$model$comm, sample, D, V)         # do normalizations!!
+    # for each species: measure prevalence
+        prevalence=apply(X = otu_table(output$model$comm), MARGIN=1,FUN = function(x){sum(x > 0)})
+    # for each species: measure relative abundance (proportion of total counts?
+        p.abund<-transform_sample_counts(output$model$comm, function(x) x/sum(x) )
+
+        mean_abundance<-apply(X = otu_table(p.abund), MARGIN=1,FUN = function(x){mean(x)})
+
+        sd_abundance<-apply(X = otu_table(p.abund), MARGIN=1,FUN = function(x){sd(x)})
+    # create a tax table for whole dataset ...
+        tab<-data.frame(prevalence, mean_abundance, sd_abundance)
+        tab$names<-rownames(tab)
+        output$model$SpeciesMeta<-tab
+
+        output$model$R<-lm.test(output$model$comm)
+
+    # remove taxa that have zero abundance in "raw" sequencing run
+    tax.filt<-filter_taxa(output$raw$comm, function(x)sum(x)>0)
+    output$raw$comm<-filter_taxa(output$raw$comm, function(x)sum(x)>0, TRUE)
+
+    output$model$comm<-filter_taxa(output$model$comm, tax.filt)
     print("subsampling complete")
     print(sample_sums(output$raw$comm))
     output$RA$comm<-transform_sample_counts(output$raw$comm, function(x) x / sum(x) )
