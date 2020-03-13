@@ -131,7 +131,7 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
     output$spplist<-rando.spp
 
     output$model$comm<-make.refcomm(rando.spp, Factors) # output a phyloseq object... will make a list of phyloseq objects
-
+    output$model$comm<-filter_taxa(output$model$comm, function(x) sum(x)>0, TRUE)
 # for each species: measure prevalence
     prevalence=apply(X = otu_table(output$model$comm), MARGIN=1,FUN = function(x){sum(x > 0)})
 # for each species: measure relative abundance (proportion of total counts?
@@ -155,7 +155,13 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
     print("metadata complete")
 
     sample<-set.seqDepth(D,V)
-    output$raw$comm<-model.rarefy(output$model$comm, sample, D, V)         # do normalizations!!
+    output$raw$comm<-model.rarefy(output$model$comm, sample, D, V)
+    # remove taxa that have zero abundance in "raw" sequencing run
+    tax.filt<-filter_taxa(output$raw$comm, function(x)sum(x)>0)
+    output$raw$comm<-filter_taxa(output$raw$comm, function(x)sum(x)>0, TRUE)
+    # remove taxa that are not kept from sequencing so that they don't penalize downstream methods
+    output$model$comm<-prune_taxa(tax.filt, output$model$comm)
+
     # for each species: measure prevalence
         prevalence=apply(X = otu_table(output$model$comm), MARGIN=1,FUN = function(x){sum(x > 0)})
     # for each species: measure relative abundance (proportion of total counts?
@@ -172,12 +178,12 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
         output$model$R<-lm.test(output$model$comm)
 
     # remove taxa that have zero abundance in "raw" sequencing run
-    tax.filt<-filter_taxa(output$raw$comm, function(x)sum(x)>0)
-    output$raw$comm<-filter_taxa(output$raw$comm, function(x)sum(x)>0, TRUE)
 
-    output$model$comm<-filter_taxa(output$model$comm, tax.filt)
     print("subsampling complete")
-    print(sample_sums(output$raw$comm))
+    #print(sample_sums(output$raw$comm))
+    print(output$raw$comm)
+    print(output$model$comm)
+
     output$RA$comm<-transform_sample_counts(output$raw$comm, function(x) x / sum(x) )
     output$eRare$comm<-make.rarefy2(output$raw$comm, min(sample_sums(output$raw$comm)))
     print("erare complete")
@@ -240,7 +246,6 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
    output$deseqVST_scaled$OI<-OI(output$model$comm, output$deseqVST_scaled$comm)
    output$limma$OI<-OI(output$model$comm, output$limma$comm)
 
-C.D500$rep1$raw$OI$SVI
    output$model$SpeciesMeta$rawOI<-output$raw$OI$SVI
    output$model$SpeciesMeta$RAOI<-output$RA$OI$SVI
    output$model$SpeciesMeta$eRareOI<-output$eRare$OI$SVI
@@ -389,8 +394,12 @@ make.table<-function(comm1, sample){
       m<-m[,-1]
       #print(m)
       m[is.na(m)]<-0
+      m<-m[order(rownames(m)),]
       otu_table(comm1)<-otu_table(m, taxa_are_rows=T)
       comm3<-merge_phyloseq(comm1, comm2)
+      m2<-as.data.frame(as.matrix(otu_table(comm3)))
+      m2<-m2[order(rownames(m2)),]
+      otu_table(comm3)<-otu_table(m2, taxa_are_rows=T)
       comm3
     }
 
