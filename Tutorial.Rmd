@@ -68,18 +68,75 @@ V.D10000<-suppressWarnings(benchmark.MM(reps=100, commonN=10, groupN=15, singleN
 ```
 ```{R}
 # boxplot of R squared from model
+
 box.df<-data.frame("reference"=C.D500$rep1$model$R$lm,"deseqVST"=C.D500$rep1$deseqVST$OI$R$lm,"limmaVST"=C.D500$rep1$limma$OI$R$lm,"RA"=C.D500$rep1$RA$OI$R$lm,"erare"=C.D500$rep1$eRare$OI$R$lm,"scaled"=C.D500$rep1$scaled$OI$R$lm)
 box.df$names<-rownames(box.df)
 m.box<-melt(data=box.df, id.vars="names", measure.vars = c("reference", "RA", "scaled", "erare", "limmaVST", "deseqVST"))
 
+keep<-names(C.D500$rep1$deseqVST$OI$SVI)[C.D500$rep1$deseqVST$OI$SVI<0]
+
+box.df2<-data.frame("reference"=C.D500$rep1$model$R$lm[names(C.D500$rep1$model$R$lm)%in%keep],"deseqVST"=C.D500$rep1$deseqVST$OI$R$lm[names(C.D500$rep1$deseqVST$OI$R$lm)%in%keep],"limmaVST"=C.D500$rep1$limma$OI$R$lm[names(C.D500$rep1$limma$OI$R$lm)%in%keep],"RA"=C.D500$rep1$RA$OI$R$lm[names(C.D500$rep1$RA$OI$R$lm)%in%keep],"erare"=C.D500$rep1$eRare$OI$R$lm[names(C.D500$rep1$eRare$OI$R$lm)%in%keep],"scaled"=C.D500$rep1$scaled$OI$R$lm[names(C.D500$rep1$scaled$OI$R$lm)%in%keep])
+box.df$names<-rownames(box.df)
+box.df2$names<-rownames(box.df2)
+
+m.box<-melt(data=box.df, id.vars="names", measure.vars = c("reference", "RA", "scaled", "erare", "limmaVST", "deseqVST"))
+
+m.box2<-melt(data=box.df2, id.vars="names", measure.vars = c("reference", "RA", "scaled", "erare", "limmaVST", "deseqVST"))
+
+
 ggplot(m.box, aes(x=variable, y=value))+
-  #geom_violin() +
-  geom_boxplot()+
+  geom_violin() +
+  #geom_boxplot()+
+  geom_jitter()+
+  theme_classic()
+
+ggplot(m.box2, aes(x=variable, y=value))+
+  geom_violin() +
+  #geom_boxplot()+
   geom_jitter()+
   theme_classic()
     
 ```
+```{R}
 
+om<-prune_taxa(taxa_names(C.D500$rep1$model$comm)%in%keep,C.D500$rep1$model$comm)
+plot_bar(om)
+
+om2<-prune_taxa(taxa_names(C.D500$rep1$raw$comm)%in%keep,C.D500$rep1$raw$comm)
+names<-data.frame("names"=taxa_names(om2), "number"=c(1:length(taxa_names(om2))))
+rownames(names)<-names$names
+tax_table(om2)<-names
+plot_bar(om2)
+```
+
+```{R}
+om3<-otu_table(prune_taxa(taxa_names(C.D500$rep1$model$comm)%in%keep,C.D500$rep1$model$comm))
+om4<-otu_table(prune_taxa(taxa_names(C.D500$rep1$scaled$comm)%in%keep,C.D500$rep1$deseqVST$comm))
+```
+
+```{R}
+box.LII<-data.frame("deseqVST"=C.D500$rep1$deseqVST$LII$R,"limmaVST"=C.D500$rep1$limma$LII$R,"RA"=C.D500$rep1$RA$LII$R,"erare"=C.D500$rep1$eRare$LII$R,"scaled"=C.D500$rep1$scaled$LII$R)
+box.LII$names<-c(1:length(box.LII$RA))
+#box.LII$names<-rownames(box.df)
+m.boxLII<-melt(data=box.LII, id.vars="names", measure.vars = c("RA", "scaled", "erare", "limmaVST", "deseqVST"))
+
+ggplot(m.boxLII, aes(x=variable, y=value))+
+  geom_violin() +
+  #geom_boxplot()+
+  geom_jitter()+
+  theme_classic()
+```
+```{R}
+LII.plotdat<-melt(data=C.D500$rep1$model$SpeciesMeta, id.vars=c("names","prevalence","mean"), measure.vars = c("reference", "RA", "scaled", "erare", "limmaVST", "deseqVST"))
+
+
+ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=prevalence,y=scaledOI,col=deseqOI))+geom_point()
+ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqLII,y=deseqOI,col=prevalence))+geom_point()
+ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqLII,y=deseqOI,col=scaledOI))+geom_point()
+ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=scaledLII,y=scaledOI,col=deseqOI))+geom_point()
+#ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqLII,y=deseqOI,col=sd_abundance))+geom_point()
+#ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqLII,y=deseqOI,col=mean_abundance))+geom_point()
+```
 
 ```{R}
 # PERMANOVA output ####

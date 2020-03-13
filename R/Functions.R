@@ -131,8 +131,22 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
     output$spplist<-rando.spp
 
     output$model$comm<-make.refcomm(rando.spp, Factors) # output a phyloseq object... will make a list of phyloseq objects
+
+# for each species: measure prevalence
+    prevalence=apply(X = otu_table(output$model$comm), MARGIN=1,FUN = function(x){sum(x > 0)})
+# for each species: measure relative abundance (proportion of total counts?
+    p.abund<-transform_sample_counts(output$model$comm, function(x) x/sum(x) )
+
+    mean_abundance<-apply(X = otu_table(p.abund), MARGIN=1,FUN = function(x){mean(x)})
+
+    sd_abundance<-apply(X = otu_table(p.abund), MARGIN=1,FUN = function(x){sd(x)})
+# create a tax table for whole dataset ...
+    tab<-data.frame(prevalence, mean_abundance, sd_abundance)
+    tab$names<-rownames(tab)
+    output$model$SpeciesMeta<-tab
+
     output$model$R<-lm.test(output$model$comm)
-    output$model$div<-div(output$model$comm)
+    #output$model$div<-div(output$model$comm)
     print("spp selection complete")
     sample_data(output$model$comm)$Density<-sample_sums(output$model$comm)# add sample sums
     sample_data(output$model$comm)$DensityF<-sample_sums(output$model$comm)/mean(sample_sums(output$model$comm))
@@ -184,6 +198,16 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
     output$deseqVST$LII<-LII(output$model$comm, output$deseqVST$comm)
     output$deseqVST_scaled$LII<-LII(output$model$comm, output$deseqVST_scaled$comm)
     output$limma$LII<-LII(output$model$comm, output$limma$comm)
+
+    output$model$SpeciesMeta$rawLII<-output$raw$LII$dif
+    output$model$SpeciesMeta$RALII<-output$RA$LII$dif
+    output$model$SpeciesMeta$eRareLII<-output$eRare$LII$dif
+    output$model$SpeciesMeta$pRareLII<-output$pRare$LII$dif
+    output$model$SpeciesMeta$scaledLII<-output$scaled$LII$dif
+    output$model$SpeciesMeta$limmaLII<-output$limma$LII$dif
+    output$model$SpeciesMeta$deseqLII<-output$deseqVST$LII$dif
+    output$model$SpeciesMeta$deseqSC.LII<-output$deseqVST_scaled$LII$dif
+
     print("LII complete")
   # add in any additional methods we want to add
 
@@ -196,14 +220,23 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
    output$deseqVST_scaled$OI<-OI(output$model$comm, output$deseqVST_scaled$comm)
    output$limma$OI<-OI(output$model$comm, output$limma$comm)
 
-   output$raw$div<-div(output$raw$comm)
-   output$RA$div<-div(output$RA$comm)
-   output$eRare$div<-div(output$eRare$comm)
-   output$pRare$div<-div(output$pRare$comm)
-   output$scaled$div<-div(output$scaled$comm)
-   output$deseqVST$div<-div(output$deseqVST$comm)
-   output$deseqVST_scaled$div<-div(output$deseqVST_scaled$comm)
-   output$limma$div<-div(output$limma$comm)
+C.D500$rep1$raw$OI$SVI
+   output$model$SpeciesMeta$rawOI<-output$raw$OI$SVI
+   output$model$SpeciesMeta$RAOI<-output$RA$OI$SVI
+   output$model$SpeciesMeta$eRareOI<-output$eRare$OI$SVI
+   output$model$SpeciesMeta$pRareOI<-output$pRare$OI$SVI
+   output$model$SpeciesMeta$scaledOI<-output$scaled$OI$SVI
+   output$model$SpeciesMeta$limmaOI<-output$limma$OI$SVI
+   output$model$SpeciesMeta$deseqOI<-output$deseqVST$OI$SVI
+   output$model$SpeciesMeta$deseqSC.OI<-output$deseqVST_scaled$OI$SVI
+   #output$raw$div<-div(output$raw$comm)
+   #output$RA$div<-div(output$RA$comm)
+   #output$eRare$div<-div(output$eRare$comm)
+   #output$pRare$div<-div(output$pRare$comm)
+   #output$scaled$div<-div(output$scaled$comm)
+   #output$deseqVST$div<-div(output$deseqVST$comm)
+   #output$deseqVST_scaled$div<-div(output$deseqVST_scaled$comm)
+   #output$limma$div<-div(output$limma$comm)
 
 
     output
@@ -632,6 +665,9 @@ if(identical(rownames(reference), rownames(treatment))){
   Ci2<-sapply(seq.int(dim(reference)[1]), function(i) summary(lm(reference[i,] ~ reference2[i,]))$r.squared)
   out$Index<-sum(Ci2-Ci)
   out$R<-Ci
+  out$diff<-Ci2-Ci
+  names(out$R)<-rownames(reference)
+  names(out$diff)<-rownames(reference)
   out} else {print("species do not match")}
 
 }
@@ -755,15 +791,16 @@ SVI2 <-function(ps1.R, ps2.T){
 #' @examples
 #' div()
 div <-function(ps2.T){
-  require(phylose)
+  require(phyloseq)
   require(vegan)
   require(asbio)
 
   out<-NULL
   tab<-as.matrix(otu_table(ps2.T))
-  out$alpha<-diversity(tab, index="shannon", margin=1)
-  out$evenness<-evenness(tab)
-  out$skew<-lapply(tab, skewness)
+  out$shannon<-diversity(tab, index="shannon")
+  out$simpson<-diversity(tab, index="simpson")
+  #out$evenness<-evenness(tab)
+  #out$skew<-lapply(tab, skewness)
   out
 }
 
@@ -2208,7 +2245,7 @@ spp3<-function(a,b,c,d,e) {(c*d*e)-(a-d)^2+(0*(a+b+c+d+e))
   #' @export
   #' @examples
   #' spp101()
-  spp101<-function(a,b,c,d,e) {(c*d*e)-(b-a)^2 +(0*(a+b+c+d+e))}
+  spp101<-function(a,b,c,d,e) {(c*d*e)-(b/a)^2 +(0*(a+b+c+d+e))}
 
   #' species function
   #' @param a environmental parameter
