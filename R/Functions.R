@@ -132,35 +132,24 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
 
     output$model$comm<-make.refcomm(rando.spp, Factors) # output a phyloseq object... will make a list of phyloseq objects
     output$model$comm<-filter_taxa(output$model$comm, function(x) sum(x)>0, TRUE)
-# for each species: measure prevalence
-    prevalence=apply(X = otu_table(output$model$comm), MARGIN=1,FUN = function(x){sum(x > 0)})
-# for each species: measure relative abundance (proportion of total counts?
-    p.abund<-transform_sample_counts(output$model$comm, function(x) x/sum(x) )
+    output$model$EV<-transform_sample_counts(output$model$comm, function(x) x / sum(x) )
 
-    mean_abundance<-apply(X = otu_table(p.abund), MARGIN=1,FUN = function(x){mean(x)})
-
-    sd_abundance<-apply(X = otu_table(p.abund), MARGIN=1,FUN = function(x){sd(x)})
-# create a tax table for whole dataset ...
-    tab<-data.frame(prevalence, mean_abundance, sd_abundance)
-    tab$names<-rownames(tab)
-    output$model$SpeciesMeta<-tab
-
-    output$model$R<-lm.test(output$model$comm)
-    #output$model$div<-div(output$model$comm)
     print("spp selection complete")
     sample_data(output$model$comm)$Density<-sample_sums(output$model$comm)# add sample sums
     sample_data(output$model$comm)$DensityF<-sample_sums(output$model$comm)/mean(sample_sums(output$model$comm))
     sample_data(output$model$comm)$Factor<-as.factor(c(rep("one",5),rep("two",5),rep("three",5),rep("four",5),rep("five",5),rep("six",5)))
     sample_data(output$model$comm)$Factor2<-as.factor(c(rep(1,5),rep(2,5),rep(3,5),rep(4,5),rep(5,5),rep(6,5)))
-    print("metadata complete")
+
 
     sample<-set.seqDepth(D,V)
     output$raw$comm<-model.rarefy(output$model$comm, sample, D, V)
+
     # remove taxa that have zero abundance in "raw" sequencing run
     tax.filt<-filter_taxa(output$raw$comm, function(x)sum(x)>0)
     output$raw$comm<-filter_taxa(output$raw$comm, function(x)sum(x)>0, TRUE)
     # remove taxa that are not kept from sequencing so that they don't penalize downstream methods
     output$model$comm<-prune_taxa(tax.filt, output$model$comm)
+    output$model$EV<-prune_taxa(tax.filt, output$model$EV)
 
     # for each species: measure prevalence
         prevalence=apply(X = otu_table(output$model$comm), MARGIN=1,FUN = function(x){sum(x > 0)})
@@ -177,6 +166,22 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
 
         output$model$R<-lm.test(output$model$comm)
 
+    # make expected value
+        s<-sample_sums(output$raw$comm)
+        s2<-as.data.frame(as.matrix(otu_table(output$model$EV)))
+        s2<-for (i in 1:ncol(s2)) {s2[,i]<-s2[,i]*s[i]}
+        otu_table(output$model$EV)<-otu_table(output$model$EV, taxa_are_rows=TRUE)
+        M.Eval<-apply(X = otu_table(output$model$EV), MARGIN=1,FUN = function(x){mean(x)})
+
+
+    #output$model$SpeciesMeta$USI<-output$model$SpeciesMeta$
+    # create a tax table for whole dataset ...
+        tab<-data.frame(prevalence, mean_abundance, sd_abundance, M.Eval)
+        tab$names<-rownames(tab)
+        output$model$SpeciesMeta<-tab
+
+        output$model$R<-lm.test(output$model$comm)
+print("metadata complete")
     # remove taxa that have zero abundance in "raw" sequencing run
 
     print("subsampling complete")
@@ -225,35 +230,47 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
     output$deseqVST_scaled$LII<-LII(output$model$comm, output$deseqVST_scaled$comm)
     output$limma$LII<-LII(output$model$comm, output$limma$comm)
 
-    output$model$SpeciesMeta$rawLII<-output$raw$LII$dif
-    output$model$SpeciesMeta$RALII<-output$RA$LII$dif
-    output$model$SpeciesMeta$eRareLII<-output$eRare$LII$dif
-    output$model$SpeciesMeta$pRareLII<-output$pRare$LII$dif
-    output$model$SpeciesMeta$scaledLII<-output$scaled$LII$dif
-    output$model$SpeciesMeta$limmaLII<-output$limma$LII$dif
-    output$model$SpeciesMeta$deseqLII<-output$deseqVST$LII$dif
-    output$model$SpeciesMeta$deseqSC.LII<-output$deseqVST_scaled$LII$dif
+# do 1- : calculates the information lost
+    output$model$SpeciesMeta$rawLII<-1-output$raw$LII$R
+    output$model$SpeciesMeta$RALII<-1-output$RA$LII$R
+    output$model$SpeciesMeta$eRareLII<-1-output$eRare$LII$R
+    output$model$SpeciesMeta$pRareLII<-1-output$pRare$LII$R
+    output$model$SpeciesMeta$scaledLII<-1-output$scaled$LII$R
+    output$model$SpeciesMeta$limmaLII<-1-output$limma$LII$R
+    output$model$SpeciesMeta$deseqLII<-1-output$deseqVST$LII$R
+    output$model$SpeciesMeta$deseqSC.LII<-1-output$deseqVST_scaled$LII$R
 
     print("LII complete")
   # add in any additional methods we want to add
 
-   output$raw$OI<-OI(output$model$comm, output$raw$comm)
-   output$RA$OI<-OI(output$model$comm, output$RA$comm)
-   output$eRare$OI<-OI(output$model$comm, output$eRare$comm)
-   output$pRare$OI<-OI(output$model$comm, output$pRare$comm)
-   output$scaled$OI<-OI(output$model$comm, output$scaled$comm)
-   output$deseqVST$OI<-OI(output$model$comm, output$deseqVST$comm)
-   output$deseqVST_scaled$OI<-OI(output$model$comm, output$deseqVST_scaled$comm)
-   output$limma$OI<-OI(output$model$comm, output$limma$comm)
+   output$raw$DMI<-DMI(output$model$comm, output$raw$comm)
+   output$RA$DMI<-DMI(output$model$comm, output$RA$comm)
+   output$eRare$DMI<-DMI(output$model$comm, output$eRare$comm)
+   output$pRare$DMI<-DMI(output$model$comm, output$pRare$comm)
+   output$scaled$DMI<-DMI(output$model$comm, output$scaled$comm)
+   output$deseqVST$DMI<-DMI(output$model$comm, output$deseqVST$comm)
+   output$deseqVST_scaled$DMI<-DMI(output$model$comm, output$deseqVST_scaled$comm)
+   output$limma$DMI<-DMI(output$model$comm, output$limma$comm)
 
-   output$model$SpeciesMeta$rawOI<-output$raw$OI$SVI
-   output$model$SpeciesMeta$RAOI<-output$RA$OI$SVI
-   output$model$SpeciesMeta$eRareOI<-output$eRare$OI$SVI
-   output$model$SpeciesMeta$pRareOI<-output$pRare$OI$SVI
-   output$model$SpeciesMeta$scaledOI<-output$scaled$OI$SVI
-   output$model$SpeciesMeta$limmaOI<-output$limma$OI$SVI
-   output$model$SpeciesMeta$deseqOI<-output$deseqVST$OI$SVI
-   output$model$SpeciesMeta$deseqSC.OI<-output$deseqVST_scaled$OI$SVI
+   output$model$SpeciesMeta$rawDMI<-output$raw$DMI$SVI
+   output$model$SpeciesMeta$RADMI<-output$RA$DMI$SVI
+   output$model$SpeciesMeta$eRareDMI<-output$eRare$DMI$SVI
+   output$model$SpeciesMeta$pRareDMI<-output$pRare$DMI$SVI
+   output$model$SpeciesMeta$scaledDMI<-output$scaled$DMI$SVI
+   output$model$SpeciesMeta$limmaDMI<-output$limma$DMI$SVI
+   output$model$SpeciesMeta$deseqDMI<-output$deseqVST$DMI$SVI
+   output$model$SpeciesMeta$deseqSC.DMI<-output$deseqVST_scaled$DMI$SVI
+
+   output$model$stats<-NULL
+   output$model$stats$rawVA<-summary(lm(output$model$SpeciesMeta$rawDMI~output$model$SpeciesMeta$rawLII))
+   output$model$stats$RADVA<-summary(lm(output$model$SpeciesMeta$RADMI~output$model$SpeciesMeta$RALII))
+   output$model$stats$eRareVA<-summary(lm(output$model$SpeciesMeta$eRareDMI~output$model$SpeciesMeta$eRareLII))
+   output$model$stats$pRareVA<-summary(lm(output$model$SpeciesMeta$pRareDMI~output$model$SpeciesMeta$pRareLII))
+   output$model$stats$scaleVA<-summary(lm(output$model$SpeciesMeta$scaledDMI~output$model$SpeciesMeta$scaledLII))
+   output$model$stats$limmaVA<-summary(lm(output$model$SpeciesMeta$limmaDMI~output$model$SpeciesMeta$limmaLII))
+   output$model$stats$deseqVA<-summary(lm(output$model$SpeciesMeta$deseqDMI~output$model$SpeciesMeta$deseqLII))
+   output$model$stats$deseqSC.VA<-summary(lm(output$model$SpeciesMeta$deseqSC.DMI~output$model$SpeciesMeta$deseqSC.LII))
+
    #output$raw$div<-div(output$raw$comm)
    #output$RA$div<-div(output$RA$comm)
    #output$eRare$div<-div(output$eRare$comm)
@@ -727,17 +744,17 @@ out<-list("raw"=c(rep(NA, length(tst))), "RA"=c(rep(NA, length(tst))),"scaled"=c
 #' @export
 #' @examples
 #' ext.LII()
-ext.OI<-function(tst){
+ext.DMI<-function(tst){
 out<-list("raw"=c(rep(NA, length(tst))), "RA"=c(rep(NA, length(tst))),"scaled"=c(rep(NA, length(tst))), "pRare"=c(rep(NA, length(tst))), "eRare"=c(rep(NA, length(tst))), "deseqVST"=c(rep(NA, length(tst))),"deseqVST_scaled"=c(rep(NA, length(tst))), "limmaVST"=c(rep(NA, length(tst))))
 
-  for(i in 1:length(tst)) {out$raw[i]<-tst[[i]]$raw$OI$Index$Index}
-  for(i in 1:length(tst)) {out$RA[i]<-tst[[i]]$RA$OI$Index}
-  for(i in 1:length(tst)) {out$scaled[i]<-tst[[i]]$scaled$OI$Index}
-  for(i in 1:length(tst)) {out$pRare[i]<-tst[[i]]$pRare$OI$Index}
-  for(i in 1:length(tst)) {out$eRare[i]<-tst[[i]]$eRare$OI$Index}
-  for(i in 1:length(tst)) {out$deseqVST[i]<-tst[[i]]$deseqVST$OI$Index}
-  for(i in 1:length(tst)) {out$deseqVST_scaled[i]<-tst[[i]]$deseqVST_scaled$OI$Index}
-  for(i in 1:length(tst)) {out$limmaVST[i]<-tst[[i]]$limma$OI$Index}
+  for(i in 1:length(tst)) {out$raw[i]<-tst[[i]]$raw$DMI$Index$Index}
+  for(i in 1:length(tst)) {out$RA[i]<-tst[[i]]$RA$DMI$Index}
+  for(i in 1:length(tst)) {out$scaled[i]<-tst[[i]]$scaled$DMI$Index}
+  for(i in 1:length(tst)) {out$pRare[i]<-tst[[i]]$pRare$DMI$Index}
+  for(i in 1:length(tst)) {out$eRare[i]<-tst[[i]]$eRare$DMI$Index}
+  for(i in 1:length(tst)) {out$deseqVST[i]<-tst[[i]]$deseqVST$DMI$Index}
+  for(i in 1:length(tst)) {out$deseqVST_scaled[i]<-tst[[i]]$deseqVST_scaled$DMI$Index}
+  for(i in 1:length(tst)) {out$limmaVST[i]<-tst[[i]]$limma$DMI$Index}
   out1<-as.data.frame(out)
   out1
 }
@@ -751,24 +768,30 @@ out<-list("raw"=c(rep(NA, length(tst))), "RA"=c(rep(NA, length(tst))),"scaled"=c
 #' SVI()
 SVI<-function(ps1, ps2){
   reference<-lm.test(ps1)
+  reference<-reference[order(names(reference))]
   trt<-lm.test(ps2)
-  o<-reference$lm-trt$lm
-  o
+  trt<-trt[order(names(trt))]
+  if(identical(names(reference),names(trt))){
+  o<-(reference$lm-trt$lm)/reference$lm
+  o} else {print("SVI names not identical")}
 }
 
-#' Index of overmodeling
+
+
+#' Delta Model index (DMI)
 #' @param ps1 product object from benchmark.MM()
 #' @keywords linear model Species Variance Index
 #' @export
 #' @examples
-#' OI()
-OI<-function(ps1, ps2){
+#' DMI()
+DMI<-function(ps1, ps2){
   o<-NULL
   o$SVI<-SVI(ps1,ps2)
   o$Index<-sum(abs(o$SVI[o$SVI<0]))
   o$R<-lm.test(ps2)
   o
 }
+
 
 #' make linear model for each taxon
 #' @param ps product object from benchmark.MM()
@@ -797,6 +820,8 @@ out<-list("lm"=testlm, "lost"=lost)
 out
 
 }
+
+
 
 #' test difference of linear model r2 values
 #' @param ps1.R phyloseq object of reference community

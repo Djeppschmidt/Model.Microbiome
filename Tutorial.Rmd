@@ -32,7 +32,6 @@ library()
 # benchmark with total = 75; different sequencing depth (low sparsity)
 #Test runs:
 C.D500<-suppressWarnings(benchmark.MM(reps=1, commonN=73, groupN=1, singleN=1, D=500, V=250))
-C.D500<-benchmark.MM(reps=1, commonN=73, groupN=1, singleN=1, D=500, V=250)
 #
 C.D500<-suppressWarnings(benchmark.MM(reps=100, commonN=73, groupN=1, singleN=1, D=500, V=250))
 C.D1000<-suppressWarnings(benchmark.MM(reps=100, commonN=73, groupN=1, singleN=1, D=1000, V=500))
@@ -67,16 +66,17 @@ V.D1000<-suppressWarnings(benchmark.MM(reps=100, commonN=10, groupN=15, singleN=
 V.D2000<-suppressWarnings(benchmark.MM(reps=100, commonN=10, groupN=15, singleN=50, D=2000, V=1000))
 V.D10000<-suppressWarnings(benchmark.MM(reps=100, commonN=10, groupN=15, singleN=50, D=10000, V=5000))
 ```
+
 ```{R}
 # boxplot of R squared from model
 
-box.df<-data.frame("reference"=C.D500$rep1$model$R$lm,"deseqVST"=C.D500$rep1$deseqVST$OI$R$lm,"limmaVST"=C.D500$rep1$limma$OI$R$lm,"RA"=C.D500$rep1$RA$OI$R$lm,"erare"=C.D500$rep1$eRare$OI$R$lm,"scaled"=C.D500$rep1$scaled$OI$R$lm)
+box.df<-data.frame("reference"=C.D500$rep1$model$R$lm,"deseqVST"=C.D500$rep1$deseqVST$DMI$lm,"limmaVST"=C.D500$rep1$limma$DMI$lm,"RA"=C.D500$rep1$RA$DMI$lm,"erare"=C.D500$rep1$eRare$DMI$lm,"scaled"=C.D500$rep1$scaled$DMI$lm)
 box.df$names<-rownames(box.df)
 m.box<-melt(data=box.df, id.vars="names", measure.vars = c("reference", "RA", "scaled", "erare", "limmaVST", "deseqVST"))
 
-keep<-names(C.D500$rep1$deseqVST$OI$SVI)[C.D500$rep1$deseqVST$OI$SVI<0]
+keep<-names(C.D500$rep1$deseqVST$DMI$SVI)[C.D500$rep1$deseqVST$DMI$SVI<0]
 
-box.df2<-data.frame("reference"=C.D500$rep1$model$R$lm[names(C.D500$rep1$model$R$lm)%in%keep],"deseqVST"=C.D500$rep1$deseqVST$OI$R$lm[names(C.D500$rep1$deseqVST$OI$R$lm)%in%keep],"limmaVST"=C.D500$rep1$limma$OI$R$lm[names(C.D500$rep1$limma$OI$R$lm)%in%keep],"RA"=C.D500$rep1$RA$OI$R$lm[names(C.D500$rep1$RA$OI$R$lm)%in%keep],"erare"=C.D500$rep1$eRare$OI$R$lm[names(C.D500$rep1$eRare$OI$R$lm)%in%keep],"scaled"=C.D500$rep1$scaled$OI$R$lm[names(C.D500$rep1$scaled$OI$R$lm)%in%keep])
+box.df2<-data.frame("reference"=C.D500$rep1$model$R$lm[names(C.D500$rep1$model$R$lm)%in%keep],"deseqVST"=C.D500$rep1$deseqVST$DMI$R$lm[names(C.D500$rep1$deseqVST$DMI$R$lm)%in%keep],"limmaVST"=C.D500$rep1$limma$DMI$R$lm[names(C.D500$rep1$limma$DMI$R$lm)%in%keep],"RA"=C.D500$rep1$RA$DMI$R$lm[names(C.D500$rep1$RA$DMI$R$lm)%in%keep],"erare"=C.D500$rep1$eRare$DMI$R$lm[names(C.D500$rep1$eRare$DMI$R$lm)%in%keep],"scaled"=C.D500$rep1$scaled$DMI$R$lm[names(C.D500$rep1$scaled$DMI$R$lm)%in%keep])
 box.df$names<-rownames(box.df)
 box.df2$names<-rownames(box.df2)
 
@@ -127,23 +127,23 @@ ggplot(m.boxLII, aes(x=variable, y=value))+
   geom_jitter()+
   theme_classic()
 ```
-```{R}
-LII.plotdat<-melt(data=C.D500$rep1$model$SpeciesMeta, id.vars=c("names","prevalence","mean"), measure.vars = c("reference", "RA", "scaled", "erare", "limmaVST", "deseqVST"))
 
-ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqOI,y=scaledOI))+geom_point()
-ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=prevalence,y=scaledOI,col=deseqOI))+geom_point()
-ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqLII,y=deseqOI,col=prevalence))+geom_point()
-ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqLII,y=deseqOI,col=scaledOI))+
-  geom_point()+
-  scale_color_viridis_c()
-ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=scaledLII,y=scaledOI,col=deseqOI))+
-  geom_point()+
-  scale_color_viridis_c()
-ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=rawLII,y=rawOI,col=deseqOI))+
-  geom_point()+
-  scale_color_viridis_c()
-#ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqLII,y=deseqOI,col=sd_abundance))+geom_point()
-#ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqLII,y=deseqOI,col=mean_abundance))+geom_point()
+```{R}
+
+
+ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=scaledLII,y=scaledDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+
+ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqLII,y=deseqDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+
+ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=rawLII,y=rawDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=RALII,y=RADMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=limmaLII,y=limmaDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=eRareLII,y=eRareDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+
+ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqDMI,y=scaledDMI, col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqLII,y=scaledLII, col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+#ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqLII,y=deseqDMI,col=sd_abundance))+geom_point()
+#ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqLII,y=deseqDMI,col=mean_abundance))+geom_point()
 ```
 
 ```{R}
