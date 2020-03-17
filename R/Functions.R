@@ -140,16 +140,19 @@ run.analysis<-function(commonN, groupN, singleN, D, V){
     sample_data(output$model$comm)$Factor<-as.factor(c(rep("one",5),rep("two",5),rep("three",5),rep("four",5),rep("five",5),rep("six",5)))
     sample_data(output$model$comm)$Factor2<-as.factor(c(rep(1,5),rep(2,5),rep(3,5),rep(4,5),rep(5,5),rep(6,5)))
 
-
+    sample_data(output$model$comm)$Richness<-estimate_richness(output$model$comm, measures="Observed")
     sample<-set.seqDepth(D,V)
     output$raw$comm<-model.rarefy(output$model$comm, sample, D, V)
 
     # remove taxa that have zero abundance in "raw" sequencing run
     tax.filt<-filter_taxa(output$raw$comm, function(x)sum(x)>0)
-    output$raw$comm<-filter_taxa(output$raw$comm, function(x)sum(x)>0, TRUE)
-    # remove taxa that are not kept from sequencing so that they don't penalize downstream methods
-    output$model$comm<-prune_taxa(tax.filt, output$model$comm)
-    output$model$EV<-prune_taxa(tax.filt, output$model$EV)
+    output$metrics<-NULL
+    output$metrix$tax.lost<-tax.filt
+      output$raw$comm<-filter_taxa(output$raw$comm, function(x)sum(x)>0, TRUE)
+      # remove taxa that are not kept from sequencing so that they don't penalize downstream methods
+      output$model$comm<-prune_taxa(tax.filt, output$model$comm)
+      output$model$EV<-prune_taxa(tax.filt, output$model$EV)
+
 
     # for each species: measure prevalence
         prevalence=apply(X = otu_table(output$model$comm), MARGIN=1,FUN = function(x){sum(x > 0)})
@@ -261,15 +264,15 @@ print("metadata complete")
    output$model$SpeciesMeta$deseqDMI<-output$deseqVST$DMI$SVI
    output$model$SpeciesMeta$deseqSC.DMI<-output$deseqVST_scaled$DMI$SVI
 
-   output$model$stats<-NULL
-   output$model$stats$rawVA<-summary(lm(output$model$SpeciesMeta$rawDMI~output$model$SpeciesMeta$rawLII))
-   output$model$stats$RADVA<-summary(lm(output$model$SpeciesMeta$RADMI~output$model$SpeciesMeta$RALII))
-   output$model$stats$eRareVA<-summary(lm(output$model$SpeciesMeta$eRareDMI~output$model$SpeciesMeta$eRareLII))
-   output$model$stats$pRareVA<-summary(lm(output$model$SpeciesMeta$pRareDMI~output$model$SpeciesMeta$pRareLII))
-   output$model$stats$scaleVA<-summary(lm(output$model$SpeciesMeta$scaledDMI~output$model$SpeciesMeta$scaledLII))
-   output$model$stats$limmaVA<-summary(lm(output$model$SpeciesMeta$limmaDMI~output$model$SpeciesMeta$limmaLII))
-   output$model$stats$deseqVA<-summary(lm(output$model$SpeciesMeta$deseqDMI~output$model$SpeciesMeta$deseqLII))
-   output$model$stats$deseqSC.VA<-summary(lm(output$model$SpeciesMeta$deseqSC.DMI~output$model$SpeciesMeta$deseqSC.LII))
+   output$metrics$stats<-NULL
+   output$metrics$stats$rawVA<-summary(lm(output$model$SpeciesMeta$rawDMI~output$model$SpeciesMeta$rawLII))
+   output$metrics$stats$RADVA<-summary(lm(output$model$SpeciesMeta$RADMI~output$model$SpeciesMeta$RALII))
+   output$metrics$stats$eRareVA<-summary(lm(output$model$SpeciesMeta$eRareDMI~output$model$SpeciesMeta$eRareLII))
+   output$metrics$stats$pRareVA<-summary(lm(output$model$SpeciesMeta$pRareDMI~output$model$SpeciesMeta$pRareLII))
+   output$metrics$stats$scaleVA<-summary(lm(output$model$SpeciesMeta$scaledDMI~output$model$SpeciesMeta$scaledLII))
+   output$metrics$stats$limmaVA<-summary(lm(output$model$SpeciesMeta$limmaDMI~output$model$SpeciesMeta$limmaLII))
+   output$metrics$stats$deseqVA<-summary(lm(output$model$SpeciesMeta$deseqDMI~output$model$SpeciesMeta$deseqLII))
+   output$metrics$stats$deseqSC.VA<-summary(lm(output$model$SpeciesMeta$deseqSC.DMI~output$model$SpeciesMeta$deseqSC.LII))
 
    #output$raw$div<-div(output$raw$comm)
    #output$RA$div<-div(output$RA$comm)
@@ -385,9 +388,9 @@ make.table<-function(comm1, sample){
   comm2<-comm1
   otu<-as.data.frame(as.matrix(otu_table(comm1)))
   otu[]<-0
-  comm<-as.data.frame(as.matrix(otu_table(comm1)))
   otu_table(comm2)<-otu_table(otu, taxa_are_rows=TRUE)
-  #print("setup")
+  comm<-as.data.frame(as.matrix(otu_table(comm1)))
+  print("setup")
   m<-as.data.frame(t(table(sample(rownames(comm), sample[1], replace=T, prob=comm[,1]/sum(comm[,1])))))
    m<-m[,colnames(m)!="Var1"]
    colnames(m)[colnames(m)=="Freq"]<-paste("Site", 1, sep="")
@@ -409,11 +412,16 @@ make.table<-function(comm1, sample){
       #names(m)[names(m)=="Var2"]<-paste0("Sample", r,)
       rownames(m)<-m$Var2
       m<-m[,-1]
-      #print(m)
       m[is.na(m)]<-0
       m<-m[order(rownames(m)),]
+      print(table(duplicated(rownames(m))))
+      print(table(duplicated(taxa_names(comm1))))
+      print(table(duplicated(taxa_names(comm2))))
+      print(m)
       otu_table(comm1)<-otu_table(m, taxa_are_rows=T)
+      print("table made")
       comm3<-merge_phyloseq(comm1, comm2)
+      print("merger 2")
       m2<-as.data.frame(as.matrix(otu_table(comm3)))
       m2<-m2[order(rownames(m2)),]
       otu_table(comm3)<-otu_table(m2, taxa_are_rows=T)
@@ -772,7 +780,7 @@ SVI<-function(ps1, ps2){
   trt<-lm.test(ps2)
   trt<-trt[order(names(trt))]
   if(identical(names(reference),names(trt))){
-  o<-(reference$lm-trt$lm)/reference$lm
+  o<-reference$lm-trt$lm
   o} else {print("SVI names not identical")}
 }
 

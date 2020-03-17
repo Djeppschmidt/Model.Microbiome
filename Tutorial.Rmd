@@ -24,6 +24,9 @@ library(dplyr)
 library(plyr)
 library(phyloseq)
 library(viridis)
+library(ranacapa)
+library(edgeR)
+library(limma)
 library()
 ```
 
@@ -129,7 +132,8 @@ ggplot(m.boxLII, aes(x=variable, y=value))+
 ```
 
 ```{R}
-
+ggrare(C.D500$rep1$raw$comm, 50, color="Factor")
+ggrare(C.D500$rep1$model$comm, 500, color="Factor")
 
 ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=scaledLII,y=scaledDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
 
