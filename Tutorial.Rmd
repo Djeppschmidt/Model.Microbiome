@@ -18,6 +18,7 @@ When you click the **Knit** button a document will be generated that includes bo
 # load required packages ####
 
 library(Model.Microbiome)
+library(reshape2)
 library(ggplot2)
 library(vegan)
 library(dplyr)
@@ -27,53 +28,55 @@ library(viridis)
 library(ranacapa)
 library(edgeR)
 library(limma)
-library()
+library(GLDEX)
+library(stats)
 ```
 
 ```{r}
 # mostly universal taxa
 # benchmark with total = 75; different sequencing depth (low sparsity)
 #Test runs:
-C.D500<-suppressWarnings(benchmark.MM(reps=1, commonN=73, groupN=1, singleN=1, D=500, V=250))
+#C.D500<-suppressWarnings(benchmark.MM(reps=10, commonN=73, groupN=1, singleN=1, D=500, V=250))
 #
-C.D500<-suppressWarnings(benchmark.MM(reps=100, commonN=73, groupN=1, singleN=1, D=500, V=250))
-C.D1000<-suppressWarnings(benchmark.MM(reps=100, commonN=73, groupN=1, singleN=1, D=1000, V=500))
-C.D2000<-suppressWarnings(benchmark.MM(reps=100, commonN=73, groupN=1, singleN=1, D=2000, V=1000))
-C.D10000<-suppressWarnings(benchmark.MM(reps=100, commonN=73, groupN=1, singleN=1, D=10000, V=5000))
+C.D500<-suppressWarnings(benchmark.MM(reps=10, commonN=73, groupN=1, singleN=1, D=500, V=250))
+C.D1000<-suppressWarnings(benchmark.MM(reps=10, commonN=73, groupN=1, singleN=1, D=1000, V=500))
+C.D2000<-suppressWarnings(benchmark.MM(reps=10, commonN=73, groupN=1, singleN=1, D=2000, V=1000))
+C.D10000<-suppressWarnings(benchmark.MM(reps=10, commonN=73, groupN=1, singleN=1, D=10000, V=5000))
 
 # increasing rare taxa (medium-low sparsity)
+#G.D500<-suppressWarnings(benchmark.MM(reps=1, commonN=50, groupN=15, singleN=10, D=500, V=250))
 # benchmark with total = 75; different sequencing depth
-G.D500<-suppressWarnings(benchmark.MM(reps=100, commonN=50, groupN=15, singleN=10, D=500, V=250))
-G.D1000<-suppressWarnings(benchmark.MM(reps=100, commonN=50, groupN=15, singleN=10, D=1000, V=500))
-G.D2000<-suppressWarnings(benchmark.MM(reps=100, commonN=50, groupN=15, singleN=10, D=2000, V=1000))
-G.D10000<-suppressWarnings(benchmark.MM(reps=100, commonN=50, groupN=15, singleN=10, D=10000, V=5000))
+G.D500<-suppressWarnings(benchmark.MM(reps=10, commonN=50, groupN=15, singleN=10, D=500, V=250))
+G.D1000<-suppressWarnings(benchmark.MM(reps=10, commonN=50, groupN=15, singleN=10, D=1000, V=500))
+G.D2000<-suppressWarnings(benchmark.MM(reps=10, commonN=50, groupN=15, singleN=10, D=2000, V=1000))
+G.D10000<-suppressWarnings(benchmark.MM(reps=10, commonN=50, groupN=15, singleN=10, D=10000, V=5000))
 
 # even distribution of rare taxa (medium sparcity)
 # benchmark with total = 75; different sequencing depth
-E.D500<-suppressWarnings(benchmark.MM(reps=100, commonN=25, groupN=25, singleN=25, D=500, V=250))
-E.D1000<-suppressWarnings(benchmark.MM(reps=100, commonN=25, groupN=25, singleN=25, D=1000, V=500))
-E.D2000<-suppressWarnings(benchmark.MM(reps=100, commonN=25, groupN=25, singleN=25, D=2000, V=1000))
-E.D10000<-suppressWarnings(benchmark.MM(reps=100, commonN=25, groupN=25, singleN=25, D=10000, V=5000))
+E.D500<-suppressWarnings(benchmark.MM(reps=10, commonN=25, groupN=25, singleN=25, D=500, V=250))
+E.D1000<-suppressWarnings(benchmark.MM(reps=10, commonN=25, groupN=25, singleN=25, D=1000, V=500))
+E.D2000<-suppressWarnings(benchmark.MM(reps=10, commonN=25, groupN=25, singleN=25, D=2000, V=1000))
+E.D10000<-suppressWarnings(benchmark.MM(reps=10, commonN=25, groupN=25, singleN=25, D=10000, V=5000))
 
 # (medium-high sparsity)
 # benchmark with total = 75; different sequencing depth
-S.D500<-suppressWarnings(benchmark.MM(reps=100, commonN=15, groupN=20, singleN=40, D=500, V=250))
-S.D1000<-suppressWarnings(benchmark.MM(reps=100, commonN=15, groupN=20, singleN=40, D=1000, V=500))
-S.D2000<-suppressWarnings(benchmark.MM(reps=100, commonN=15, groupN=20, singleN=40, D=2000, V=1000)) 
-S.D10000<-suppressWarnings(benchmark.MM(reps=100, commonN=15, groupN=20, singleN=40, D=10000, V=5000)) 
+S.D500<-suppressWarnings(benchmark.MM(reps=10, commonN=15, groupN=20, singleN=40, D=500, V=250))
+S.D1000<-suppressWarnings(benchmark.MM(reps=10, commonN=15, groupN=20, singleN=40, D=1000, V=500))
+S.D2000<-suppressWarnings(benchmark.MM(reps=10, commonN=15, groupN=20, singleN=40, D=2000, V=1000)) 
+S.D10000<-suppressWarnings(benchmark.MM(reps=10, commonN=15, groupN=20, singleN=40, D=10000, V=5000)) 
 
 # (High sparsity)
 # benchmark with total = 75; different sequencing depth
-V.D500<-suppressWarnings(benchmark.MM(reps=100, commonN=10, groupN=15, singleN=50, D=500, V=250))
-V.D1000<-suppressWarnings(benchmark.MM(reps=100, commonN=10, groupN=15, singleN=50, D=1000, V=500))
-V.D2000<-suppressWarnings(benchmark.MM(reps=100, commonN=10, groupN=15, singleN=50, D=2000, V=1000))
-V.D10000<-suppressWarnings(benchmark.MM(reps=100, commonN=10, groupN=15, singleN=50, D=10000, V=5000))
+V.D500<-suppressWarnings(benchmark.MM(reps=10, commonN=10, groupN=15, singleN=50, D=500, V=250))
+V.D1000<-suppressWarnings(benchmark.MM(reps=10, commonN=10, groupN=15, singleN=50, D=1000, V=500))
+V.D2000<-suppressWarnings(benchmark.MM(reps=10, commonN=10, groupN=15, singleN=50, D=2000, V=1000))
+V.D10000<-suppressWarnings(benchmark.MM(reps=10, commonN=10, groupN=15, singleN=50, D=10000, V=5000))
 ```
 
 ```{R}
 # boxplot of R squared from model
 
-box.df<-data.frame("reference"=C.D500$rep1$model$R$lm,"deseqVST"=C.D500$rep1$deseqVST$DMI$lm,"limmaVST"=C.D500$rep1$limma$DMI$lm,"RA"=C.D500$rep1$RA$DMI$lm,"erare"=C.D500$rep1$eRare$DMI$lm,"scaled"=C.D500$rep1$scaled$DMI$lm)
+box.df<-data.frame("reference"=C.D500$rep1$model$R$lm,"deseqVST"=C.D500$rep1$deseqVST$DMI$R$lm,"limmaVST"=C.D500$rep1$limma$DMI$R$lm,"RA"=C.D500$rep1$RA$DMI$R$lm,"erare"=C.D500$rep1$eRare$DMI$R$lm,"scaled"=C.D500$rep1$scaled$DMI$R$lm)
 box.df$names<-rownames(box.df)
 m.box<-melt(data=box.df, id.vars="names", measure.vars = c("reference", "RA", "scaled", "erare", "limmaVST", "deseqVST"))
 
@@ -109,7 +112,7 @@ plot_bar(om)
 om2<-prune_taxa(taxa_names(C.D500$rep1$raw$comm)%in%keep,C.D500$rep1$raw$comm)
 names<-data.frame("names"=taxa_names(om2), "number"=c(1:length(taxa_names(om2))))
 rownames(names)<-names$names
-tax_table(om2)<-names
+#tax_table(om2)<-names
 plot_bar(om2)
 ```
 
@@ -135,9 +138,10 @@ ggplot(m.boxLII, aes(x=variable, y=value))+
 ggrare(C.D500$rep1$raw$comm, 50, color="Factor")
 ggrare(C.D500$rep1$model$comm, 500, color="Factor")
 
-ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=scaledLII,y=scaledDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep3$model$SpeciesMeta, aes(x=log(M.Eval),y=scaledLII,col=scaledDMI))+geom_point()+ scale_color_viridis_c(option="C")
 
-ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqLII,y=deseqDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep3$model$SpeciesMeta, aes(x=log(M.Eval),y=deseqLII,col=deseqDMI))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep3$model$SpeciesMeta, aes(x=log(M.Eval),y=limmaLII,col=abs(limmaDMI)))+geom_point()+ scale_color_viridis_c(option="C")
 
 ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=rawLII,y=rawDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
 ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=RALII,y=RADMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
@@ -145,10 +149,75 @@ ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=limmaLII,y=limmaDMI,col=log(M.Eval))
 ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=eRareLII,y=eRareDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
 
 ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqDMI,y=scaledDMI, col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
-ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqLII,y=scaledLII, col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+#ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqLII,y=scaledLII, col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
 #ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqLII,y=deseqDMI,col=sd_abundance))+geom_point()
 #ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqLII,y=deseqDMI,col=mean_abundance))+geom_point()
 ```
+```{R}
+ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=scaledLII,y=scaledDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep2$model$SpeciesMeta, aes(x=scaledLII,y=scaledDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep3$model$SpeciesMeta, aes(x=scaledLII,y=scaledDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep4$model$SpeciesMeta, aes(x=scaledLII,y=scaledDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep5$model$SpeciesMeta, aes(x=scaledLII,y=scaledDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+
+```
+
+```{R}
+ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqLII,y=deseqDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep2$model$SpeciesMeta, aes(x=deseqLII,y=deseqDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep3$model$SpeciesMeta, aes(x=deseqLII,y=deseqDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep4$model$SpeciesMeta, aes(x=deseqLII,y=deseqDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep5$model$SpeciesMeta, aes(x=deseqLII,y=deseqDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+
+```
+
+```{R}
+sample_sums(C.D500$rep1$raw$comm)
+C.D500$rep1$metrics$skewness
+C.D500$rep1$metrics$stats
+C.D500$rep1$metrics$Richness
+C.D500$rep1$metrics$lost
+RI<-ext.RI(C.D500)
+sk2<-NULL
+for(i in 1:length(C.D500)){sk2[i]<-median(apply(X = otu_table(C.D500[[i]]$raw$comm), MARGIN=2,FUN = function(x){skewness(x)}))}
+sk<-NULL
+for(i in 1:length(C.D500)){sk[i]<-C.D500[[i]]$metrics$skewness}
+
+ri<-NULL
+for(i in 1:length(C.D500)){ri[i]<-estimate_richness(C.D500[[i]]$raw$comm, measures="Observed")}#/C.D500[[i]]$metrics$Richness}
+#estimate_richness(C.D500$rep1$raw$comm)
+
+for(i in 1:length(C.D500)){ri[i]<-mean(ri[[i]])}
+#C.D500$rep1$metrics$Richness-estimate_richness(C.D500$rep1$raw$comm, measures="Observed")
+
+```
+```{R}
+
+# explore data
+ggrare(C.D500$rep1$raw$comm, 50, color="Factor")
+ggrare(C.D500$rep1$model$comm, 500, color="Factor")
+ggrare(C.D500$rep2$raw$comm, 50, color="Factor")
+ggrare(C.D500$rep2$model$comm, 500, color="Factor")
+
+ggrare(C.D500$rep2$raw$comm, 50, color="Factor")
+ggrare(C.D500$rep2$model$comm, 500, color="Factor")
+ggrare(C.D500$rep37$raw$comm, 50, color="Factor")
+ggrare(C.D500$rep37$model$comm, 500, color="Factor")
+
+View(as.data.frame(as.matrix(otu_table(C.D500$rep2$raw$comm))))
+View(as.data.frame(as.matrix(otu_table(C.D500$rep1$raw$comm))))
+plot(RI$scaled/RI$deseqVST, sk)
+abline(v=1,col="red", lwd=3, lty=2)
+plot(RI$scaled/RI$deseqVST, sk2)
+abline(v=1,col="red", lwd=3, lty=2)
+plot(RI$scaled/RI$deseqVST, ri)
+abline(v=1,col="red", lwd=3, lty=2)
+plot(sk,ri, cex=c(RI$scaled/RI$deseqVST))
+
+```
+
+
+
 
 ```{R}
 # PERMANOVA output ####
