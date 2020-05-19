@@ -10,10 +10,19 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## R Markdown
+This tutorial will walk you through the use of the Model.Microbiome package for modeling, and how it can be used to test new software.
+Table of contents:
+Introduction to the model and it's basic function/structure:
+Exploring effects of sampling depth:
+Exploring effects of sparcity:
+Analysis from the paper:
+Toolkit for new functions:
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+First, let's install Model.Microbiome:
+```{r}
+devtools::install_github("djeppschmidt/Model.Microbiome")
+```
+Now load all the other packages we need (or download and load if you haven't already):
 ```{r}
 # load required packages ####
 
@@ -32,13 +41,23 @@ library(GLDEX)
 library(stats)
 ```
 
+We then do our first modeling run. In this case, reps is the number of times that we repeat the model with the same conditions. CommonN is the number of taxa that are modeled acorss all sites; groupN is the number of taxa that are modeled at each site; singleN are the number of taxa that are modeled at single sites; D is the smean ampling depth, V is the variation around that depth. These are the parameters that are necessary to set up and execute the sampling run. It should be noted that large values for the reps (e.g. greater than 100) may take longer than an hour to run. 1000's of reps could take days, depending on the processing power of your machine. I recommend starting with 10 reps to get the feel of the output structure. 
+```{r}
+
+#Test runs:
+C.D500<-suppressWarnings(benchmark.MM(reps=10, commonN=73, groupN=1, singleN=1, D=500, V=250))
+
+runtest<-run.analysis2(commonN=73, groupN=1, singleN=1, D=500, V=250, method=c("RA"))
+#
+```
+Notice that each repeated run of the function can be referenced from the object (e.g. 'C.D500$rep1$...'). The output format for this model is as lists of lists (or a complex array). It contains phyloseq objects of the community. Within each
+
 ```{r}
 # mostly universal taxa
 # benchmark with total = 75; different sequencing depth (low sparsity)
-#Test runs:
-#C.D500<-suppressWarnings(benchmark.MM(reps=10, commonN=73, groupN=1, singleN=1, D=500, V=250))
-#
+
 C.D500<-suppressWarnings(benchmark.MM(reps=10, commonN=73, groupN=1, singleN=1, D=500, V=250))
+
 C.D1000<-suppressWarnings(benchmark.MM(reps=10, commonN=73, groupN=1, singleN=1, D=1000, V=500))
 C.D2000<-suppressWarnings(benchmark.MM(reps=10, commonN=73, groupN=1, singleN=1, D=2000, V=1000))
 C.D10000<-suppressWarnings(benchmark.MM(reps=10, commonN=73, groupN=1, singleN=1, D=10000, V=5000))
@@ -80,7 +99,7 @@ box.df<-data.frame("reference"=C.D500$rep1$model$R$lm,"deseqVST"=C.D500$rep1$des
 box.df$names<-rownames(box.df)
 m.box<-melt(data=box.df, id.vars="names", measure.vars = c("reference", "RA", "scaled", "erare", "limmaVST", "deseqVST"))
 
-keep<-names(C.D500$rep1$deseqVST$DMI$SVI)[C.D500$rep1$deseqVST$DMI$SVI<0]
+keep<-names(C.D500$rep1$scaled$LII$R)[C.D500$rep1$scaled$LII$R>0.9]
 
 box.df2<-data.frame("reference"=C.D500$rep1$model$R$lm[names(C.D500$rep1$model$R$lm)%in%keep],"deseqVST"=C.D500$rep1$deseqVST$DMI$R$lm[names(C.D500$rep1$deseqVST$DMI$R$lm)%in%keep],"limmaVST"=C.D500$rep1$limma$DMI$R$lm[names(C.D500$rep1$limma$DMI$R$lm)%in%keep],"RA"=C.D500$rep1$RA$DMI$R$lm[names(C.D500$rep1$RA$DMI$R$lm)%in%keep],"erare"=C.D500$rep1$eRare$DMI$R$lm[names(C.D500$rep1$eRare$DMI$R$lm)%in%keep],"scaled"=C.D500$rep1$scaled$DMI$R$lm[names(C.D500$rep1$scaled$DMI$R$lm)%in%keep])
 box.df$names<-rownames(box.df)
@@ -135,8 +154,210 @@ ggplot(m.boxLII, aes(x=variable, y=value))+
 ```
 
 ```{R}
-ggrare(C.D500$rep1$raw$comm, 50, color="Factor")
-ggrare(C.D500$rep1$model$comm, 500, color="Factor")
+# index workspace
+table(C.D10000$rep3$model$SpeciesMeta$scaledLII==1)
+table(C.D10000$rep3$model$SpeciesMeta$deseqLII==1)
+table(C.D10000$rep3$model$SpeciesMeta$limmaLII==1)
+table(C.D10000$rep3$model$SpeciesMeta$RALII==1)
+
+table(S.D500$rep3$model$SpeciesMeta$scaledLII==1)
+table(S.D500$rep3$model$SpeciesMeta$deseqLII==1)
+table(S.D500$rep3$model$SpeciesMeta$limmaLII==1)
+table(S.D500$rep3$model$SpeciesMeta$RALII==1)
+S.D10000
+
+length(i$rawLII[i$rawLII<0.1])
+```
+
+```{R}
+ext.LII2<-function(tst, threshold){
+out<-list("raw"=c(rep(NA, length(tst))),"RA"=c(rep(NA, length(tst))), "scaled"=c(rep(NA, length(tst))), "pRare"=c(rep(NA, length(tst))), "eRare"=c(rep(NA, length(tst))), "deseqVST"=c(rep(NA, length(tst))),"deseqVST_scaled"=c(rep(NA, length(tst))), "limmaVST"=c(rep(NA, length(tst))))
+
+  for(i in 1:length(tst)) {out$raw[i]<-length(tst[[i]]$model$SpeciesMeta$rawLII[tst[[i]]$model$SpeciesMeta$rawLII<threshold])/length(tst[[i]]$model$SpeciesMeta$rawLII)}
+  for(i in 1:length(tst)) {out$RA[i]<-length(tst[[i]]$model$SpeciesMeta$RALII[tst[[i]]$model$SpeciesMeta$RALII<threshold])/length(tst[[i]]$model$SpeciesMeta$RALII)}
+  for(i in 1:length(tst)) {out$scaled[i]<-length(tst[[i]]$model$SpeciesMeta$scaledLII[tst[[i]]$model$SpeciesMeta$scaledLII<threshold])/length(tst[[i]]$model$SpeciesMeta$scaledLII)}
+  for(i in 1:length(tst)) {out$pRare[i]<-length(tst[[i]]$model$SpeciesMeta$pRareLII[tst[[i]]$model$SpeciesMeta$pRareLII<threshold])/length(tst[[i]]$model$SpeciesMeta$pRareLII)}
+  for(i in 1:length(tst)) {out$eRare[i]<-length(tst[[i]]$model$SpeciesMeta$eRareLII[tst[[i]]$model$SpeciesMeta$eRareLII<threshold])/length(tst[[i]]$model$SpeciesMeta$eRareLII)}
+  for(i in 1:length(tst)) {out$deseqVST[i]<-length(tst[[i]]$model$SpeciesMeta$deseqLII[tst[[i]]$model$SpeciesMeta$deseqLII<threshold])/length(tst[[i]]$model$SpeciesMeta$deseqLII)}
+  for(i in 1:length(tst)) {out$deseqVST_scaled[i]<-length(tst[[i]]$model$SpeciesMeta$deseqSC.LII[tst[[i]]$model$SpeciesMeta$deseqSC.LII<threshold])/length(tst[[i]]$model$SpeciesMeta$deseqSC.LII)}
+  for(i in 1:length(tst)) {out$limmaVST[i]<-length(tst[[i]]$model$SpeciesMeta$limmaLII[tst[[i]]$model$SpeciesMeta$limmaLII<threshold])/length(tst[[i]]$model$SpeciesMeta$limmaLII)}
+  out1<-as.data.frame(out)
+  out1
+  #out2<-boxplot(out1)
+  #out4<-c("table"=out1,"plot"=out2)
+  #out4
+}
+# benchmark with total = 75; different sequencing depth
+LP10_C.D500<-ext.LII2(C.D500, threshold=0.1)
+LP10_C.D1000<-ext.LII2(C.D1000,threshold=0.1)
+LP10_C.D2000<-ext.LII2(C.D2000,threshold=0.1)
+LP10_C.D10000<-ext.LII2(C.D10000,threshold=0.1)
+# seq depth at mostly universal taxa
+# benchmark with total = 75; different sequencing depth
+LP10_G.D500<-ext.LII2(G.D500,threshold=0.1)
+LP10_G.D1000<-ext.LII2(G.D1000,threshold=0.1)
+LP10_G.D2000<-ext.LII2(G.D2000,threshold=0.1)
+LP10_G.D10000<-ext.LII2(G.D10000,threshold=0.1)
+
+# seq depth at mostly universal taxa
+# benchmark with total = 75; different sequencing depth
+LP10_E.D500<-ext.LII2(E.D500,threshold=0.1)
+LP10_E.D1000<-ext.LII2(E.D1000,threshold=0.1)
+LP10_E.D2000<-ext.LII2(E.D2000,threshold=0.1)
+LP10_E.D10000<-ext.LII2(E.D10000,threshold=0.1)
+
+# seq depth at mostly universal taxa
+# benchmark with total = 75; different sequencing depth
+LP10_S.D500<-ext.LII2(S.D500,threshold=0.1)
+LP10_S.D1000<-ext.LII2(S.D1000,threshold=0.1)
+LP10_S.D2000<-ext.LII2(S.D2000,threshold=0.1)
+LP10_S.D10000<-ext.LII2(S.D10000,threshold=0.1)
+
+LP10_V.D500<-ext.LII2(S.D500,threshold=0.1)
+LP10_V.D1000<-ext.LII2(S.D1000,threshold=0.1)
+LP10_V.D2000<-ext.LII2(S.D2000,threshold=0.1)
+LP10_V.D10000<-ext.LII2(S.D10000,threshold=0.1)
+
+# prepare Loss of information for plotting
+
+LP10_C.D500$Level<-c(rep(500, 10))
+LP10_C.D1000$Level<-c(rep(1000, 10))
+LP10_C.D2000$Level<-c(rep(2000, 10))
+LP10_C.D10000$Level<-c(rep(10000, 10))
+
+LP10_G.D500$Level<-c(rep(500, 10))
+LP10_G.D1000$Level<-c(rep(1000, 10))
+LP10_G.D2000$Level<-c(rep(2000, 10))
+LP10_G.D10000$Level<-c(rep(10000, 10))
+
+LP10_E.D500$Level<-c(rep(500, 10))
+LP10_E.D1000$Level<-c(rep(1000, 10))
+LP10_E.D2000$Level<-c(rep(2000, 10))
+LP10_E.D10000$Level<-c(rep(10000, 10))
+
+LP10_S.D500$Level<-c(rep(500, 10))
+LP10_S.D1000$Level<-c(rep(1000, 10))
+LP10_S.D2000$Level<-c(rep(2000, 10))
+LP10_S.D10000$Level<-c(rep(10000, 10))
+
+LP10_V.D500$Level<-c(rep(500, 10))
+LP10_V.D1000$Level<-c(rep(1000, 10))
+LP10_V.D2000$Level<-c(rep(2000, 10))
+LP10_V.D10000$Level<-c(rep(10000, 10))
+
+# rep
+LP10_C.D500$rep<-c(1:10)
+LP10_C.D1000$rep<-c(11:20)
+LP10_C.D2000$rep<-c(21:30)
+LP10_C.D10000$rep<-c(31:40)
+
+LP10_G.D500$rep<-c(41:50)
+LP10_G.D1000$rep<-c(51:60)
+LP10_G.D2000$rep<-c(61:70)
+LP10_G.D10000$rep<-c(71:80)
+
+LP10_E.D500$rep<-c(81:90)
+LP10_E.D1000$rep<-c(91:100)
+LP10_E.D2000$rep<-c(101:110)
+LP10_E.D10000$rep<-c(111:120)
+
+LP10_S.D500$rep<-c(121:130)
+LP10_S.D1000$rep<-c(131:140)
+LP10_S.D2000$rep<-c(141:150)
+LP10_S.D10000$rep<-c(161:170)
+
+LP10_V.D500$rep<-c(181:190)
+LP10_V.D1000$rep<-c(201:210)
+LP10_V.D2000$rep<-c(211:220)
+LP10_V.D10000$rep<-c(221:230)
+
+LIP10.C<-do.call("rbind", list(LP10_C.D500,LP10_C.D1000,LP10_C.D2000,LP10_C.D10000))
+LP10.C2<-melt(data=LIP10.C, id.vars="Level", measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
+LP10.C2<-data_summary2(LP10.C2, varname="value", groupnames=c("Level", "variable"))
+LIP10.G<-do.call("rbind", list(LP10_G.D500,LP10_G.D1000,LP10_G.D2000,LP10_G.D10000))
+LP10.G2<-melt(data=LIP10.G, id.vars="Level", measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
+LP10.G2<-data_summary2(LP10.G2, varname="value", groupnames=c("Level", "variable"))
+LIP10.E<-do.call("rbind", list(LP10_E.D500,LP10_E.D1000,LP10_E.D2000,LP10_E.D10000))
+LP10.E2<-melt(data=LIP10.E, id.vars="Level", measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
+LP10.E2<-data_summary2(LP10.E2, varname="value", groupnames=c("Level", "variable"))
+LIP10.S<-do.call("rbind", list(LP10_S.D500,LP10_S.D1000,LP10_S.D2000,LP10_S.D10000))
+LP10.S2<-melt(data=LIP10.S, id.vars="Level", measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
+LP10.S2<-data_summary2(LP10.S2, varname="value", groupnames=c("Level", "variable"))
+LIP10.V<-do.call("rbind", list(LP10_V.D500,LP10_V.D1000,LP10_V.D2000,LP10_V.D10000))
+LP10.V2<-melt(data=LIP10.V, id.vars="Level", measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
+LP10.V2<-data_summary2(LP10.V2, varname="value", groupnames=c("Level", "variable"))
+
+ggplot(LP10.C2, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(0.2)) +
+  geom_line(position=position_dodge(0.2))+
+  geom_point(position=position_dodge(0.2))+
+  xlab("Seq. Depth")+
+  ylab("Percent of taxa with LI < 0.1")+
+  scale_color_viridis_d(option="C")+
+  theme_classic()
+
+ggplot(LP10.G2, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(0.2)) +
+  geom_line(position=position_dodge(0.2))+
+  geom_point(position=position_dodge(0.2))+
+  xlab("Seq. Depth")+
+  ylab("Percent of taxa with LI < 0.1")+
+  scale_color_viridis_d(option="C")+
+  theme_classic()
+
+ggplot(LP10.E2, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(0.2)) +
+  geom_line(position=position_dodge(0.2))+
+  geom_point(position=position_dodge(0.2))+
+  xlab("Seq. Depth")+
+  ylab("Percent of taxa with LI < 0.1")+
+  scale_color_viridis_d(option="C")+
+  theme_classic()
+
+ggplot(LP10.S2, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(0.2)) +
+  geom_line(position=position_dodge(0.2))+
+  geom_point(position=position_dodge(0.2))+
+  xlab("Seq. Depth")+
+  ylab("Percent of taxa with LI < 0.1")+
+  scale_color_viridis_d(option="C")+
+  theme_classic()
+
+ggplot(LP10.V2, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(0.2)) +
+  geom_line(position=position_dodge(0.2))+
+  geom_point(position=position_dodge(0.2))+
+  xlab("Seq. Depth")+
+  ylab("Percent of taxa with LI < 0.1")+
+  scale_color_viridis_d(option="C")+
+  theme_classic()
+
+```
+
+```{r}
+LIP10.C$sparsity<-c(rep(1, 40))
+LIP10.E$sparsity<-c(rep(3, 40))
+LIP10.G$sparsity<-c(rep(2, 40))
+LIP10.S$sparsity<-c(rep(4, 40))
+LIP10.V$sparsity<-c(rep(5, 40))
+
+LIP10.stats<-do.call("rbind", list(LIP10.C, LIP10.E, LIP10.G,LIP10.S, LIP10.V))
+LIP10.stats$sparsity<-as.factor(LIP10.stats$sparsity)
+LIP10.stats$rep<-as.factor(LIP10.stats$rep)
+LIP10.stats$Level<-as.factor(LIP10.stats$Level)
+#Permanova.stats$sparsity<-as.factor(Permanova.stats$sparsity)
+LIP10.stats<-melt(data=LIP10.stats, id.vars=c("Level","rep", "sparsity"), measure.vars = c("raw","RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
+
+#summary(aov(value~variable*sparsity*Level+variable:rep, data=LIP10.stats))
+summary(aov(value~variable*sparsity*Level, data=LIP10.stats))
+
+#TukeyHSD(aov(value~variable*sparsity+variable:rep, data=LIP10.stats))
+TukeyHSD(aov(value~variable*sparsity*Level, data=LIP10.stats))
+```
+
+```{R}
+ggrare(S.D500$rep1$raw$comm, 50, color="Factor")
+ggrare(S.D500$rep1$model$comm, 500, color="Factor")
 
 ggplot(C.D500$rep3$model$SpeciesMeta, aes(x=log(M.Eval),y=scaledLII,col=scaledDMI))+geom_point()+ scale_color_viridis_c(option="C")
 
@@ -154,20 +375,122 @@ ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqDMI,y=scaledDMI, col=log(M.Eval
 #ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqLII,y=deseqDMI,col=mean_abundance))+geom_point()
 ```
 ```{R}
-ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=scaledLII,y=scaledDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
-ggplot(C.D500$rep2$model$SpeciesMeta, aes(x=scaledLII,y=scaledDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
-ggplot(C.D500$rep3$model$SpeciesMeta, aes(x=scaledLII,y=scaledDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
-ggplot(C.D500$rep4$model$SpeciesMeta, aes(x=scaledLII,y=scaledDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
-ggplot(C.D500$rep5$model$SpeciesMeta, aes(x=scaledLII,y=scaledDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=log10(M.Eval),y=scaledLII,col=scaledDMI))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep2$model$SpeciesMeta, aes(x=log10(M.Eval),y=scaledLII,col=scaledDMI))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep3$model$SpeciesMeta, aes(x=log10(M.Eval),y=scaledLII,col=scaledDMI))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep4$model$SpeciesMeta, aes(x=log10(M.Eval),y=scaledLII,col=scaledDMI))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep5$model$SpeciesMeta, aes(x=log10(M.Eval),y=scaledLII,col=scaledDMI))+geom_point()+ scale_color_viridis_c(option="C")
+
+
+ggplot(C.D10000$rep1$model$SpeciesMeta, aes(x=log10(M.Eval),y=deseqLII,col=scaledLII/deseqLII))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D10000$rep2$model$SpeciesMeta, aes(x=log10(M.Eval),y=deseqLII,col=scaledLII/deseqLII))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D10000$rep3$model$SpeciesMeta, aes(x=log10(M.Eval),y=deseqLII,col=scaledLII/deseqLII))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D10000$rep4$model$SpeciesMeta, aes(x=log10(M.Eval),y=deseqLII,col=scaledLII/deseqLII))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D10000$rep5$model$SpeciesMeta, aes(x=log10(M.Eval),y=deseqLII,col=scaledLII/deseqLII))+geom_point()+ scale_color_viridis_c(option="C")
+
+
+ggplot(C.D10000$rep1$model$SpeciesMeta, aes(x=log10(M.Eval),y=limmaLII,col=scaledLII/limmaLII))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D10000$rep2$model$SpeciesMeta, aes(x=log10(M.Eval),y=limmaLII,col=scaledLII/limmaLII))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D10000$rep3$model$SpeciesMeta, aes(x=log10(M.Eval),y=limmaLII,col=scaledLII/limmaLII))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D10000$rep4$model$SpeciesMeta, aes(x=log10(M.Eval),y=limmaLII,col=scaledLII/limmaLII))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D10000$rep5$model$SpeciesMeta, aes(x=log10(M.Eval),y=limmaLII,col=scaledLII/limmaLII))+geom_point()+ scale_color_viridis_c(option="C")
+```
+
+```{R}
+ggplot(C.D1000$rep1$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(scaledLII),col=scaledDMI))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+
+ggplot(C.D1000$rep2$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(scaledLII),col=scaledDMI))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+ggplot(C.D1000$rep3$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(scaledLII),col=scaledDMI))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+ggplot(C.D1000$rep4$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(scaledLII),col=scaledDMI))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+ggplot(C.D1000$rep5$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(scaledLII),col=scaledDMI))+
+  geom_point()+
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+
+```
+```{R}
+ggplot(C.D1000$rep1$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(rawLII),col=rawDMI))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  scale_x_continuous(name="Log E value", limits=c(-4, 0)) +
+  scale_y_continuous(name="Log raw LII value", limits=c(-8, 0))+
+  theme_classic()
+
+ggplot(C.D1000$rep1$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(RALII),col=RADMI))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  scale_x_continuous(name="Log E value", limits=c(-4, 0)) +
+  scale_y_continuous(name="Log relative abundance LII value", limits=c(-8, 0))+
+  theme_classic()
+ggplot(C.D1000$rep1$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(scaledLII),col=scaledDMI))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  scale_x_continuous(name="Log E value", limits=c(-4, 0)) +
+  scale_y_continuous(name="Logs scaled LII value", limits=c(-8, 0))+
+  theme_classic()
+ggplot(C.D1000$rep1$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(deseqLII),col=deseqDMI))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  scale_x_continuous(name="Log E value", limits=c(-4, 0)) +
+  scale_y_continuous(name="Log deseq LII value", limits=c(-8, 0))+
+  theme_classic()
+ggplot(C.D1000$rep1$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(limmaLII),col=limmaDMI))+
+  geom_point()+
+  scale_color_viridis_c(option="C")+
+  scale_x_continuous(name="Log E value", limits=c(-4, 0)) +
+  scale_y_continuous(name="Log limma LII value", limits=c(-8, 0))+
+  theme_classic()
+
+ggplot(C.D1000$rep1$model$SpeciesMeta[C.D1000$rep1$model$SpeciesMeta$deseqLII==0,], aes(x=log10(M.Eval),y=log(limmaLII),col=limmaDMI))+
+  geom_point()+
+  scale_color_viridis_c(option="C")+
+  scale_x_continuous(name="Log E value", limits=c(-4, 0)) +
+  scale_y_continuous(name="Log limma LII value", limits=c(-8, 0))+
+  theme_classic()
 
 ```
 
 ```{R}
-ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=deseqLII,y=deseqDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
-ggplot(C.D500$rep2$model$SpeciesMeta, aes(x=deseqLII,y=deseqDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
-ggplot(C.D500$rep3$model$SpeciesMeta, aes(x=deseqLII,y=deseqDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
-ggplot(C.D500$rep4$model$SpeciesMeta, aes(x=deseqLII,y=deseqDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
-ggplot(C.D500$rep5$model$SpeciesMeta, aes(x=deseqLII,y=deseqDMI,col=log(M.Eval)))+geom_point()+ scale_color_viridis_c(option="C")
+t<-data.frame("names"=taxa_names(C.D1000$rep1$model$comm), "names2"=taxa_names(C.D1000$rep1$model$comm), "names3"=taxa_names(C.D1000$rep1$model$comm))
+rownames(t)<-taxa_names(C.D1000$rep1$model$comm)
+t<-tax_table(t)
+taxa_names(t)<-taxa_names(C.D1000$rep1$model$comm)
+
+tax_table(C.D1000$rep1$model$comm)<-t
+tax_table(C.D1000$rep1$limma$comm)<-t
+tax_table(C.D1000$rep1$deseqVST$comm)<-t
+tax_table(C.D1000$rep1$scaled$comm)<-t
+
+keep<-row.names(C.D1000$rep1$model$SpeciesMeta)[C.D1000$rep1$model$SpeciesMeta$rawLII==0]
+reference_r<-prune_taxa(taxa_names(C.D1000$rep1$model$comm)%in%keep, C.D1000$rep1$model$comm)
+limma_r<-prune_taxa(taxa_names(C.D1000$rep1$limma$comm)%in%keep, C.D1000$rep1$limma$comm)
+deseq_r<-prune_taxa(taxa_names(C.D1000$rep1$deseqVST$comm)%in%keep, C.D1000$rep1$deseqVST$comm)
+scaled_r<-prune_taxa(taxa_names(C.D1000$rep1$scaled$comm)%in%keep, C.D1000$rep1$scaled$comm)
+
+plot_bar(reference_r, fill="ta1")
+plot_bar(limma_r, fill="ta1")
+plot_bar(deseq_r, fill="ta1")
+plot_bar(scaled_r, fill="ta1")
+```
+
+```{R}
+ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(deseqLII),col=deseqDMI))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep2$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(deseqLII),col=deseqDMI))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep3$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(deseqLII),col=deseqDMI))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep4$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(deseqLII),col=deseqDMI))+geom_point()+ scale_color_viridis_c(option="C")
+ggplot(C.D500$rep5$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(deseqLII),col=deseqDMI))+geom_point()+ scale_color_viridis_c(option="C")
 
 ```
 
@@ -223,10 +546,10 @@ plot(sk,ri, cex=c(RI$scaled/RI$deseqVST))
 # PERMANOVA output ####
 
 # benchmark with total = 75; different sequencing depth
-P_C.D500<-ext.PERMANOVA(C.D500)
-P_C.D1000<-ext.PERMANOVA(C.D1000)
-P_C.D2000<-ext.PERMANOVA(C.D2000)
-P_C.D10000<-ext.PERMANOVA(C.D10000)
+P_C.D500<-ext.PERMANOVA2(C.D500)
+P_C.D1000<-ext.PERMANOVA2(C.D1000)
+P_C.D2000<-ext.PERMANOVA2(C.D2000)
+P_C.D10000<-ext.PERMANOVA2(C.D10000)
 # seq depth at mostly universal taxa
 # benchmark with total = 75; different sequencing depth
 P_G.D500<-ext.PERMANOVA(G.D500)
@@ -257,61 +580,77 @@ P_V.D10000<-ext.PERMANOVA(V.D10000)
 ```{r}
 # prepare permanova data for plotting ####
 
-P_C.D500$Level<-c(rep(500, 100))
-P_C.D1000$Level<-c(rep(1000, 100))
-P_C.D2000$Level<-c(rep(2000, 100))
-P_C.D10000$Level<-c(rep(10000, 100))
+P_C.D500$Level<-c(rep(500, 10))
+P_C.D1000$Level<-c(rep(1000, 10))
+P_C.D2000$Level<-c(rep(2000, 10))
+P_C.D10000$Level<-c(rep(10000, 10))
 
-P_G.D500$Level<-c(rep(500, 100))
-P_G.D1000$Level<-c(rep(1000, 100))
-P_G.D2000$Level<-c(rep(2000, 100))
-P_G.D10000$Level<-c(rep(10000, 100))
+P_G.D500$Level<-c(rep(500, 10))
+P_G.D1000$Level<-c(rep(1000, 10))
+P_G.D2000$Level<-c(rep(2000, 10))
+P_G.D10000$Level<-c(rep(10000, 10))
 
-P_E.D500$Level<-c(rep(500, 100))
-P_E.D1000$Level<-c(rep(1000, 100))
-P_E.D2000$Level<-c(rep(2000, 100))
-P_E.D10000$Level<-c(rep(10000, 100))
+P_E.D500$Level<-c(rep(500, 10))
+P_E.D1000$Level<-c(rep(1000, 10))
+P_E.D2000$Level<-c(rep(2000, 10))
+P_E.D10000$Level<-c(rep(10000, 10))
 
-P_S.D500$Level<-c(rep(500, 100))
-P_S.D1000$Level<-c(rep(1000, 100))
-P_S.D2000$Level<-c(rep(2000, 100))
-P_S.D10000$Level<-c(rep(10000, 100))
+P_S.D500$Level<-c(rep(500, 10))
+P_S.D1000$Level<-c(rep(1000, 10))
+P_S.D2000$Level<-c(rep(2000, 10))
+P_S.D10000$Level<-c(rep(10000, 10))
 
-P_V.D500$Level<-c(rep(500, 100))
-P_V.D1000$Level<-c(rep(1000, 100))
-P_V.D2000$Level<-c(rep(2000, 100))
-P_V.D10000$Level<-c(rep(10000, 100))
+P_V.D500$Level<-c(rep(500, 10))
+P_V.D1000$Level<-c(rep(1000, 10))
+P_V.D2000$Level<-c(rep(2000, 10))
+P_V.D10000$Level<-c(rep(10000, 10))
 
 #rep
-P_C.D500$rep<-c(1:100)
-P_C.D1000$rep<-c(101:200)
-P_C.D2000$rep<-c(201:300)
-P_C.D10000$rep<-c(301:400)
+P_C.D500$rep<-c(1:10)
+P_C.D1000$rep<-c(11:20)
+P_C.D2000$rep<-c(21:30)
+P_C.D10000$rep<-c(31:40)
 
-P_G.D500$rep<-c(501:600)
-P_G.D1000$rep<-c(601:700)
-P_G.D2000$rep<-c(701:800)
-P_G.D10000$rep<-c(801:900)
+P_G.D500$rep<-c(51:60)
+P_G.D1000$rep<-c(61:70)
+P_G.D2000$rep<-c(71:80)
+P_G.D10000$rep<-c(81:90)
 
-P_E.D500$rep<-c(901:1000)
-P_E.D1000$rep<-c(1001:1100)
-P_E.D2000$rep<-c(1101:1200)
-P_E.D10000$rep<-c(1201:1300)
+P_E.D500$rep<-c(91:100)
+P_E.D1000$rep<-c(101:110)
+P_E.D2000$rep<-c(111:120)
+P_E.D10000$rep<-c(121:130)
 
-P_S.D500$rep<-c(1301:1400)
-P_S.D1000$rep<-c(1401:1500)
-P_S.D2000$rep<-c(1501:1600)
-P_S.D10000$rep<-c(1601:1700)
+P_S.D500$rep<-c(131:140)
+P_S.D1000$rep<-c(141:150)
+P_S.D2000$rep<-c(151:160)
+P_S.D10000$rep<-c(161:170)
 
-P_V.D500$rep<-c(1701:1800)
-P_V.D1000$rep<-c(1801:1900)
-P_V.D2000$rep<-c(1901:2000)
-P_V.D10000$rep<-c(2001:2100)
+P_V.D500$rep<-c(171:180)
+P_V.D1000$rep<-c(181:190)
+P_V.D2000$rep<-c(191:200)
+P_V.D10000$rep<-c(201:210)
 ```
 
 ```{r}
 # permanova plots
+ext.PERMANOVA2<-function(tst){
+out<-list("raw"=c(rep(NA, length(tst))),"RA"=c(rep(NA, length(tst))), "scaled"=c(rep(NA, length(tst))), "pRare"=c(rep(NA, length(tst))), "eRare"=c(rep(NA, length(tst))), "deseqVST"=c(rep(NA, length(tst))),"deseqVST_scaled"=c(rep(NA, length(tst))), "limmaVST"=c(rep(NA, length(tst))))
 
+  for(i in 1:length(tst)) {out$raw[i]<-sum(tst[[i]]$raw$PERMANOVA$aov.tab$R2[2:6])}
+  for(i in 1:length(tst)) {out$RA[i]<-sum(tst[[i]]$RA$PERMANOVA$aov.tab$R2[2:6])}
+  for(i in 1:length(tst)) {out$scaled[i]<-sum(tst[[i]]$scaled$PERMANOVA$aov.tab$R2[2:6])}
+  for(i in 1:length(tst)) {out$pRare[i]<-sum(tst[[i]]$pRare$PERMANOVA$aov.tab$R2[2:6])}
+  for(i in 1:length(tst)) {out$eRare[i]<-sum(tst[[i]]$eRare$PERMANOVA$aov.tab$R2[2:6])}
+  for(i in 1:length(tst)) {out$deseqVST[i]<-sum(tst[[i]]$deseqVST$PERMANOVA$aov.tab$R2[2:6])}
+  for(i in 1:length(tst)) {out$deseqVST_scaled[i]<-sum(tst[[i]]$deseqVST_scaled$PERMANOVA$aov.tab$R2[2:6])}
+  for(i in 1:length(tst)) {out$limmaVST[i]<-sum(tst[[i]]$limma$PERMANOVA$aov.tab$R2[2:6])}
+  out1<-as.data.frame(out)
+  out1
+  #out2<-boxplot(out1)
+  #out4<-c("table"=out1,"plot"=out2)
+  #out4
+}
 Permanova.C<-do.call("rbind", list(P_C.D500,P_C.D1000,P_C.D2000,P_C.D10000))
 Permanova.C2<-melt(data=Permanova.C, id.vars="Level", measure.vars = c("raw", "RA", "scaled", "eRare", "pRare", "limmaVST", "deseqVST", "deseqVST_scaled"))
 library(ggplot2)
