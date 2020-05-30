@@ -5,6 +5,27 @@ date: "5/18/2020"
 output: html_document
 ---
 
+Table of contents:
+Building a model
+Emplementing a simulation
+Outputs: examining taxon relationships to environment
+i-PERMANOVA
+ii-LII
+iii-linear model
+iv-index ratios & variance
+v-statistical tests
+
+Outputs: examining taxon relationships to each other
+
+Introduction:
+
+ModelMicrobiome is a novel platform for testing the performance and assumptions underlying ecological inference of microbiomes. Whereas previous benchmarking and modeling efforts have used case-control frameworks, and/or used randomized real data, none have tested the accuracy of ecological inference following a sequence count normalization procedure. This is to say previous efforts have focused on the ability to accurately detect a change in relative abudance (i.e. differential abundance analysis). But these tests do not reflect how well the ecological relationships are preserved through the normalization process (e.g. relationship between the taxa and their environment or among taxa). This software does not attempt to address bias that is introduced by the sequencing, DNA purification, or field sampling efforts. It only is meant as a tool to better understand the effect that any post-hoc sequence count normalization has on our ability to infer underlying ecological relationships. 
+
+To further clarify the limits of this software, it is not intended to be applied to metagenomics analyses that derive from shotgun sequence data. There are database and sequencing biases that are particular to whole genome sequencing that must be addressed separately and that may confound the inferences made from this software. THIS SOFTWARE IS NOT DESIGNED TO ADDRESS SHOTGUN SEQUENCING OR ION TORRENT ETC. SEQUENCING. This software is designed specifically for amplicon (i.e. metabarcoding) studies of a single gene locus used to infer population structure. 
+
+This software was written under R version 3.6.1. R version 4 has been published with major updates to some of the core mechanics. Model.MicrobiomeV2 will be updated for R 4.0.
+
+With those disclaimers out of the way, let's dig in.
 
 First, let's install Model.Microbiome:
 ```{r}
@@ -27,11 +48,206 @@ library(edgeR)
 library(limma)
 library(GLDEX)
 library(stats)
+library(igraph)
+```
+
+
+The core functionality of Model.Microbiome is to create a model microbial community, then simulate sequencing by subsampling from it, then normalizing the raw sequence data. This is handled by the run.analysis2() function. I recommend running this function with SuppressWarnings() because many of the models throw warnings about too-perfect of a fit. Since the point of this software is to detect these functions, we don't care. We have ways of measuring these effects.
+
+Building the model community works sequenially by:
+1. creating an environment, with 5 environmental parameters
+  a. environmetnal paramters 1-3 change in mean and variance according to the experimental design
+  b. environmental parameters 4-5 are unrelated to the experimental design, but do affect taxon abundance
+  c. the sampling environment consists of 30 samples, divided into 6 experimental treatments (or 5 reps per treatment)
+  d. the environmental parameters have the same mean and variance for each group every time the software is run; however, the values of any given run are randomly drawn from this distribution. Therefore no two runs will have exactly the same environment, but they will represent exactly the same experiment.
+
+2. Choosing which species exist in each sample.
+  a. The user sets how many taxa will be chosen per sample
+  b. the user sets how many taxa will exist only within certain experimental treatments
+  c. the user sets how many taxa will exist only within certain samples
+  d. the user sets how many taxa will be chosen to be globally distributed
+  
+NOTE: SEE SECTION DETAILS FOR CAVEATS ABOUT THIS SELECTION PROCESS!!
+
+3. Community assembly.
+  a. taxon abundances are calculated; each species has a specific relationship with the environmental variables.
+  b. OTU table generated, and merged into a phyloseq object with metadata on the environment, etc.
+
+4. Community is sampled
+  a. this is a subsampling routine that creates the "sequence output" table
+
+5. Sequence Normalization
+  a. uses a function to normalize the data any arbitrary number of different methods
+
+So let's look at the function. It has several inputs necessary:
+
+commonN: Number of taxa that have a global distribution
+groupN: Number of taxa that are group-specific
+singleN: Number of taxa that are sample-specific
+
+CAVEAT: there are 700 species functions that the software selects from. For each of these values, it uses a random selection routine. It includes resampling among the groups. This means that THERE IS A CHANCE THAT A TAXON MAY END UP REPRESENTING SEVERAL GROUPS, OR SAMPLES.
+
+D: mean sampling depth (e.g. for sequencing)
+V: variance of sampling depth.
+
+method: names of the functions to be used for count normalization (see below for details)
+
+```{r}
+method<-c("QSeq")
+
+model<-suppressWarnings(run.analysis2(commonN=30, groupN=20, singleN=5, D=500, V=250, method))
+```
+This creates a single output object that contains the phyloseq objects created before, and a number of different statistics. We'll get to the idices later.In order to get it to work, we need at least one methods function.
+
+
+Example method function:
+```{r}
+make.scaled2<-function(ps, val, scale){
+  scaled<-data.frame(mapply(`*`, data.frame(as.matrix(otu_table(transform_sample_counts(ps, function(x) x/sum(x))))), scale * val))# sample_data(ps)$val))
+  names<-rownames(data.frame(as.matrix(otu_table(ps))))
+  rownames(scaled)<-names
+  scaled<-round(scaled)
+
+  p2<-ps
+  otu_table(p2)<- otu_table(scaled, taxa_are_rows=T)
+  p2
+}
+
+QSeq<-function(ps){
+    scale<-sample_data(ps)$DensityF
+    out<-make.scaled2(ps, val=2*mean(sample_sums(ps)), scale)
+    out
+}
+
+```
+
+Notice that this is actually one function nested within another. The wrapper helps the function to play nice. So we'll call "QSeq".
+
+
+
+Remember QSeq? We could make several versions of this same function to test how it functions under different conditions. Let's change the value parameter.
+
+```{r}
+QSeq0.5<-function(ps){
+    scale<-sample_data(ps)$DensityF
+    out<-make.scaled2(ps, val=0.5*mean(sample_sums(ps)), scale)
+    out
+}
+
+QSeq1<-function(ps){
+    scale<-sample_data(ps)$DensityF
+    out<-make.scaled2(ps, val=mean(sample_sums(ps)), scale)
+    out
+}
+
+QSeq2<-function(ps){
+    scale<-sample_data(ps)$DensityF
+    out<-make.scaled2(ps, val=2*mean(sample_sums(ps)), scale)
+    out
+}
+
+QSeq3<-function(ps){
+    scale<-sample_data(ps)$DensityF
+    out<-make.scaled2(ps, val=3*mean(sample_sums(ps)), scale)
+    out
+}
+```
+
+If we want to use all of them in our simulation study, then we simply do:
+```{r}
+method<-c("QSeq0.5", "QSeq1", "QSeq2", "QSeq3")
+```
+
+This allows us to change, tweak, and compare the results in a simulation. Let's run this and see what we get:
+
+```{r}
+model<-suppressWarnings(run.analysis2(commonN=30, groupN=20, singleN=5, D=500, V=250, method))
+```
+
+We can call the phyloseq object from any one of the normalization (including the reference data and the raw sequence counts):
+```{r}
+model$model$comm
+model$raw$comm
+model$QSeq0.5$comm
+model$QSeq1$comm
+model$QSeq2$comm
+model$QSeq3$comm
+```
+
+Model.Microbiome also automatically calculates several metrics. For example, it calculates automatically an experiment-wide PERMANOVA for each method:
+```{r}
+model$model$PERMANOVA
+model$raw$PERMANOVA
+model$QSeq0.5$PERMANOVA
+model$QSeq1$PERMANOVA
+model$QSeq2$PERMANOVA
+model$QSeq3$PERMANOVA
+```
+
+Model.Microbiome uses a few statistics to understand bias that is introduced through the normalization process. One is the loss of information index (LII). A simplistic way of understanding this index (tl;dr) is that it takes each taxon in the dataset, and correlates the abundance of that taxon in the reference dataset to the abundance in the normalized dataset. The r squared tells us how much information is retained through the transformation.
+
+[long explanation, needs work] This index is calculated by normalizing the abundance of each taxon across the dataset to it's own mean for each of the reference and normalization methods. In effect this means that the slope of the regression line should be 1; and that there should be a perfect r-squared if all information is retained. 
+
+For example, we can look at the relationship between sparcity and lost information in our normalization function:
+```{r}
+plot(model$model$SpeciesMeta$prevalence,model$QSeq0.5$lmtab, col=gray(model$model$SpeciesMeta$M.Eval), 
+  main="deseq; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+
+plot(model$model$SpeciesMeta$prevalence,model$QSeq1$lmtab, col=gray(model$model$SpeciesMeta$M.Eval), 
+  main="deseq; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+
+plot(model$model$SpeciesMeta$prevalence,model$QSeq2$lmtab, col=gray(model$model$SpeciesMeta$M.Eval), 
+  main="deseq; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+
+plot(model$model$SpeciesMeta$prevalence,model$QSeq3$lmtab, col=gray(model$model$SpeciesMeta$M.Eval), 
+  main="deseq; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+```
+
+You may notice that certain taxa have lost information ... [fill in the details here!!]
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+
+
+
+
+
+This software also has a wrapper that allows us to iterate the function and produce many copies of the simulation. This has all the same inputs as before, plus one aditional input to tell the function how many times to iterate. In this case we'll do 10
+```{r}
+model10<-BENCHMARK.MM(reps=10, commonN=30, groupN=20, singleN=5, D=500, V=250, method)
+```
+model10 is now a list object with 10 items, each one as a replicated simulation. This is the basis for us to be able to extract performance metrics and do statistical analyses to compare different normalization methods.
+```{r}
+
 ```
 
 ```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+```{r}
 # new functions for more flexible use ####
 #raw<-function(ps){ps}
+
 
 RA<-function(ps){
   s<-transform_sample_counts(ps, function(x) x / sum(x))
@@ -52,22 +268,68 @@ pRare<-function(ps, level=NULL){
   out
 }
 
-QSeq<-function(ps, D){
-  if(is.null(D)){print("QSeq Error: enter scaling factor D=...")}
-  out<-make.scaled2(ps, val=sample_sums(ps)/mean(sample_sums(ps)), scale=D)
+QSeq<-function(ps){
+  scale<-sample_data(ps)$DensityF
+  out<-make.scaled2(ps, val=2*mean(sample_sums(ps)), scale)
   out
   }
 deseqVST<-function(ps){
-  out<-make.deseqVST(output$raw$comm, "Factor", l=1)
+  out<-make.deseqVST(ps, "Factor", l=1)
+  out
+}
+deseqVST.log<-function(ps){
+  out<-make.deseqVST(ps, "Factor", l=1)
   out
 }
 limmaVST<-function(ps){
-  out<-make.limmaVST(output$raw$comm, "Factor")
+  out<-make.limmaVST(ps, "Factor")
   out
 }
+limmaVST.log<-function(ps){
+  out<-make.limmaVST(ps, "Factor")
+  out
+}
+lm.model<-function(ps){
+  anova.otu<-t(as.data.frame(as.matrix(otu_table(ps))))
+  anova.env<-data.frame(as.matrix(sample_data(ps)))
+  anova.env$F1<-as.numeric(as.character(anova.env$F1))
+  anova.env$F2<-as.numeric(as.character(anova.env$F2))
+  anova.env$F3<-as.numeric(as.character(anova.env$F3))
+  anova.env$F4<-as.numeric(as.character(anova.env$F4))
+  anova.env$F5<-as.numeric(as.character(anova.env$F5))
 
+  testlm<-adply(anova.otu, 2, function(x) {
 
+    l1=summary(lm(x~anova.env$F1+anova.env$F2+anova.env$F3+anova.env$F4+anova.env$F5))
+    return(l1$r.squared)
+    })
+  testlm[is.na(testlm)]<-0
+  testlm2<-testlm$V1
+  names(testlm2)<-testlm$X1
+  #row.names(testlm)<-testlm$X1
+  #testlm<-testlm[,-1]
+  #testlm<-testlm[order(row.names(testlm)),]
+  testlm2
+  }
 
+lm.model2<-function(ps){
+  anova.otu<-t(as.data.frame(as.matrix(otu_table(ps))))
+  anova.env<-data.frame(as.matrix(sample_data(ps)))
+  
+
+  testlm<-adply(anova.otu, 2, function(x) {
+
+    l1=summary(lm(x~anova.env$Factor2))
+    return(l1$r.squared)
+    })
+  testlm[is.na(testlm)]<-0
+  testlm2<-testlm$V1
+  names(testlm2)<-testlm$X1
+  #row.names(testlm)<-testlm$X1
+  #testlm<-testlm[,-1]
+  #testlm<-testlm[order(row.names(testlm)),]
+  testlm2
+  }
   #' workhorse function for benchmark.MM version 2 with flexible inputs
   #' @param commonN number of common species
   #' @param groupN number of unique taxa to groups
@@ -79,7 +341,26 @@ limmaVST<-function(ps){
   #' @export
   #' @examples
   #' run.analysis()
-  run.analysis2<-function(commonN, groupN, singleN, D, V, method){
+
+  
+  
+  # test funcitons ####
+
+  method<-c("RA", "eRare", "pRare", "QSeq", "deseqVST", "limmaVST")
+  
+ #test.analysis<-run.analysis2(commonN=30, groupN=20, singleN=5, D=500, V=250, method)
+test.analysisB<-suppressWarnings(run.analysis2(commonN=30, groupN=20, singleN=5, D=500, V=250, method))
+ test.analysis2<-run.analysis(commonN=30, groupN=20, singleN=5, D=500, V=250)
+```
+
+
+
+```{r}
+
+
+
+
+run.analysis2<-function(commonN, groupN, singleN, D, V, method){
       AllSpp<-c(paste0("spp", c(1:700), sep="")) # make a quick list of all species functions
       AllSpp<-lapply(AllSpp, get) # connect function to name
       AllSpp<-unlist(AllSpp)  # format to be read by downstream functions
@@ -171,9 +452,8 @@ limmaVST<-function(ps){
       rownames(Factors)<-Sites
       colnames(Factors)<-c("F1","F2","F3","F4","F5")
 
-      output<-list("model"=NULL, "spplist"=NULL, "raw"=NULL, "RA"=NULL, "eRare"=NULL, "pRare"=NULL, "scaled"=NULL, "deseqVST"=NULL, "deseqVST_scaled"=NULL, "limma"=NULL)
+      output<-list("model"=NULL, "spplist"=NULL, "raw"=NULL)
 
-      #output$model<-NULL
       output$spplist<-rando.spp
 
       output$model$comm<-make.refcomm(rando.spp, Factors) # output a phyloseq object... will make a list of phyloseq objects
@@ -185,10 +465,9 @@ limmaVST<-function(ps){
       Rich<-estimate_richness(output$model$comm, measures="Observed")
       output$metrics$Richness<-Rich
       output$metrics$skewness<-median(apply(X = otu_table(output$model$comm), MARGIN=2,FUN = function(x){skewness(x)}))
-      #output$metrics$skewness.raw<-median(apply(X = otu_table(output$raw$comm), MARGIN=2,FUN = function(x){skewness(x)}))
+     
       sample<-set.seqDepth(D,V)
-
-      output$raw$comm<-model.rarefy(output$model$comm, sample)
+      output$raw$comm<-model.rarefy(output$model$comm, sample, D, V)
 
       print("spp selection complete")
       sample_data(output$model$comm)$Density<-sample_sums(output$model$comm)# add sample sums
@@ -198,6 +477,8 @@ limmaVST<-function(ps){
 
 
       print("start subsampling")
+
+      print("subsampling finished")
       # remove taxa that have zero abundance in "raw" sequencing run
       tax.filt<-filter_taxa(output$raw$comm, function(x)sum(x)>0)
       output$metrics$tax.lost<-tax.filt
@@ -221,6 +502,7 @@ limmaVST<-function(ps){
           output$model$SpeciesMeta<-tab
 
           output$model$R<-lm.test(output$model$comm)
+         
 
       # make expected value
           s<-sample_sums(output$raw$comm)
@@ -237,94 +519,228 @@ limmaVST<-function(ps){
           output$model$SpeciesMeta<-tab
           output$model$R<-lm.test(output$model$comm)
           sample_data(output$raw$comm)<-sample_data(output$model$comm)
+          output$model$PERMANOVA<-make.PERMANOVA(output$model$comm)
+          output$model$rarecurve<-ggrare(output$model$comm, 50, color="Factor")
   print("metadata complete")
-      # remove taxa that have zero abundance in "raw" sequencing run
-# prepare raw metadata for lm analysis and model for lm analysis
-      output$raw$PERMANOVA<-make.PERMANOVA(output$raw$comm)
-      output$raw$LII<-LII(output$model$comm, output$raw$comm)
-      output$raw$lmtab<-lm.model(output$raw$comm) # error here!
-      output$model$lmtab<-lm.model(output$model$comm)
-      output$raw$Dtab<-output$model$lmtab-output$raw$lmtab
-      output$RA$comm<-transform_sample_counts(output$raw$comm, function(x) x / sum(x) )
-
-     # output$eRare$comm<-make.rarefy2(output$raw$comm, min(sample_sums(output$raw$comm)))
-     # print("erare complete")
-    #  output$pRare$comm<-make.rarefy2(output$raw$comm, min(sample_sums(output$raw$comm))*sample_sums(output$raw$comm)/mean(sample_sums(output$raw$comm)))
-    #  print("prare complete")
-    #  output$scaled$comm<-make.scaled2(output$raw$comm, val=sample_sums(output$model$comm)/mean(sample_sums(output$model$comm)), scale=D)
-     # print("scaling complete")
-      #output$deseqVST$comm<-make.deseqVST(output$raw$comm, "Factor", l=1)
-      #print("deseq complete")
-      #output$deseqVST_scaled$comm<-make.deseqVST(output$scaled$comm, "Factor", l=1)
-    #  output$limma$comm<-make.limmaVST(output$raw$comm, "Factor")
-     # print("limma complete")
-      #method.names<-method
-      #method<-lapply(method, get)
-      #method<-unlist(method)
-      #names(method)<method.names
-      method2<-c("RA", "eRare", "pRare", "QSeq", "DeseqVst", "limmaVst", method)
-      for (i in 1:length(method2)){
-        a<-get(method2[i])
+  
+  # implement each normalization function
+      for (i in 1:length(method)){
+        a<-get(method[i])
         #name(a)<-i
         b<-output$raw$comm
         c<-a(b)
-        output[[method2[i]]]$comm<-c
-        output[[method2[i]]]$PERMANOVA<-make.PERMANOVA(c)
-        output[[method2[i]]]$LII<-LII(output$model$comm, output[[i]]$comm)
-
+        output[[method[i]]]$comm<-c
+        output[[method[i]]]$PERMANOVA<-make.PERMANOVA(c)
+        output[[method[i]]]$PERMANOVA$Rratio<-output[[method[i]]]$PERMANOVA$aov.tab$R2/output$model$PERMANOVA$aov.tab$R2
+        output[[method[i]]]$LII<-LII(output$model$comm, output[[method[i]]]$comm)
+        #output[[method[i]]]$Dtab.plot<-plot(output$model$SpeciesMeta$prevalence,output[[method[i]]]$Dtab, col=output$model$SpeciesMeta$M.Eval, main="Ratio of Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
+        #output[[method[i]]]$Dtab.model.plot<-plot(output$model$SpeciesMeta$prevalence,output[[method[i]]]$Dtab.model, col=output$model$SpeciesMeta$M.Eval, main="Ratio of Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
+        
+        print(paste(method[i], " complete"))
       }
-print("normalizing complete")
-  # do 1- : calculates the information lost
-  #  for (i in 1:length(method2)){
-      # make the species-wise LII value:
-  #    output$model$SpeciesMeta[[method2[i]]]<-1-output[[paste(method2[i],"LII")]]$LII$R
-      # make the lm output for each normalization: (this is rsquared, could be r value ...)
-  #    output[[method2[i]]]$lmtab<-lm.model(output[[method2[i]]]$comm)
+# prepare raw metadata for lm analysis and model for lm analysis
+      output$raw$PERMANOVA<-make.PERMANOVA(output$raw$comm)
+      print("raw permanova complete")
+      output$raw$LII<-LII(output$model$comm, output$raw$comm)
+      print("raw LII complete")
+      output$raw$lmtab<-lm.model(output$raw$comm)
+      output$raw$lmtab.model<-lm.model2(output$raw$comm)
+      print("lmtab raw complete")
+      output$model$lmtab<-lm.model(output$model$comm)
+      output$model$lmtab.model<-lm.model2(output$model$comm)# linear model of env. parameters as explanatory variables for abundance of each taxon
+      print("lmtab model complete")
+      output$raw$lmRatiotab<-output$raw$lmtab/output$model$lmtab #ratio of lm of env from normalized data to reference
+      output$raw$lmRatiotab.model<-output$raw$lmtab.model/output$model$lmtab.model #ratio of lm of env from normalized data to reference using only categorical model variables (no explicit env. model)
+      print("dtab complete")
+
+  # do 1- : calculates the information lost per taxon
+    for (i in 1:length(method)){
+    # make the species-wise LII value:
+      output$model$SpeciesMeta[[method[i]]]<-1-output[[method[i]]]$LII$R
+      # make the lm output for each normalization: (this is r-squared, could be r value ...)
+      output[[method[i]]]$lmtab<-lm.model(output[[method[i]]]$comm)# linear model of env. parameters as explanatory variables for abundance of each taxon
+      output[[method[i]]]$lmtab.model<-lm.model2(output[[method[i]]]$comm)
       # conditional statement to make sure that the taxon names match, then:
       # difference in rsquared values (or r values?) from reference:
- #     if(rownames(output$model$lmtab)==rownames(output[[method2[i]]]$lmtab)){
-#      output[[method2[i]]]$Dtab<-output$model$lmtab-output[[method2[i]]]$lmtab}
-  #    else{print("Error in Dtab: names do not match")}
-  #  }
+      if(names(output$model$lmtab)==names(output[[method[i]]]$lmtab)){
+      output[[method[i]]]$lmRatiotab<-output[[method[i]]]$lmtab/output$model$lmtab
+      output[[method[i]]]$lmRatiotab.model<-output[[method[i]]]$lmtab.model/output$model$lmtab.model} #ratio of lm of env from normalized data to reference
+      else{print("Error in Dtab: names do not match")}
+    }
+    
     output
   }
+```
 
+test space:
+```{r}
+method<-c("RA", "QSeq")
+tget<-get(method[1])
 
-  lm.model<-function(ps){
-  anova.otu<-as.data.frame(t(as.matrix(otu_table(ps))))
-  anova.env<-data.frame(as.matrix(sample_data(ps)))
-  anova.env$F1<-as.numeric(as.character(anova.env$F1))
-  anova.env$F2<-as.numeric(as.character(anova.env$F2))
-  anova.env$F3<-as.numeric(as.character(anova.env$F3))
-  anova.env$F4<-as.numeric(as.character(anova.env$F4))
-  anova.env$F5<-as.numeric(as.character(anova.env$F5))
+trt$rep1<-suppressWarnings(run.analysis2(commonN=30, groupN=20, singleN=5, D=500, V=250, method))
+trt$rep2<-suppressWarnings(run.analysis2(commonN=30, groupN=20, singleN=5, D=500, V=250, method))
 
-  testlm<-ddply(anova.otu, 2, function(x) {
-    #l1=summary(lm(x~anova.env$Factor+anova.env$F1+anova.env$F2+anova.env$F3+anova.env$F4+anova.env$F5))
-    l1=summary(lm(x~anova.env$F1+anova.env$F2+anova.env$F3+anova.env$F4+anova.env$F5))
-    return(l1$r.squared)
-    })
-  testlm[is.na(testlm)]<-0
-  testlm<-testlm[order(names(testlm))]
-  testlm
+Summarize.Ftable<-function(trt, method){
+  Ftab<-matrix(NA, nrow = length(trt), ncol = length(method))
+  for(i in 1:length(trt)){
+    for(j in 1:length(method)){
+      Ftab[i,j]<-sum(trt[[i]][[method[j]]]$PERMANOVA$aov.tab$F.Model, na.rm=T)
+    #print(sum(trt[[i]][j]$PERMANOVA$aov.tab$F.Model))
   }
-  
-  
-  
-  # test funcitons ####
+}
+  rownames(Ftab)<-names(trt)
+  colnames(Ftab)<-method
+  Ftab
+}
 
-  method<-c("RA", "eRare","pRare","deseqVST", "limmaVST") 
-  
- test.analysis<-run.analysis2(commonN=30, groupN=20, singleN=5, D=500, V=250, method) 
+Summarize.PERMANOVA.Rratio<-function(trt, method){
+  Ftab<-matrix(NA, nrow = length(trt), ncol = length(method))
+  print("reference")
+  for(i in 1:length(trt)){
+    for(j in 1:length(method)){
+      print(method[j])
+     print(trt[[i]][[method[j]]]$PERMANOVA$Rratio)
+    #print(sum(trt[[i]][j]$PERMANOVA$aov.tab$F.Model))
+  }
+}
+}
+
+Summarize.LII<-function(trt, method){
+  Ftab<-matrix(NA, nrow = length(trt), ncol = length(method))
+  for(i in 1:length(trt)){
+    for(j in 1:length(method)){
+      Ftab[i,j]<-sum(trt[[i]][[method[j]]]$LII$Index, na.rm=T)
+    #print(sum(trt[[i]][j]$PERMANOVA$aov.tab$F.Model))
+  }
+}
+  rownames(Ftab)<-names(trt)
+  colnames(Ftab)<-method
+  Ftab
+}
+
+Plot.dtab<-function(trt, method){
+  for(i in 1:length(trt)){
+    for(j in 1:length(method)){plot(trt[[i]]$model$SpeciesMeta$prevalence,trt[[i]][[method[j]]]$Dtab, col=trt[[i]]$model$SpeciesMeta$M.Eval, main="Ratio of Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
+  }
+}}
+
+Summarize.PERMANOVA.Rratio(trt, method)
+
+plot(trt$rep1$model$SpeciesMeta$prevalence,trt$rep1$QSeq$Dtab, col=gray(2*trt$rep1$model$SpeciesMeta$M.Eval), 
+  main="QSeq; Ratio of Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
+
+plot(trt$rep1$model$SpeciesMeta$prevalence,trt$rep1$QSeq$Dtab.model, col=gray(2*trt$rep1$model$SpeciesMeta$M.Eval), 
+  main="QSeq; Ratio of Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
+
+
+plot(trt$rep1$model$SpeciesMeta$prevalence,trt$rep1$deseqVST$Dtab, col=gray(2*trt$rep1$model$SpeciesMeta$M.Eval), 
+  main="deseq; Ratio of Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
+
+plot(trt$rep1$model$SpeciesMeta$prevalence,trt$rep1$deseqVST$Dtab.model, col=gray(2*trt$rep1$model$SpeciesMeta$M.Eval), 
+  main="deseq; Ratio of Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
+
+plot(trt$rep1$model$SpeciesMeta$prevalence,trt$rep1$QSeq$lmtab, col=gray(2*trt$rep1$model$SpeciesMeta$M.Eval), 
+  main="QSeq; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+plot(trt$rep1$model$SpeciesMeta$prevalence,trt$rep1$QSeq$lmtab.model, col=gray(2*trt$rep1$model$SpeciesMeta$M.Eval), 
+  main="QSeq; Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared")
+
+plot(trt$rep1$model$SpeciesMeta$prevalence,trt$rep1$deseqVST$lmtab, col=gray(2*trt$rep1$model$SpeciesMeta$M.Eval), 
+  main="deseq; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+plot(trt$rep1$model$SpeciesMeta$prevalence,trt$rep1$deseqVST$lmtab.model, col=gray(2*trt$rep1$model$SpeciesMeta$M.Eval), 
+  main="deseq; Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared")
+
+#collect variance data for stats!!
+var(trt$rep1$QSeq$Dtab)
+median(trt$rep1$QSeq$Dtab)
+var(trt$rep1$QSeq$Dtab.model)
+median(trt$rep1$QSeq$Dtab.model)
+var(trt$rep1$deseqVST$Dtab)
+median(trt$rep1$deseqVST$Dtab)
+var(trt$rep1$deseqVST$Dtab.model)
+median(trt$rep1$deseqVST$Dtab.model)
+# make output with difference with env. and without env. variables in lm for lm.model()
+# 
 ```
-
-
-
 ```{r}
+plot(trt$rep2$model$SpeciesMeta$prevalence,trt$rep2$QSeq$Dtab, col=gray(trt$rep2$model$SpeciesMeta$M.Eval), 
+  main="QSeq; Ratio of Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
 
+plot(trt$rep2$model$SpeciesMeta$prevalence,trt$rep2$QSeq$Dtab.model, col=gray(trt$rep2$model$SpeciesMeta$M.Eval), 
+  main="QSeq; Ratio of Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
+
+
+plot(trt$rep2$model$SpeciesMeta$prevalence,trt$rep2$deseqVST$Dtab, col=gray(trt$rep2$model$SpeciesMeta$M.Eval), 
+  main="deseq; Ratio of Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
+
+plot(trt$rep2$model$SpeciesMeta$prevalence,trt$rep2$deseqVST$Dtab.model, col=gray(trt$rep2$model$SpeciesMeta$M.Eval), 
+  main="deseq; Ratio of Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
+
+plot(trt$rep2$model$SpeciesMeta$prevalence,trt$rep2$QSeq$lmtab, col=gray(2*trt$rep2$model$SpeciesMeta$M.Eval), 
+  main="QSeq; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+plot(trt$rep2$model$SpeciesMeta$prevalence,trt$rep2$QSeq$lmtab.model, col=gray(2*trt$rep2$model$SpeciesMeta$M.Eval), 
+  main="QSeq; Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared")
+
+plot(trt$rep2$model$SpeciesMeta$prevalence,trt$rep2$deseqVST$lmtab, col=gray(2*trt$rep2$model$SpeciesMeta$M.Eval), 
+  main="deseq; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+plot(trt$rep2$model$SpeciesMeta$prevalence,trt$rep2$deseqVST$lmtab.model, col=gray(2*trt$rep2$model$SpeciesMeta$M.Eval), 
+  main="deseq; Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared")
+
+#collect variance data for stats!!
+var(trt$rep2$QSeq$Dtab)
+median(trt$rep2$QSeq$Dtab)
+var(trt$rep2$QSeq$Dtab.model)
+median(trt$rep2$QSeq$Dtab.model)
+var(trt$rep1$deseqVST$Dtab)
+median(trt$rep2$deseqVST$Dtab)
+var(trt$rep2$deseqVST$Dtab.model)
+median(trt$rep2$deseqVST$Dtab.model)
+
+ConnStat<-function(ps, num=200){
+  require(phyloseq)
+  require(igraph)
+  o<-otu_table(ps)
+  c<-cor(o)
+  i=1
+  c[c<1]<-0
+  n<-graph_from_incidence_matrix(c)
+  while(ecount(n)<num){
+    t<-otu_table(ps)
+    t<-cor(t)
+    t[t<i]<-0
+    t[t>i]<-1
+    n<-graph_from_incidence_matrix(t)
+    i=i-0.001
+  }
+   cfg<-cluster_fast_greedy(as.undirected(n))
+  plot(cfg, as.undirected(n), layout=layout_nicely(n), vertex.label=NA, main="Dynamic", vertex.size=10)
+  table<-matrix(nrow=2,ncol=4)
+  colnames(table)<-c("Mean_Closeness", "Mean_Degree", "Modularity", "Threshold")
+  rownames(table)<-c("Dynamic", "Static")
+  table[1,1]<-mean(closeness(n))
+  table[1,2]<-mean(degree(n))
+  table[1,3]<-modularity(n, membership(cfg))
+  table[1,4]<-i
+
+  t<-otu_table(ps)
+  t<-cor(t)
+  t[t<0.8]<-0
+  t[t>0.8]<-1
+  n<-graph_from_incidence_matrix(t)
+  cfg<-cluster_fast_greedy(as.undirected(n))
+  table[2,1]<-mean(closeness(n))
+  table[2,2]<-mean(degree(n))
+  table[2,3]<-modularity(n, membership(cfg))
+  table[2,4]<-0.8
+  plot(cfg, as.undirected(n), layout=layout_nicely(n), vertex.label=NA, main="Static", vertex.size=10)
+  table
+}
+
+
+ConnStat(trt$rep1$model$comm, num=50)
+ConnStat(trt$rep1$model$comm, num=100)
+ConnStat(trt$rep1$model$comm, num=150)
+ConnStat(trt$rep1$model$comm, num=200)
+ConnStat(trt$rep1$model$comm, num=250)
+ConnStat(trt$rep1$model$comm, num=350)
+ConnStat(trt$rep1$model$comm, num=450)
 ```
-
-```{r}
-
-```
-

@@ -10,7 +10,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## R Markdown
-This tutorial will walk you through the use of the Model.Microbiome package for modeling, and how it can be used to test new software.
+This tutorial will walk you through the use of the Model.Microbiome package for modeling, and how it can be used to test new software. The primary function of Model.Microbiome is to create a series of randomly generated communities. These communities are subsampled to simulate the sequencing process. Then any normalization effort may be applied to these data, and compared for accuracy. This model software does not attempt to model PCR, sequencing, or any other bias that may be introduced on the benchtop or by the DNA isolation procedure. These should be addressed separately. This software only attempts to address inferential bias that is introduced during the sequence count normalization process. 
+
 Table of contents:
 Introduction to the model and it's basic function/structure:
 Exploring effects of sampling depth:
@@ -39,6 +40,47 @@ library(edgeR)
 library(limma)
 library(GLDEX)
 library(stats)
+```
+
+The central function of this package creates an array (or list of objects) that include a data table of taxon abundance that represents the community being sampled; a subsampled data table (i.e. the corresponding sequencing output), and any outputs from normalization procedures that the user may choose. These community datasets are organized as phyloseq objects that contain the otu table, taxa names, and environmental data. Each of the datasets created has the same experimental design; there are 5 replicates of six experimental conditions. The community data is generated using a stepwise process. First, the environmental metadata is defined. There are five environmental parameters; three of which are related to the experimental design. These are randomly generated each time a new community is made; the specific values are drawn from a normal distribution with specific mean and variance for each experimental condition. The last two environmental variables have a mean and variance that is not captured by the categorical experimental design (ie is pulled from the same distribution across the dataset). The end result is a table of "environmental data" for each sample that includes values that are reflected in the experimental design, and those that are not. This is important as environmental studies are often designed with a tacit understanding of the environmental gradient; in such cases important environmental variables may or may not behave as anticipated by the researcher. Including variables that may be of interest but are not a-priori accurately predicted by the researcher is important for ensuring that statistical softwares do not over-fit taxon abundance to the experimental design and lose resolution on unanticipated environmental drivers.
+
+Model.Microbiome includes 700 individual species equations that relate species abundance to the five environmental parameters. After the environment is created, the community is assembled. In this step, the user may vary the proportion of taxa that may be detected at a global scale; within a group; and within a particular sample. For example, we might say that 20 taxa may exist globally, 30 taxa may exist that are endemic to their experimental condition; and 10 taxa may exist only in the single site. In this case model.microbiome will randomly select 20 taxa from the list of 700 to be in the species list of all sites. Then it will randomly select 30 taxa for each experimental condition that will be in the species list of all sites that are in that experimental condition. And finally, Model.Microbiome will select 10 taxa for each site from the 700. These taxon lists are compiled so that each site includes uniuqe, groupwise, and globally distributed taxa. Then their abundance is calculated. Within each round of selection taxa are selected without replacement, but taxa are selected with replacement between rounds. This means that site-wise selection is blinded to the global selection, and to other site-specific selection. Therefore it is possible that a taxon is selected as a global taxon and a site-specific; or that two sites may include the same organism as site-specific. This is an intentional behavior to model sparcity and the role of historicity in ecological process. By modulating the proportion of global, group, and sitewise taxa, we can test how each normalization procedure handles sparcity. Another thing to note is that just because the abundance of a taxon is calculated at a site does not mean it has a positive count value. Many taxa in the global set will only have positive values in a subset of experimental conditions. This is an intended effect.
+
+Once the species lists are created for each site, then Model.Microbiome calculates their abundance. 
+
+
+The user designates the number of communities that are created, and selects parameters to define the sparcity (i.e. how likely a taxon will appear only in one sample), mean sampling depth (i.e. sequencing depth), variance of sample-wise sequencing depth around the mean, etc. The following procedure will outline two methods for how one may designate the normalization procedure.
+
+Model.Microbiome uses get() to import functions, giving the user platform the flexibility define new normalization functions, and import them into the analysis chain. There are two ways to include new functions. The first is to include them as a parameter in the core function. This requires defining a function. Here is an example:
+```{r}
+# define the normalization function
+Relative.Abundance<-function(x){require(phyloseq)
+}
+# create a list of names
+method<-c("Relative.Abundance")
+
+# reps = number of test cases generated
+# commonN = number of taxa that will be calculated for all samples
+# groupN = number of taxa that will be calculated within groups
+# singleN = number of taxa that will be calculated only in a single sample
+# D = sequencing depth (ie number of samples taken on average)
+# V = variance of sequencing depth
+# method = list of names of applied methods
+testrun<-suppressWarnings(benchmark.MM2(reps=10, commonN=73, groupN=1, singleN=1, D=500, V=250, method))
+
+```
+
+The second approach also demonstrates the core functionality that allows the user to also add any statistical function/analysis to the array. Again for this process, we define a function
+
+```{r}
+# define the normalization function
+Relative.Abundance<-function(x){require(phyloseq)
+}
+# create a list of names
+method<-c("Relative.Abundance")
+
+testrun2<-
+
 ```
 
 We then do our first modeling run. In this case, reps is the number of times that we repeat the model with the same conditions. CommonN is the number of taxa that are modeled acorss all sites; groupN is the number of taxa that are modeled at each site; singleN are the number of taxa that are modeled at single sites; D is the smean ampling depth, V is the variation around that depth. These are the parameters that are necessary to set up and execute the sampling run. It should be noted that large values for the reps (e.g. greater than 100) may take longer than an hour to run. 1000's of reps could take days, depending on the processing power of your machine. I recommend starting with 10 reps to get the feel of the output structure. 
