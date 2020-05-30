@@ -29,7 +29,7 @@ With those disclaimers out of the way, let's dig in.
 
 First, let's install Model.Microbiome:
 ```{r}
-devtools::install_github("(“djeppschmidt/Model.Microbiome”")
+devtools::install_github("djeppschmidt/Model.Microbiome")
 ```
 Now load all the other packages we need (or download and load if you haven't already):
 ```{r}
