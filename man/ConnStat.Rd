@@ -2,7 +2,7 @@
 % Please edit documentation in R/Functions.R
 \name{ConnStat}
 \alias{ConnStat}
-\title{extract Lost Information Index values from a benchmarked object}
+\title{generate network analysis and network stats}
 \usage{
 ConnStat(ps, num = 250)
 }
@@ -12,7 +12,7 @@ ConnStat(ps, num = 250)
 \item{num}{number of edges for static analysis}
 }
 \description{
-extract Lost Information Index values from a benchmarked object
+generate network analysis and network stats
 }
 \examples{
 ConnStat()

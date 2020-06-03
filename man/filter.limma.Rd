@@ -4,7 +4,7 @@
 \alias{filter.limma}
 \title{do filter protocol for limma}
 \usage{
-\method{filter}{limma}(ps)
+filter.limma(ps)
 }
 \arguments{
 \item{ps}{product object from benchmark.MM()}

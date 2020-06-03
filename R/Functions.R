@@ -936,7 +936,7 @@ ConnStat<-function(ps, num=250){
 #' @export
 #' @examples
 #' getNetPlot()
-getNetPlot(x, method){
+getNetPlot<-function(x, method){
   for(i in 1:length(x)){
     for(j in 1:length(method)){
      plot(trt[[i]][[method[j]]]$networkStat$Dynamic$cfg, as.undirected(trt[[i]][[method[j]]]$networkStat$Dynamic$n), layout=layout_nicely(trt[[i]][[method[j]]]$networkStat$Dynamic$n),
@@ -944,6 +944,8 @@ getNetPlot(x, method){
     plot(trt[[i]][[method[j]]]$networkStat$Static$cfg, as.undirected(trt[[i]][[method[j]]]$networkStat$Static$n), layout=layout_nicely(trt[[i]][[method[j]]]$networkStat$Static$n),
                vertex.label=NA, main=paste("Static", method[j]), vertex.size=10)
 
+}
+}
 }
 
 
