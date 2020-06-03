@@ -49,6 +49,7 @@ library(limma)
 library(GLDEX)
 library(stats)
 library(igraph)
+library(car)
 ```
 
 
@@ -79,6 +80,10 @@ NOTE: SEE SECTION DETAILS FOR CAVEATS ABOUT THIS SELECTION PROCESS!!
 5. Sequence Normalization
   a. uses a function to normalize the data any arbitrary number of different methods
 
+```{r}
+knitr::include_graphics("~/Desktop/PhD/RarefactionProject/Process_Map.pdf")
+```
+
 So let's look at the function. It has several inputs necessary:
 
 commonN: Number of taxa that have a global distribution
@@ -102,6 +107,8 @@ This creates a single output object that contains the phyloseq objects created b
 
 Example method function:
 ```{r}
+
+# these functions are already provided as a part of Model.Microbiome
 make.scaled2<-function(ps, val, scale){
   scaled<-data.frame(mapply(`*`, data.frame(as.matrix(otu_table(transform_sample_counts(ps, function(x) x/sum(x))))), scale * val))# sample_data(ps)$val))
   names<-rownames(data.frame(as.matrix(otu_table(ps))))
@@ -121,11 +128,7 @@ QSeq<-function(ps){
 
 ```
 
-Notice that this is actually one function nested within another. The wrapper helps the function to play nice. So we'll call "QSeq".
-
-
-
-Remember QSeq? We could make several versions of this same function to test how it functions under different conditions. Let's change the value parameter.
+Notice that this is actually one function nested within another. The wrapper helps the function to play nice. It's easy to replicate wrappers to provide the underlying function with different inputs if we want to test the different potential conditions. For example, our QSeq function is meant to replicate the normalization technique called quantitative sequencing. This technique combines quantitative data from QPCR with sequence count distributions to normalize the sequence counts in each sample by the relative total sequence counts of that sample compared to other samples. This should more closely approximate the behavior of the sampled community than relative abundance. To do this though, we need to decide what the mean value for the sample-wise abundance normalization. We could make several versions of the QSeq function to test what is the optimal mean sample-wise total abundance. To do this we change the value parameter as follows:
 
 ```{r}
 QSeq0.5<-function(ps){
@@ -151,14 +154,20 @@ QSeq3<-function(ps){
     out<-make.scaled2(ps, val=3*mean(sample_sums(ps)), scale)
     out
 }
+
+QSeq4<-function(ps){
+    scale<-sample_data(ps)$DensityF
+    out<-make.scaled2(ps, val=10*mean(sample_sums(ps)), scale)
+    out
+}
 ```
 
 If we want to use all of them in our simulation study, then we simply do:
 ```{r}
-method<-c("QSeq0.5", "QSeq1", "QSeq2", "QSeq3")
+method<-c("QSeq0.5", "QSeq1", "QSeq2", "QSeq3", "QSeq4")
 ```
 
-This allows us to change, tweak, and compare the results in a simulation. Let's run this and see what we get:
+Then we implement it in the analysis pipeline:
 
 ```{r}
 model<-suppressWarnings(run.analysis2(commonN=30, groupN=20, singleN=5, D=500, V=250, method))
@@ -176,39 +185,160 @@ model$QSeq3$comm
 
 Model.Microbiome also automatically calculates several metrics. For example, it calculates automatically an experiment-wide PERMANOVA for each method:
 ```{r}
-model$model$PERMANOVA
-model$raw$PERMANOVA
-model$QSeq0.5$PERMANOVA
-model$QSeq1$PERMANOVA
-model$QSeq2$PERMANOVA
-model$QSeq3$PERMANOVA
+model$model$PERMANOVA # reference condition!
+model$raw$PERMANOVA # not normalized
+model$QSeq0.5$PERMANOVA # lowest mean value
+model$QSeq1$PERMANOVA  #...
+model$QSeq2$PERMANOVA #...
+model$QSeq3$PERMANOVA # highest mean value
 ```
+You'll notice that the QSeq PERMANOVA tables are very similar to the reference PERMANOVA table, and that the un-normalized table is a bit different. This is great! 
 
-Model.Microbiome uses a few statistics to understand bias that is introduced through the normalization process. One is the loss of information index (LII). A simplistic way of understanding this index (tl;dr) is that it takes each taxon in the dataset, and correlates the abundance of that taxon in the reference dataset to the abundance in the normalized dataset. The r squared tells us how much information is retained through the transformation.
+Model.Microbiome uses a few statistics to understand bias that is introduced through the normalization process. All the metrics in Model.Microbiome consist of the ouput from an analysis conducted on a normalized dataset divided by the same analysis conducted on the reference community. For example, if we are interested in the relationship between a taxon an the environment, we could construct a linear model where abundance of taxon x depends on enviornment A. The R-squared of this model would represent the amount of information captured by the model. If we applied this model to both the reference community, and the normalized community, then we have a measure of the "actual" relationship and the infered relationship after our normalization. The ratio of these values gives us a comparable and interpretable value where 1 represents a perfect match; greater than 1 means the normalization method leads to overestimating the explanatory power of the environmental factors on the abundance of the taxon; and a value of less than one is interpreted to mean that the normalization underestimates the explanatory value of the environmental parameter. All of the indices are based on this interpretation principle. Here is a brief description of each index:
 
-[long explanation, needs work] This index is calculated by normalizing the abundance of each taxon across the dataset to it's own mean for each of the reference and normalization methods. In effect this means that the slope of the regression line should be 1; and that there should be a perfect r-squared if all information is retained. 
 
-For example, we can look at the relationship between sparcity and lost information in our normalization function:
+Loss of information index (LII) is based on a linear model approach, but instead of regressing the taxa against the environment and comparing the outputs, it regresses the treatment (normalized data) against the reference (pre-sampling). This provides a direct measure of information that is maintained about the abundance of the taxon across the dataset. The LII output has several components;
+
+$Index : index value which is the sum of (1 - the r-squared values) across all taxa. This is a single value for the whole run. Lower scores equate to less overall information lost.
+
+$R : a list of the R squared values, one per taxon in the run.
+
+$diff : a list of (1 - the r-squared values) for the Index value, one for each taxon. This is useful to identify which taxa are deviating substantially, and help with troubleshooting the normalization method.
+
+All of these can be accessed from the normalization object (see output object map). 
+
+
+
+The second set of metrics consist of linear regressions of the taxa against environmental and experimental design predictors. This test allows us to diagnose the effect that our normalization protocol has on our ability to infer relationships between the taxa and the environment / experimental condition. Once again, the primary outputs of this process are then taken as a ratio to the reference for interpretation.
+
+$lmRatiotab : list of taxa and their R-squared values between taxon and the environment, normalized by the reference
+
+$lmRatiotab.model : list of taxa and their R-squared values between taxon and the experimental design, normalized by the reference
+
+These datasets are useful
+
+Object Map:
 ```{r}
-plot(model$model$SpeciesMeta$prevalence,model$QSeq0.5$lmtab, col=gray(model$model$SpeciesMeta$M.Eval), 
-  main="deseq; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
-
-plot(model$model$SpeciesMeta$prevalence,model$QSeq1$lmtab, col=gray(model$model$SpeciesMeta$M.Eval), 
-  main="deseq; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
-
-plot(model$model$SpeciesMeta$prevalence,model$QSeq2$lmtab, col=gray(model$model$SpeciesMeta$M.Eval), 
-  main="deseq; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
-
-plot(model$model$SpeciesMeta$prevalence,model$QSeq3$lmtab, col=gray(model$model$SpeciesMeta$M.Eval), 
-  main="deseq; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+knitr::include_graphics("~/Desktop/PhD/RarefactionProject/Output_Map.pdf")
 ```
 
-You may notice that certain taxa have lost information ... [fill in the details here!!]
+Here are a few plots of reference vs. normalized abundance for a few randomly selected taxa:
 
 ```{r}
 
 ```
 
+
+We might look for information that could explain why certain taxa lose more information than others. For example, we can look at the relationship between sparcity and lost information in our normalization function: 
+
+(R squared = 1 is ideal!)
+```{r}
+plot(model$model$SpeciesMeta$prevalence,model$QSeq0.5$LII$R, col=gray(model$model$SpeciesMeta$M.Eval), 
+  main="QSeq0.5; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+
+plot(model$model$SpeciesMeta$prevalence,model$QSeq1$LII$R, col=gray(model$model$SpeciesMeta$M.Eval), 
+  main="QSeq1; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+
+plot(model$model$SpeciesMeta$prevalence,model$QSeq2$LII$R, col=gray(model$model$SpeciesMeta$M.Eval), 
+  main="QSeq2; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+
+plot(model$model$SpeciesMeta$prevalence,model$QSeq3$LII$R, col=gray(model$model$SpeciesMeta$M.Eval), 
+  main="QSeq3; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+```
+
+It's interesting that the prevalence of the taxon does not seem to determine how well information about it's abundance is retained! But, looks can be decieving; we can do a statistical test:
+
+```{r}
+
+```
+
+
+You may notice that certain taxa have an R squared of 0; some of them improve as we increase the overall scaling factor. This happens when taxa are very low abundance in a particular sample. If their count abundance is less than 0.5, they get rounded down to 0. So ideally we want to pick a scaling value that lets us keep all the information from sampling (i.e. such that in all samples, the minimum taxon has a count of at least 1). This is an important observation if we want to use this method on a real dataset because it gives us a criteria for choosing what our scaling factor will be.
+
+In nearly all our comparisons of a normalization technique, we are comparing the results of a statistical test given the normalization to the reference. we do this because it is possible that our normalization technique might overfit the data to an expected trend, thus information may be lost also by overfitting. We have looked at an explicit evaluation of lost information intrinic to each taxon; we can also look at how this lost information degrades our abilty to detect true relationships between the taxa and the environmental gradients. To do this, we employ linear modeling. We have two linear model outputs for each taxon. In the first case, we regress the abundance of the taxon against all the environmental variables, excluding categorical experimental design from the test structure. In the second case, we include only the categorical variables and exclude the environmental variables. This allows us to resolve whether there has been overfitting of taxon abundance to our experimental design; and the effect this has had on our ability to detect the relationship to environmental gradients. Of course, our final interest is not on the outputs of the model per se, but the ratio of model outputs from normalized datasets to the reference. This gives ratio tells us clearly which taxa are accurately modeled. In aggregate, the variance of this ratio around 1 tells us which method is more consistently and accurately modeling the relationship of each taxon to the environmental gradient driving it's abundance. 
+
+Let's look at a couple examples. This linear model ratio is calculated automatically in each run:
+```{r}
+plot(model$model$SpeciesMeta$prevalence,model$raw$lmRatiotab, col=gray(model$model$SpeciesMeta$M.Eval), 
+  main="Raw; ratio-Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+
+plot(model$model$SpeciesMeta$prevalence,model$QSeq3$lmRatiotab, col=gray(model$model$SpeciesMeta$M.Eval), 
+  main="QSeq3; ratio-Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+```
+It's intruiging that actually highly prevalent taxa seem to lose the relationships to the environmental gradients the most consistently; and that low prevalence taxa seem most likely to have overestimated variance explained by the environment. We can see qualitatively that our QSeq methods increase the accuracy of our taxon-specific models by a small margin. We can evaluate this statistically:
+
+```{r}
+levenetest<-data.frame("ratio"=c(model$raw$lmRatiotab, model$QSeq3$lmRatiotab), "method"=c(rep("raw", length(model$raw$lmRatiotab)), rep("QSeq", length(model$QSeq3$lmRatiotab))))
+
+car::leveneTest(ratio ~ method, data = levenetest)
+```
+In this case it's not a huge improvement, but the method provides a solid evidence-based approach for optimizing normalization methods. 
+
+So far we've looked at how normalization might affect the ability to accurately detect environmental gradient effects on taxon abundance. Now let's use the same approach to see how the normalization affects our ability to detect experimental conditions. Model.Microbiome also calculates the variance explained by the experimental condition on each taxon:
+
+```{r}
+plot(model$model$SpeciesMeta$prevalence,model$raw$lmRatiotab.model, col=gray(model$model$SpeciesMeta$M.Eval), 
+  main="Raw; ratio-Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+
+plot(model$model$SpeciesMeta$prevalence,model$QSeq3$lmRatiotab.model, col=gray(model$model$SpeciesMeta$M.Eval), 
+  main="QSeq3; ratio-Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+```
+
+```{r}
+levenetest2<-data.frame("ratio"=c(model$raw$lmRatiotab.model, model$QSeq3$lmRatiotab.model), "method"=c(rep("raw", length(model$raw$lmRatiotab.model)), rep("QSeq", length(model$QSeq3$lmRatiotab.model))))
+
+car::leveneTest(ratio ~ method, data = levenetest2)
+```
+We can see that in this case, there is a weaker effect of normalization on the dispersion of the ratio from 1. It is interesting to note though that non-normalized data again seems much more likely to over-estimate the significance of the experimental design on the taxa than the normalized data.
+
+
+Thus far we have looked at the effect of normalization on detecting important relationships between taxa and the modeled environment. Now let's look at how relationships among taxa are affected by normalization (or lack therof). We will be conducting a network analysis for this section.
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+We take a similar approach for PERMANOVA metrics: we use a ratio of the permanova F value, or R-squared (both give relevant information), of the normalized dataset to the reference. We interpret therefore a value greater than one meaning the data is over-fit; and a value of less than one to mean that information has been lost. Model.Mocrobiome has a function that extracts the relevant PERMANOVA data and displays in a table:
+
+```{r}
+Summarize.PERMANOVA.Rratio(model, method) # needs work !!
+```
+We can see that ...
+
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
 
 ```{r}
 
@@ -222,28 +352,327 @@ You may notice that certain taxa have lost information ... [fill in the details 
 
 This software also has a wrapper that allows us to iterate the function and produce many copies of the simulation. This has all the same inputs as before, plus one aditional input to tell the function how many times to iterate. In this case we'll do 10
 ```{r}
-model10<-BENCHMARK.MM(reps=10, commonN=30, groupN=20, singleN=5, D=500, V=250, method)
+model10<-suppressWarnings(BENCHMARK.MM(reps=10, commonN=30, groupN=20, singleN=5, D=500, V=250, method))
 ```
-model10 is now a list object with 10 items, each one as a replicated simulation. This is the basis for us to be able to extract performance metrics and do statistical analyses to compare different normalization methods.
+model10 is now a list object with 10 items, each one as a replicated simulation. This is the basis for us to be able to extract performance metrics and do statistical analyses to compare different normalization methods. 
+
+So now that we have the basic data structures and functionalities, let's look at some analyses that are possible when we can automate community generation.
+
+
+We first extract the LII indicator with the function Summarize.LII(), then we melt the dataframe and do a statistical test on it:
+```{r}
+model10.LIIsummary<-Summarize.LII(model10, method)
+model10.LIIsummary<-melt(model10.LIIsummary, value.name = "Value")
+
+summary(aov(Value~Var2 +Error(Var1/Var2), data=model10.LIIsummary)) # blocks of method are nested within each run
+TukeyHSD(aov(Value~Var2, data=model10.LIIsummary)) # ignoring the blocks bc TukeyHSD can't handle them. Still tells us which is most significant
+plot(TukeyHSD(aov(Value~Var2, data=model10.LIIsummary))) # visual of confidence intervals
+
+```
+Clearly, the worst performing method is QSeq0.5. This is likely because it effectively leads to undersampling by rounding low count values to zero. Ideally we should choose a threshold value for this method that is sufficiently high enough that all sequences that pass QC in our pipeline are included in the sampling, and not rounded to 0 in any sample.
+
+But wait, there's more. Let's say that we want to understand how the effect size of geographic structure within a community interacts with the performance of our normalization technique (or in the case of experimental design, what are the direct assemply effects of the treatment). Model.Microbiome gives us the power to vary the geographic structure/direct effects of the treatment on the community by determining the proportion of each sample that explicitly is determined by the grouping function:
+```{r}
+model10.A<-suppressWarnings(BENCHMARK.MM(reps=10, commonN=53, groupN=1, singleN=1, D=500, V=250, method)) # essentially no filtration by group
+
+model10.B<-suppressWarnings(BENCHMARK.MM(reps=10, commonN=35, groupN=15, singleN=5, D=500, V=250, method)) # ~27% filtration by the group
+
+model10.C<-suppressWarnings(BENCHMARK.MM(reps=10, commonN=20, groupN=20, singleN=15, D=500, V=250, method)) # ~36% filtration by the group
+
+model10.D<-suppressWarnings(BENCHMARK.MM(reps=10, commonN=10, groupN=30, singleN=15, D=500, V=250, method)) # ~55% filtration by the group
+```
+
+First, let's look at how the structure of the data might interact with our normalization strategy to influence how well information is retained. For this we will extract the LII value. As a reminder, LII correlates each taxon in the normalized dataset against it's abundance in the reference dataset. The index itself is a sum of 1-R-squared; this means that low LII values mean that overall the R-squared of the taxa against their references were close to 1 (or little information was lost). Conversely, higher values indicate that a lot of information was lost.
+```{r}
+method<- c("raw", method) # add raw data to the methods list to extract it too
+
+# extract the LII from each level of sparcity
+SummaryLII.model10.A<-as.data.frame(Summarize.LII(model10.A,method))
+SummaryLII.model10.B<-as.data.frame(Summarize.LII(model10.B, method)) 
+SummaryLII.model10.C<-as.data.frame(Summarize.LII(model10.C, method))
+SummaryLII.model10.D<-as.data.frame(Summarize.LII(model10.D, method))
+
+# prepare data for merging datasets
+SummaryLII.model10.A$Level<-c(rep(1,10))
+SummaryLII.model10.A<-melt(SummaryLII.model10.A, id.vars = "Level", measure.vars = method)
+SummaryLII.model10.B$Level<-c(rep(2,10))
+SummaryLII.model10.B<-melt(SummaryLII.model10.B, id.vars = "Level", measure.vars = method)
+SummaryLII.model10.C$Level<-c(rep(3,10))
+SummaryLII.model10.C<-melt(SummaryLII.model10.C, id.vars = "Level", measure.vars = method)
+SummaryLII.model10.D$Level<-c(rep(4,10))
+SummaryLII.model10.D<-melt(SummaryLII.model10.D, id.vars = "Level", measure.vars = method)
+
+# merge datasets
+model10Levels<-do.call("rbind", list(SummaryLII.model10.A,SummaryLII.model10.B,SummaryLII.model10.C,SummaryLII.model10.D))
+
+# summarize for plotting
+model10Levels.summary<-data_summary2(model10Levels, varname="value", groupnames=c("Level", "variable"))
+
+# plot
+ggplot(model10Levels.summary, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Degree of Structure")+
+  ylab("LII Value (Median +/- min/max)")+
+  theme_classic()
+```
+Here we can see clearly that the degree of structure in the dataset interacts with the normalization method to affect it's accuracy. In all cases the QSeq normaliation method out performs
+And some statistics:
+
+```{r}
+summary(aov(model10Levels.summary$value~model10Levels.summary$Level*model10Levels.summary$variable))
+
+TukeyHSD(aov(model10Levels.summary$value~model10Levels.summary$Level*model10Levels.summary$variable))
+```
+Conclusion: we can see clearly that the degree of structure in the dataset interacts with the normalization method to affect it's accuracy. In all cases the QSeq normaliation method out performs un-normalized data at low structure, but at high levels of structure only QSeq2 and QSeq3 parameters continue to consistently outperform the raw variables. Remeber that LII reports the degradation of R squared and so is a direct measure of lost information. Let's now look at how this results in a loss of environmental signal.
+
+In this case interpretation is a little more challenging, because we are less interested in the mean value, and more interested in the variance of the values. This is because our metric is a ratio of the R-squared (variance explained) of each taxon by the environment to the same measure of the taxon in the reference dataset. This tells us the relative accuracy with which the normalized dataset is predicting the relationship of each taxon to the environment. Ideally the mean value should be 1 (a perfect fit). But it is possible for the mean to be 1, but the deviation to be substantial if it is balanced in the positive and negative direction. In otherwords, if the error in the positive and negative direction are equal in size, then even if there is large error in those directions, the mean value will still be 1 (a perfect fit). Thus we might have a perfect fit of the mean, yet have no taxa that is accurately modeled. To account for this, we put larger emphasis on the variance using a levene's test of equality of variance; but because variances may not be equally balanced in the positive and negative direction we are also still interested in changes in the average value. The two are necessary for accurate interpretation. We find especially for this analysis that outliers unduely affect the mean, so we prefer median for understanding the most common effect
+
+```{r}
+Summarize.lmRatiotab.Median<-function(trt, method){
+  Ftab<-matrix(NA, nrow = length(trt), ncol = length(method)) # make matrix
+  for(i in 1:length(trt)){
+    for(j in 1:length(method)){
+      Ftab[i,j]<-median(trt[[i]][[method[j]]]$lmRatiotab, na.rm=T)
+    #print(sum(trt[[i]][j]$PERMANOVA$aov.tab$F.Model))
+  }
+}
+  rownames(Ftab)<-names(trt)
+  colnames(Ftab)<-method
+  Ftab
+}
+
+Summarize.lmRatiotab.Var<-function(trt, method){
+  Ftab<-matrix(NA, nrow = length(trt), ncol = length(method)) # make matrix
+  for(i in 1:length(trt)){
+    for(j in 1:length(method)){
+      Ftab[i,j]<-var(trt[[i]][[method[j]]]$lmRatiotab, na.rm=T)
+    #print(sum(trt[[i]][j]$PERMANOVA$aov.tab$F.Model))
+  }
+}
+  rownames(Ftab)<-names(trt)
+  colnames(Ftab)<-method
+  Ftab
+}
+
+Summarize.lmRatiotab.Var(model10.A, method)
+
+
+
+SM.lmRatio.model10.A<-as.data.frame(Summarize.lmRatiotab.Median(model10.A,method))
+SV.lmRatio.model10.A<-as.data.frame(Summarize.lmRatiotab.Var(model10.A,method))
+SM.lmRatio.model10.B<-as.data.frame(Summarize.lmRatiotab.Median(model10.B,method))
+SV.lmRatio.model10.B<-as.data.frame(Summarize.lmRatiotab.Var(model10.B,method))
+SM.lmRatio.model10.C<-as.data.frame(Summarize.lmRatiotab.Median(model10.C,method))
+SV.lmRatio.model10.C<-as.data.frame(Summarize.lmRatiotab.Var(model10.C,method))
+SM.lmRatio.model10.D<-as.data.frame(Summarize.lmRatiotab.Median(model10.D,method))
+SV.lmRatio.model10.D<-as.data.frame(Summarize.lmRatiotab.Var(model10.D,method))
+
+# prepare data for merging datasets
+
+SM.lmRatio.model10.A$Level<-c(rep(1,10))
+SV.lmRatio.model10.A$Level<-c(rep(1,10))
+SM.lmRatio.model10.B$Level<-c(rep(2,10))
+SV.lmRatio.model10.B$Level<-c(rep(2,10))
+SM.lmRatio.model10.C$Level<-c(rep(3,10))
+SV.lmRatio.model10.C$Level<-c(rep(3,10))
+SM.lmRatio.model10.D$Level<-c(rep(4,10))
+SV.lmRatio.model10.D$Level<-c(rep(4,10))
+
+SM.lmRatio.model10.A<-melt(SM.lmRatio.model10.A, id.vars = "Level", measure.vars = method)
+SV.lmRatio.model10.A<-melt(SV.lmRatio.model10.A, id.vars = "Level", measure.vars = method)
+SM.lmRatio.model10.B<-melt(SM.lmRatio.model10.B, id.vars = "Level", measure.vars = method)
+SV.lmRatio.model10.B<-melt(SV.lmRatio.model10.B, id.vars = "Level", measure.vars = method)
+SM.lmRatio.model10.C<-melt(SM.lmRatio.model10.C, id.vars = "Level", measure.vars = method)
+SV.lmRatio.model10.C<-melt(SV.lmRatio.model10.C, id.vars = "Level", measure.vars = method)
+SM.lmRatio.model10.D<-melt(SM.lmRatio.model10.D, id.vars = "Level", measure.vars = method)
+SV.lmRatio.model10.D<-melt(SV.lmRatio.model10.D, id.vars = "Level", measure.vars = method)
+
+# merge datasets
+SM.lmRatio.model10Levels<-do.call("rbind", list(SM.lmRatio.model10.A,SM.lmRatio.model10.B,SM.lmRatio.model10.C,SM.lmRatio.model10.D))
+SV.lmRatio.model10Levels<-do.call("rbind", list(SV.lmRatio.model10.A,SV.lmRatio.model10.B,SV.lmRatio.model10.C,SV.lmRatio.model10.D))
+
+
+# summarize for plotting
+SM.lmRatio.model10.p<-data_summary2(SM.lmRatio.model10Levels, varname="value", groupnames=c("Level", "variable"))
+SV.lmRatio.model10.p<-data_summary2(SV.lmRatio.model10Levels, varname="value", groupnames=c("Level", "variable"))
+# plot
+ggplot(SM.lmRatio.model10.p, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Degree of Structure")+
+  ylab("Median lmRatio (Median +/- min/max)")+
+  theme_classic()
+
+ggplot(SV.lmRatio.model10.p, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Degree of Structure")+
+  ylab("Variance lmRatio (Median +/- min/max)")+
+  theme_classic()
+```
+... and run statistics to see the effect:
+```{r}
+summary(aov(SM.lmRatio.model10.p$value~SM.lmRatio.model10.p$Level*SM.lmRatio.model10.p$variable))
+
+TukeyHSD(aov(SM.lmRatio.model10.p$value~SM.lmRatio.model10.p$Level*SM.lmRatio.model10.p$variable))
+
+summary(aov(SV.lmRatio.model10.p$value~SV.lmRatio.model10.p$Level*SV.lmRatio.model10.p$variable))
+
+TukeyHSD(aov(SV.lmRatio.model10.p$value~SV.lmRatio.model10.p$Level*SV.lmRatio.model10.p$variable))
+
+
+```
+Conclusion: there is an interaction between the normalization method and the internal structure of the community on our ability to accurately describe the relationship between taxa and the environmental gradients. According to this analysis we should prefer either QSeq2 or QSeq3 [check this later!!! (add in QSeq4)]
+
+What about our ability to detect the experimental design? Following the same methodology:
+
+```{r}
+Summarize.lmRatiotabModel.Median<-function(trt, method){
+  Ftab<-matrix(NA, nrow = length(trt), ncol = length(method)) # make matrix
+  for(i in 1:length(trt)){
+    for(j in 1:length(method)){
+      Ftab[i,j]<-median(trt[[i]][[method[j]]]$lmRatiotab.model, na.rm=T)
+    #print(sum(trt[[i]][j]$PERMANOVA$aov.tab$F.Model))
+  }
+}
+  rownames(Ftab)<-names(trt)
+  colnames(Ftab)<-method
+  Ftab
+}
+
+Summarize.lmRatiotabModel.Var<-function(trt, method){
+  Ftab<-matrix(NA, nrow = length(trt), ncol = length(method)) # make matrix
+  for(i in 1:length(trt)){
+    for(j in 1:length(method)){
+      Ftab[i,j]<-var(trt[[i]][[method[j]]]$lmRatiotab.model, na.rm=T)
+    #print(sum(trt[[i]][j]$PERMANOVA$aov.tab$F.Model))
+  }
+}
+  rownames(Ftab)<-names(trt)
+  colnames(Ftab)<-method
+  Ftab
+}
+
+
+SM.lmRatioM.model10.A<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.A,method))
+SV.lmRatioM.model10.A<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.A,method))
+SM.lmRatioM.model10.B<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.B,method))
+SV.lmRatioM.model10.B<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.B,method))
+SM.lmRatioM.model10.C<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C,method))
+SV.lmRatioM.model10.C<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C,method))
+SM.lmRatioM.model10.D<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.D,method))
+SV.lmRatioM.model10.D<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.D,method))
+
+# prepare data for merging datasets
+
+SM.lmRatioM.model10.A$Level<-c(rep(1,10))
+SV.lmRatioM.model10.A$Level<-c(rep(1,10))
+SM.lmRatioM.model10.B$Level<-c(rep(2,10))
+SV.lmRatioM.model10.B$Level<-c(rep(2,10))
+SM.lmRatioM.model10.C$Level<-c(rep(3,10))
+SV.lmRatioM.model10.C$Level<-c(rep(3,10))
+SM.lmRatioM.model10.D$Level<-c(rep(4,10))
+SV.lmRatioM.model10.D$Level<-c(rep(4,10))
+
+SM.lmRatioM.model10.A<-melt(SM.lmRatioM.model10.A, id.vars = "Level", measure.vars = method)
+SV.lmRatioM.model10.A<-melt(SV.lmRatioM.model10.A, id.vars = "Level", measure.vars = method)
+SM.lmRatioM.model10.B<-melt(SM.lmRatioM.model10.B, id.vars = "Level", measure.vars = method)
+SV.lmRatioM.model10.B<-melt(SV.lmRatioM.model10.B, id.vars = "Level", measure.vars = method)
+SM.lmRatioM.model10.C<-melt(SM.lmRatioM.model10.C, id.vars = "Level", measure.vars = method)
+SV.lmRatioM.model10.C<-melt(SV.lmRatioM.model10.C, id.vars = "Level", measure.vars = method)
+SM.lmRatioM.model10.D<-melt(SM.lmRatioM.model10.D, id.vars = "Level", measure.vars = method)
+SV.lmRatioM.model10.D<-melt(SV.lmRatioM.model10.D, id.vars = "Level", measure.vars = method)
+
+# merge datasets
+SM.lmRatioM.model10Levels<-do.call("rbind", list(SM.lmRatioM.model10.A,SM.lmRatioM.model10.B,SM.lmRatioM.model10.C,SM.lmRatioM.model10.D))
+SV.lmRatioM.model10Levels<-do.call("rbind", list(SV.lmRatioM.model10.A,SV.lmRatioM.model10.B,SV.lmRatioM.model10.C,SV.lmRatioM.model10.D))
+
+
+# summarize for plotting
+SM.lmRatioM.model10.p<-data_summary2(SM.lmRatioM.model10Levels, varname="value", groupnames=c("Level", "variable"))
+SV.lmRatioM.model10.p<-data_summary2(SV.lmRatioM.model10Levels, varname="value", groupnames=c("Level", "variable"))
+# plot
+ggplot(SM.lmRatioM.model10.p, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Degree of Structure")+
+  ylab("Median lmRatio.model (Median +/- min/max)")+
+  theme_classic()
+
+ggplot(SV.lmRatioM.model10.p, aes(x=Level, y=log(value), group = variable, color=variable))+
+  geom_errorbar(aes(ymin=log(low), ymax=log(high)), width=.1, position=position_dodge(.3)) +
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Degree of Structure")+
+  ylab("Variance lmRatio.model (Median +/- min/max)")+
+  theme_classic()
+
+```
+
+And again we do the stats:
+
+```{r}
+summary(aov(SM.lmRatioM.model10.p$value~SM.lmRatioM.model10.p$Level*SM.lmRatioM.model10.p$variable))
+
+TukeyHSD(aov(SM.lmRatioM.model10.p$value~SM.lmRatioM.model10.p$Level*SM.lmRatioM.model10.p$variable))
+
+summary(aov(SV.lmRatioM.model10.p$value~SV.lmRatioM.model10.p$Level*SV.lmRatioM.model10.p$variable))
+
+TukeyHSD(aov(SV.lmRatioM.model10.p$value~SV.lmRatioM.model10.p$Level*SV.lmRatioM.model10.p$variable))
+
+```
+An emerging pattern that we see here is that raw data without any processing performs much worst when there is less structure and environmental variables can act more as a filter. Also, in our normalization method QSeq, higher sampling variables that don't omit low abundance taxa perform better. Higher abundance will continue to perform even better.
+
+
+
+
+
+
+
+But wait, there's more! Let's say we want to know the effect of undersampling interacts with our normalization protocol to affect our ability to detect relationships between taxa and the environment. We can vary the sequencing depth:
+```{r}
+method<-c("QSeq0.5", "QSeq1", "QSeq2", "QSeq3", "QSeq4")
+model10.C1<-BENCHMARK.MM(reps=10, commonN=20, groupN=20, singleN=15, D=100, V=50, method)
+
+model10.C2<-BENCHMARK.MM(reps=10, commonN=20, groupN=20, singleN=15, D=200, V=100, method)
+
+model10.C3<-BENCHMARK.MM(reps=10, commonN=20, groupN=20, singleN=15, D=500, V=250, method)
+
+model10.C4<-BENCHMARK.MM(reps=10, commonN=20, groupN=20, singleN=15, D=1000, V=500, method)
+
+model10.C5<-BENCHMARK.MM(reps=10, commonN=20, groupN=20, singleN=15, D=2000, V=1000, method)
+
+```
+
+
+Just like in the example about sparsity, we can look at the effect on sequencing depth on infering the relationship of species abundance to environmental gradients:
 ```{r}
 
 ```
 
+
+Okay, at this point you may be wondering what the little network outputs have been about. Thus far we have looked at the effect of normalization on detecting important relationships between taxa and the modeled environment. Now let's look at how relationships among taxa are affected by normalization (or lack therof). We will be conducting a network analysis for this section. In the following section, each taxon is represented by a vertice, and relationships between taxa are represented as edges. To construct a network, we typically correlate taxa, then choose a threshold for netowrk construction. Taxa that have a high enough correlation coefficient are connected with an edge, and those falling below the threshold are not connected. We are generally interested in 3 network metrics:
+
+In this analysis, a network is constructed using two methods: one has a preset correlation coefficient that determines which taxa are included (is called "static"); the other includes a dynamic threshold to reach a certain present number of edges (called "dynamic"). A common statistic that is used in network theory, but that also is interpretable in ecology is modularity. This is a measure of internal structure of the community. We can use the modules to interpret functional groups, identify covarying taxa, and potentially hypothesize functional relationships among organisms. However, measures of modularity are very sensitive to the number of edges and the number of vertices in a network. In our experiment, all of the networks have the same number of vertices because they come from the same community. But normalization may affect the strength of the relatioships among taxa, so it might affect the number of edges. The dynamic method is designed to ensure that the number of edges is the same across all networks constructed. To do this, the threshold for inclusion is varied. So for interpretation, we need to look at both the modularity, and the threshold level. Even if the modularity is the same, if the threshold from one normalization is much lower than another, it means that this method reduces the strength of the relatioships. The static method includes all relationships that meet a certain threshold. This can give a clear indication also of how well relationships are preserved through the normalization process.
+
+Let's look at an example of this in practice. 
+```{r}
+
+```
+Here we can see clearly that the degree of structure in the dataset interacts with the normalization method to affect it's accuracy. In all cases the QSeq normaliation method out performs
+And some statistics:
+
 ```{r}
 
 ```
 
-```{r}
 
-```
-
-```{r}
-
-```
-
-```{r}
-
-```
+[FOR PAPER 2]/ development
 ```{r}
 # new functions for more flexible use ####
 #raw<-function(ps){ps}
@@ -743,4 +1172,19 @@ ConnStat(trt$rep1$model$comm, num=200)
 ConnStat(trt$rep1$model$comm, num=250)
 ConnStat(trt$rep1$model$comm, num=350)
 ConnStat(trt$rep1$model$comm, num=450)
+
+
+Mean<-c(1,3,10,30,60,15,34,30,10,55,35,60,1,3,10,15,3,15,5,5,5,5,5,5,50,50,50,50,50,50)
+Var<-c(0.5,1,4,10,20,5,10,10,3,10,1,20,0.5,1,3,3,1,5,1,1,1,1,1,1,20,20,20,20,20,20)
+ymin<-Mean-Var
+ymax<-Mean+Var
+Factor.Label<-c(rep("Factor 1", 6), rep("Factor 2", 6), rep("Factor 3", 6), rep("Factor 4", 6), rep("Factor 5", 6))
+Group.label<-c(rep(c("Group 1", "Group 2", "Group 3", "Group 4", "Group 5", "Group 6"), 5))
+
+df.envplot<-data.frame(Group.label, Factor.Label, Mean, Var, ymin, ymax)
+
+ggplot(df.envplot, aes(x=Group.label, y=Mean,group=Factor.Label, colour=Factor.Label))+ geom_point() + geom_line()+geom_errorbar(aes(ymin=ymin, ymax=ymax), linetype=2, alpha=0.9, position=position_dodge(0.1))+theme_classic()
+
+
+
 ```

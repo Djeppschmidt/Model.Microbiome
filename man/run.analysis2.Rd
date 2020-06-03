@@ -5,8 +5,6 @@
 \title{workhorse function for BENCHMARK.MM}
 \usage{
 run.analysis2(commonN, groupN, singleN, D, V, method)
-
-run.analysis2(commonN, groupN, singleN, D, V, method)
 }
 \arguments{
 \item{commonN}{number of common species}
@@ -19,17 +17,12 @@ run.analysis2(commonN, groupN, singleN, D, V, method)
 
 \item{V}{variation in sampling depth}
 
-\item{method}{new normalization function to implement}
+\item{method}{list of function names to be applied as normalization}
 }
 \description{
 workhorse function for BENCHMARK.MM
-
-workhorse function for benchmark.MM version 2 with flexible inputs
 }
 \examples{
-run.analysis2()
-run.analysis()
-workhorse function for benchmark.MM version 2 with flexible inputs
 run.analysis2()
 }
 \keyword{benchmark}
