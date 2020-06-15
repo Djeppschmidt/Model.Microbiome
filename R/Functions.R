@@ -174,7 +174,11 @@ run.analysis2<-function(commonN, groupN, singleN, D, V, method){
 
           output$model$R<-lm.test(output$model$comm)
           output$model$networkStat<-ConnStat(output$model$comm, num=250)
-
+          output$raw$networkStat<-ConnStat(output$raw$comm, num=250)
+          if(output$model$networkStat$taxcor$Var1==output$raw$networkStat$taxcor$Var1 & output$model$networkStat$taxcor$Var2==output$raw$networkStat$taxcor$Var2){
+          tab<-output$model$networkStat$taxcor
+          tab$value<-output$raw$networkStat$taxcor$value/output$model$networkStat$taxcor$value
+          output$raw$taxCor.Ratio<-tab}
       # make expected value
           s<-sample_sums(output$raw$comm)
           s2<-as.data.frame(as.matrix(otu_table(output$model$EV)))
@@ -192,6 +196,7 @@ run.analysis2<-function(commonN, groupN, singleN, D, V, method){
           sample_data(output$raw$comm)<-sample_data(output$model$comm)
           output$model$PERMANOVA<-make.PERMANOVA(output$model$comm)
           output$model$rarecurve<-ggrare(output$model$comm, 50, color="Factor")
+
   print("metadata complete")
 
   # implement each normalization function
@@ -202,7 +207,14 @@ run.analysis2<-function(commonN, groupN, singleN, D, V, method){
         c<-a(b)
         output[[method[i]]]$comm<-c
         output[[method[i]]]$PERMANOVA<-make.PERMANOVA(c)
-        output[[method[i]]]$PERMANOVA$Rratio<-output[[method[i]]]$PERMANOVA$aov.tab$R2/output$model$PERMANOVA$aov.tab$R2
+
+        output[[method[i]]]$PERMANOVA$CategoryRratio<-output[[method[i]]]$PERMANOVA$Category$aov.tab$R2/output$model$PERMANOVA$Category$aov.tab$R2
+        output[[method[i]]]$PERMANOVA$F1Rratio<-output[[method[i]]]$PERMANOVA$F1$aov.tab$R2/output$model$PERMANOVA$F1$aov.tab$R2
+        output[[method[i]]]$PERMANOVA$F2Rratio<-output[[method[i]]]$PERMANOVA$F2$aov.tab$R2/output$model$PERMANOVA$F2$aov.tab$R2
+        output[[method[i]]]$PERMANOVA$F3Rratio<-output[[method[i]]]$PERMANOVA$F3$aov.tab$R2/output$model$PERMANOVA$F3$aov.tab$R2
+        output[[method[i]]]$PERMANOVA$F4Rratio<-output[[method[i]]]$PERMANOVA$F4$aov.tab$R2/output$model$PERMANOVA$F4$aov.tab$R2
+        output[[method[i]]]$PERMANOVA$F5Rratio<-output[[method[i]]]$PERMANOVA$F5$aov.tab$R2/output$model$PERMANOVA$F5$aov.tab$R2
+
         output[[method[i]]]$LII<-LII(output$model$comm, output[[method[i]]]$comm)
         output[[method[i]]]$networkStat<-ConnStat(output[[method[i]]]$comm, num=250)
 
@@ -210,6 +222,12 @@ run.analysis2<-function(commonN, groupN, singleN, D, V, method){
       }
 # prepare raw metadata for lm analysis and model for lm analysis
       output$raw$PERMANOVA<-make.PERMANOVA(output$raw$comm)
+      output$raw$PERMANOVA$CategoryRratio<-output[[method[i]]]$PERMANOVA$Category$aov.tab$R2/output$model$PERMANOVA$Category$aov.tab$R2
+      output$raw$PERMANOVA$F1Rratio<-output$raw$PERMANOVA$F1$aov.tab$R2/output$model$PERMANOVA$F1$aov.tab$R2
+      output$raw$PERMANOVA$F2Rratio<-output$raw$PERMANOVA$F2$aov.tab$R2/output$model$PERMANOVA$F2$aov.tab$R2
+      output$raw$PERMANOVA$F3Rratio<-output$raw$PERMANOVA$F3$aov.tab$R2/output$model$PERMANOVA$F3$aov.tab$R2
+      output$raw$PERMANOVA$F4Rratio<-output$raw$PERMANOVA$F4$aov.tab$R2/output$model$PERMANOVA$F4$aov.tab$R2
+      output$raw$PERMANOVA$F5Rratio<-output$raw$PERMANOVA$F5$aov.tab$R2/output$model$PERMANOVA$F5$aov.tab$R2
       print("raw permanova complete")
       output$raw$LII<-LII(output$model$comm, output$raw$comm)
       print("raw LII complete")
@@ -234,8 +252,21 @@ run.analysis2<-function(commonN, groupN, singleN, D, V, method){
       # difference in rsquared values (or r values?) from reference:
       if(names(output$model$lmtab)==names(output[[method[i]]]$lmtab)){
       output[[method[i]]]$lmRatiotab<-output[[method[i]]]$lmtab/output$model$lmtab
-      output[[method[i]]]$lmRatiotab.model<-output[[method[i]]]$lmtab.model/output$model$lmtab.model} #ratio of lm of env from normalized data to reference
+      output[[method[i]]]$lmRatiotab.model<-output[[method[i]]]$lmtab.model/output$model$lmtab.model
+
+    } #ratio of lm of env from normalized data to reference
       else{print("Error in Dtab: names do not match")}
+    }
+
+    for (i in 1:length(method)){
+
+      if(output$model$networkStat$taxcor$Var1==output[[method[i]]]$networkStat$taxcor$Var1 & output$model$networkStat$taxcor$Var2==output[[method[i]]]$networkStat$taxcor$Var2){
+      tab<-output$model$networkStat$taxcor
+      tab$value<-output[[method[i]]]$networkStat$taxcor$value/output$model$networkStat$taxcor$value
+      output[[method[i]]]$taxCor.Ratio<-tab
+
+    } #ratio of lm of env from normalized data to reference
+      else{print("Error in taxCor: names do not match")}
     }
 
     output
@@ -243,22 +274,24 @@ run.analysis2<-function(commonN, groupN, singleN, D, V, method){
 
 # needs work!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #' extract and summarize PERMANOVA r-squared values
-#' @param trt output object from BENCHMARK.MM or run.analysis2
+#' @param x output object from BENCHMARK.MM or run.analysis2
 #' @param method list of methods applied
+#' @param ... names of r ratios to extract. can be one of: "CategoryRratio", "F1Rratio", "F2Rratio","F3Rratio", "F4Rratio", "F5Rratio"
 #' @keywords reference community model microbiome
 #' @export
 #' @examples depricated?
 #' Summarize.PERMANOVA.Rratio()
-Summarize.PERMANOVA.Rratio<-function(trt, method){
-  Ftab<-matrix(NA, nrow = length(trt), ncol = length(method))
-  print("reference")
-  for(i in 1:length(trt)){
+Summarize.PERMANOVA.Rratio<-function(x, method, ...){
+  Ftab<-matrix(NA, nrow = length(x), ncol = length(method))
+  #print("reference")
+  for(i in 1:length(x)){
     for(j in 1:length(method)){
-      print(method[j])
-     print(trt[[i]][[method[j]]]$PERMANOVA$Rratio)
-    #print(sum(trt[[i]][j]$PERMANOVA$aov.tab$F.Model))
+     Ftab[i,j]<-x[[i]][[method[j]]]$PERMANOVA[[...]][1]
   }
-}
+  }
+  rownames(Ftab)<-names(x)
+  colnames(Ftab)<-method
+  Ftab
 }
 
 #' create transformed community to relative abundance
@@ -795,8 +828,21 @@ make.PERMANOVA<-function(ps){
   y$F4<-as.numeric(as.character(y$F4))
   y$F5<-as.numeric(as.character(y$F5))
   data.frame(x,y)
-  a<-adonis(x~Factor2+F1+F2+F3+F4+F5, data=y)
-  a
+  Category<-adonis(x~Factor2, data=y)
+  F1<-adonis(x~F1, data=y)
+  F2<-adonis(x~F2, data=y)
+  F3<-adonis(x~F3, data=y)
+  F4<-adonis(x~F4, data=y)
+  F5<-adonis(x~F5, data=y)
+
+  out<-NULL
+  out$Category<-Category
+  out$F1<-F1
+  out$F2<-F2
+  out$F3<-F3
+  out$F4<-F4
+  out$F5<-F5
+  out
 }
 
 #' extract PERMANOVA r2 values from a benchmarked object
@@ -926,6 +972,8 @@ ConnStat<-function(ps, num=250){
   out$Static<-NULL
   out$Static$cfg<-cfg
   out$Static$n<-n
+  out$taxcor<-melt(cor(t(as.data.frame(as.matrix(otu_table(ps))))))
+  out$taxcor$value[is.na(out$taxcor$value)]<-0
   out
 }
 
@@ -939,15 +987,123 @@ ConnStat<-function(ps, num=250){
 getNetPlot<-function(x, method){
   for(i in 1:length(x)){
     for(j in 1:length(method)){
-     plot(trt[[i]][[method[j]]]$networkStat$Dynamic$cfg, as.undirected(trt[[i]][[method[j]]]$networkStat$Dynamic$n), layout=layout_nicely(trt[[i]][[method[j]]]$networkStat$Dynamic$n),
+     plot(x[[i]][[method[j]]]$networkStat$Dynamic$cfg, as.undirected(x[[i]][[method[j]]]$networkStat$Dynamic$n), layout=layout_nicely(x[[i]][[method[j]]]$networkStat$Dynamic$n),
           vertex.label=NA, main=paste("Dynamic", method[j]), vertex.size=10)
-    plot(trt[[i]][[method[j]]]$networkStat$Static$cfg, as.undirected(trt[[i]][[method[j]]]$networkStat$Static$n), layout=layout_nicely(trt[[i]][[method[j]]]$networkStat$Static$n),
+    plot(x[[i]][[method[j]]]$networkStat$Static$cfg, as.undirected(x[[i]][[method[j]]]$networkStat$Static$n), layout=layout_nicely(x[[i]][[method[j]]]$networkStat$Static$n),
                vertex.label=NA, main=paste("Static", method[j]), vertex.size=10)
 
 }
 }
 }
 
+
+#' Summarize output from lm ratio index for median (environment)
+#' @param x output object from BENCHMARK.MM
+#' @param method names of normalization functions as characters. Must be consistent with inputs to BENCHMARK.MM
+#' @keywords network statistics analysis plot
+#' @export
+#' @examples
+#' Summarize.lmRatiotabModel.Median()
+Summarize.lmRatiotabModel.Median<-function(x, method){
+  Ftab<-matrix(NA, nrow = length(x), ncol = length(method)) # make matrix
+  for(i in 1:length(x)){
+    for(j in 1:length(method)){
+      Ftab[i,j]<-median(x[[i]][[method[j]]]$lmRatiotab.model, na.rm=T)
+    #print(sum(trt[[i]][j]$PERMANOVA$aov.tab$F.Model))
+  }
+}
+  rownames(Ftab)<-names(x)
+  colnames(Ftab)<-method
+  Ftab
+}
+
+#' Summarize output from lm ratio index for variance (environment)
+#' @param x output object from BENCHMARK.MM
+#' @param method names of normalization functions as characters. Must be consistent with inputs to BENCHMARK.MM
+#' @keywords network statistics analysis plot
+#' @export
+#' @examples
+#' Summarize.lmRatiotabModel.Var()
+Summarize.lmRatiotabModel.Var<-function(x, method){
+  Ftab<-matrix(NA, nrow = length(x), ncol = length(method)) # make matrix
+  for(i in 1:length(x)){
+    for(j in 1:length(method)){
+      Ftab[i,j]<-var(x[[i]][[method[j]]]$lmRatiotab.model, na.rm=T)
+    #print(sum(trt[[i]][j]$PERMANOVA$aov.tab$F.Model))
+  }
+}
+  rownames(Ftab)<-names(x)
+  colnames(Ftab)<-method
+  Ftab
+}
+
+#' Summarize output from lm ratio index for median (categorical)
+#' @param x output object from BENCHMARK.MM
+#' @param method names of normalization functions as characters. Must be consistent with inputs to BENCHMARK.MM
+#' @keywords network statistics analysis plot
+#' @export
+#' @examples
+#' Summarize.lmRatiotabModel.Median()
+Summarize.lmRatiotab.Median<-function(x, method){
+  Ftab<-matrix(NA, nrow = length(x), ncol = length(method)) # make matrix
+  for(i in 1:length(x)){
+    for(j in 1:length(method)){
+      Ftab[i,j]<-median(x[[i]][[method[j]]]$lmRatiotab, na.rm=T)
+    #print(sum(trt[[i]][j]$PERMANOVA$aov.tab$F.Model))
+  }
+}
+  rownames(Ftab)<-names(x)
+  colnames(Ftab)<-method
+  Ftab
+}
+
+#' extract output from taxa correlation ratio in a table form
+#' @param x output object from BENCHMARK.MM
+#' @param method names of normalization functions as characters. Must be consistent with inputs to BENCHMARK.MM
+#' @keywords network statistics analysis plot
+#' @export
+#' @examples
+#' getTaxCor.Tab()
+getTaxCor.Tab<-function(x, method){
+  V.tax<-matrix(nrow=length(x), ncol=length(method))
+  Median.tax<-matrix(nrow=length(x), ncol=length(method))
+  for(i in 1:length(x)){
+    for(j in 1:length(method)){
+      v<-x[[i]][[method[j]]]$taxCor.Ratio$value
+      V.tax[i,j]<-var(v)
+      Median.tax[i,j]<-median(v)
+      }
+  }
+  rownames(V.tax)<-paste("rep", 1:length(x))
+  rownames(Median.tax)<-paste("rep", 1:length(x))
+  colnames(V.tax)<-method
+  colnames(Median.tax)<-method
+  out<-NULL
+  out$V.tax<-V.tax
+  out$Median.tax<-Median.tax
+  out
+}
+
+
+#' Summarize output from lm ratio index for variance (categorical)
+#' @param x output object from BENCHMARK.MM
+#' @param method names of normalization functions as characters. Must be consistent with inputs to BENCHMARK.MM
+#' @keywords network statistics analysis plot
+#' @export
+#' @examples
+#' Summarize.lmRatiotabModel.Median()
+Summarize.lmRatiotab.Var<-function(x, method){
+  Ftab<-matrix(NA, nrow = length(x), ncol = length(method)) # make matrix
+  for(i in 1:length(x)){
+    for(j in 1:length(method)){
+      Ftab[i,j]<-var(trt[[i]][[method[j]]]$lmRatiotab, na.rm=T)
+    #print(sum(trt[[i]][j]$PERMANOVA$aov.tab$F.Model))
+  }
+}
+  rownames(Ftab)<-names(x)
+  colnames(Ftab)<-method
+  Ftab
+}
 
 #' extract correlation values between LII and DMI
 #' @param tst product object from benchmark.MM()

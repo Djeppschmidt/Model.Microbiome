@@ -4,12 +4,14 @@
 \alias{Summarize.PERMANOVA.Rratio}
 \title{extract and summarize PERMANOVA r-squared values}
 \usage{
-Summarize.PERMANOVA.Rratio(trt, method)
+Summarize.PERMANOVA.Rratio(x, method, ...)
 }
 \arguments{
-\item{trt}{output object from BENCHMARK.MM or run.analysis2}
+\item{x}{output object from BENCHMARK.MM or run.analysis2}
 
 \item{method}{list of methods applied}
+
+\item{...}{names of r ratios to extract. can be one of: "CategoryRratio", "F1Rratio", "F2Rratio","F3Rratio", "F4Rratio", "F5Rratio"}
 }
 \description{
 extract and summarize PERMANOVA r-squared values
