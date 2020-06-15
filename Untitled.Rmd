@@ -444,16 +444,25 @@ SummaryLII.model10.D<-melt(SummaryLII.model10.D, id.vars = "Level", measure.vars
 model10Levels<-do.call("rbind", list(SummaryLII.model10.A,SummaryLII.model10.B,SummaryLII.model10.C,SummaryLII.model10.D))
 
 # summarize for plotting
-model10Levels.summary<-data_summary2(model10Levels, varname="value", groupnames=c("Level", "variable"))
-
+model10Levels.summary2<-data_summary2(model10Levels, varname="value", groupnames=c("Level", "variable"))
+model10Levels.summary1<-data_summary(model10Levels, varname="value", groupnames=c("Level", "variable"))
 # plot
-ggplot(model10Levels.summary, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(model10Levels.summary2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
   scale_colour_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.3))+
   geom_point(position=position_dodge(.3))+
   xlab("Degree of Structure")+
   ylab("LII Value (Median +/- min/max)")+
+  theme_classic()
+
+ggplot(model10Levels.summary1, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Degree of Structure")+
+  ylab("LII Value (Mean +/- standard dev)")+
   theme_classic()
 ```
 Here we can see clearly that the degree of structure in the dataset interacts with the normalization method to affect it's accuracy. In all cases the QSeq normaliation method out performs
@@ -536,12 +545,33 @@ SV.lmRatio.model10Levels<-do.call("rbind", list(SV.lmRatio.model10.A,SV.lmRatio.
 
 
 # summarize for plotting
-SM.lmRatio.model10.p<-data_summary2(SM.lmRatio.model10Levels, varname="value", groupnames=c("Level", "variable"))
-SV.lmRatio.model10.p<-data_summary2(SV.lmRatio.model10Levels, varname="value", groupnames=c("Level", "variable"))
+SM.lmRatio.model10.p1<-data_summary(SM.lmRatio.model10Levels, varname="value", groupnames=c("Level", "variable"))
+SV.lmRatio.model10.p1<-data_summary(SV.lmRatio.model10Levels, varname="value", groupnames=c("Level", "variable"))
 # plot
+SM.lmRatio.model10.p2<-data_summary2(SM.lmRatio.model10Levels, varname="value", groupnames=c("Level", "variable"))
+SV.lmRatio.model10.p2<-data_summary2(SV.lmRatio.model10Levels, varname="value", groupnames=c("Level", "variable"))
+# plot
+ggplot(SM.lmRatio.model10.p1, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Degree of Structure")+
+  ylab("Mean lmRatio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(SV.lmRatio.model10.p1, aes(x=Level, y=value, group = variable, color=variable))+scale_colour_viridis_d(direction=-1)+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Degree of Structure")+
+  ylab("Variance lmRatio (Mean +/- sd)")+
+  theme_classic()
+
+
 ggplot(SM.lmRatio.model10.p, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
-  scale_colour_viridis_d()+
+  scale_colour_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.3))+
   geom_point(position=position_dodge(.3))+
   xlab("Degree of Structure")+
@@ -553,8 +583,10 @@ ggplot(SV.lmRatio.model10.p, aes(x=Level, y=log(value), group = variable, color=
   geom_line(position=position_dodge(.3))+
   geom_point(position=position_dodge(.3))+
   xlab("Degree of Structure")+
-  ylab("Variance lmRatio (Median +/- min/max)")+
+  ylab("log Variance lmRatio (Median +/- min/max)")+
   theme_classic()
+
+
 ```
 ... and run statistics to see the effect:
 ```{r}
@@ -635,9 +667,30 @@ SV.lmRatioM.model10Levels<-do.call("rbind", list(SV.lmRatioM.model10.A,SV.lmRati
 
 
 # summarize for plotting
-SM.lmRatioM.model10.p<-data_summary2(SM.lmRatioM.model10Levels, varname="value", groupnames=c("Level", "variable"))
-SV.lmRatioM.model10.p<-data_summary2(SV.lmRatioM.model10Levels, varname="value", groupnames=c("Level", "variable"))
+
+SM.lmRatioM.model10.p1<-data_summary(SM.lmRatioM.model10Levels, varname="value", groupnames=c("Level", "variable"))
+SV.lmRatioM.model10.p1<-data_summary(SV.lmRatioM.model10Levels, varname="value", groupnames=c("Level", "variable"))
+SM.lmRatioM.model10.p2<-data_summary2(SM.lmRatioM.model10Levels, varname="value", groupnames=c("Level", "variable"))
+SV.lmRatioM.model10.p2<-data_summary2(SV.lmRatioM.model10Levels, varname="value", groupnames=c("Level", "variable"))
 # plot
+ggplot(SM.lmRatioM.model10.p1, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  scale_colour_viridis_d()+
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Degree of Structure")+
+  ylab("Median lmRatio.model (Median +/- min/max)")+
+  theme_classic()
+
+ggplot(SV.lmRatioM.model10.p1, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Degree of Structure")+
+  ylab("Variance lmRatio.model (Median +/- min/max)")+
+  
+  theme_classic()
 ggplot(SM.lmRatioM.model10.p, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
   scale_colour_viridis_d()+
@@ -718,10 +771,30 @@ M.TaxRatio.model10Levels<-do.call("rbind", list(M.TaxRatio.model10.A,M.TaxRatio.
 
 
 # summarize for plotting
-V.TaxRatio.model10.p<-data_summary2(V.TaxRatio.model10Levels, varname="value", groupnames=c("Level", "Var2"))
-M.TaxRatio.model10.p<-data_summary2(M.TaxRatio.model10Levels, varname="value", groupnames=c("Level", "Var2"))
+V.TaxRatio.model10.p1<-data_summary(V.TaxRatio.model10Levels, varname="value", groupnames=c("Level", "Var2"))
+M.TaxRatio.model10.p1<-data_summary(M.TaxRatio.model10Levels, varname="value", groupnames=c("Level", "Var2"))
+V.TaxRatio.model10.p2<-data_summary2(V.TaxRatio.model10Levels, varname="value", groupnames=c("Level", "Var2"))
+M.TaxRatio.model10.p2<-data_summary2(M.TaxRatio.model10Levels, varname="value", groupnames=c("Level", "Var2"))
 # plot
-ggplot(V.TaxRatio.model10.p, aes(x=Level, y=log10(value), group = Var2, color=Var2))+
+ggplot(V.TaxRatio.model10.p1, aes(x=Level, y=value, group = Var2, color=Var2))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  scale_color_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Degree of Structure")+
+  ylab("Variance taxRatio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(M.TaxRatio.model10.p1, aes(x=Level, y=value, group = Var2, color=Var2))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  scale_color_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Degree of Structure")+
+  ylab("Mean taxRatio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(V.TaxRatio.model10.p2, aes(x=Level, y=log10(value), group = Var2, color=Var2))+
   geom_errorbar(aes(ymin=log10(low), ymax=log10(high)), width=.1, position=position_dodge(.3)) +
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.3))+
@@ -730,7 +803,7 @@ ggplot(V.TaxRatio.model10.p, aes(x=Level, y=log10(value), group = Var2, color=Va
   ylab("Variance taxRatio (Median +/- min/max)")+
   theme_classic()
 
-ggplot(M.TaxRatio.model10.p, aes(x=Level, y=value, group = Var2, color=Var2))+
+ggplot(M.TaxRatio.model10.p2, aes(x=Level, y=value, group = Var2, color=Var2))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.3))+
@@ -758,51 +831,66 @@ The TukeyHSD confirms that differences in median value are primarily driven by Q
 Now let's look at a common community level statistic.
 ```{r}
 # get permanova geography ####
-model10A_ptab<-Summarize.Ptable(model10.A,method2)
-model10B_ptab<-Summarize.Ptable(model10.B,method2)
-model10C_ptab<-Summarize.Ptable(model10.C,method2)
-model10D_ptab<-Summarize.Ptable(model10.D,method2)
-
-ext.p<-function(x, level, method){
-  a<-as.data.frame(x)
-  a$Level<-c(rep(level, 10))
-  b<-melt(a, id.vars = "Level", measure.vars = method)
-  b
-}
-model10A.Permanova.model<-Summarize.PERMANOVA.Rratio(model10A_ptab$model, method2, )
-
-model10A.Permanova.model<-Summarize.PERMANOVA.Rratio(model10.A,method2, "CategoryRratio")
-model10A.Permanova.env1<-Summarize.PERMANOVA.Rratio(model10.A, method2, "F1Rratio")
-model10A.Permanova.env2<-Summarize.PERMANOVA.Rratio(model10.A, method2, "F2Rratio")
-model10A.Permanova.env3<-Summarize.PERMANOVA.Rratio(model10.A, method2, "F3Rratio")
-model10A.Permanova.env4<-Summarize.PERMANOVA.Rratio(model10.A, method2, "F4Rratio")
-model10A.Permanova.env5<-Summarize.PERMANOVA.Rratio(model10.A,method2, "F5Rratio")
 
 
-model10B.Permanova.model<-Summarize.PERMANOVA.Rratio(model10.B, method2, "CategoryRratio")
-model10B.Permanova.env1<-Summarize.PERMANOVA.Rratio(model10.B, method2, "F1Rratio")
-model10B.Permanova.env2<-Summarize.PERMANOVA.Rratio(model10.B, method2, "F2Rratio")
-model10B.Permanova.env3<-Summarize.PERMANOVA.Rratio(model10.B, method2, "F3Rratio")
-model10B.Permanova.env4<-Summarize.PERMANOVA.Rratio(model10.B, method2, "F4Rratio")
-model10B.Permanova.env5<-Summarize.PERMANOVA.Rratio(model10.B, method2, "F5Rratio")
+model10A.Permanova.model<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.A,method2, "CategoryRratio"))
+model10A.Permanova.env1<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "F1Rratio"))
+model10A.Permanova.env2<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "F2Rratio"))
+model10A.Permanova.env3<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "F3Rratio"))
+model10A.Permanova.env4<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "F4Rratio"))
+model10A.Permanova.env5<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.A,method2, "F5Rratio"))
 
 
-model10C.Permanova.model<-Summarize.PERMANOVA.Rratio(model10.C, method2, "CategoryRratio")
-model10C.Permanova.env1<-Summarize.PERMANOVA.Rratio(model10.C, method2, "F1Rratio")
-model10C.Permanova.env2<-Summarize.PERMANOVA.Rratio(model10.C, method2, "F2Rratio")
-model10C.Permanova.env3<-Summarize.PERMANOVA.Rratio(model10.C, method2, "F3Rratio")
-model10C.Permanova.env4<-Summarize.PERMANOVA.Rratio(model10.C, method2, "F4Rratio")
-model10C.Permanova.env5<-Summarize.PERMANOVA.Rratio(model10.C, method2, "F5Rratio")
+model10B.Permanova.model<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.B, method2, "CategoryRratio"))
+model10B.Permanova.env1<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.B, method2, "F1Rratio"))
+model10B.Permanova.env2<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.B, method2, "F2Rratio"))
+model10B.Permanova.env3<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.B, method2, "F3Rratio"))
+model10B.Permanova.env4<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.B, method2, "F4Rratio"))
+model10B.Permanova.env5<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.B, method2, "F5Rratio"))
 
 
-model10D.Permanova.model<-Summarize.PERMANOVA.Rratio(model10.D, method2, "CategoryRratio")
-model10D.Permanova.env1<-Summarize.PERMANOVA.Rratio(model10.D, method2, "F1Rratio")
-model10D.Permanova.env2<-Summarize.PERMANOVA.Rratio(model10.D, method2, "F2Rratio")
-model10D.Permanova.env3<-Summarize.PERMANOVA.Rratio(model10.D, method2, "F3Rratio")
-model10D.Permanova.env4<-Summarize.PERMANOVA.Rratio(model10.D, method2, "F4Rratio")
-model10D.Permanova.env5<-Summarize.PERMANOVA.Rratio(model10.D, method2, "F5Rratio")
+model10C.Permanova.model<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C, method2, "CategoryRratio"))
+model10C.Permanova.env1<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C, method2, "F1Rratio"))
+model10C.Permanova.env2<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C, method2, "F2Rratio"))
+model10C.Permanova.env3<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C, method2, "F3Rratio"))
+model10C.Permanova.env4<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C, method2, "F4Rratio"))
+model10C.Permanova.env5<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C, method2, "F5Rratio"))
 
 
+model10D.Permanova.model<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.D, method2, "CategoryRratio"))
+model10D.Permanova.env1<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.D, method2, "F1Rratio"))
+model10D.Permanova.env2<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.D, method2, "F2Rratio"))
+model10D.Permanova.env3<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.D, method2, "F3Rratio"))
+model10D.Permanova.env4<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.D, method2, "F4Rratio"))
+model10D.Permanova.env5<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.D, method2, "F5Rratio"))
+
+model10A.Permanova.model$Level<-c(rep(1,10))
+model10A.Permanova.env1$Level<-c(rep(1,10))
+model10A.Permanova.env2$Level<-c(rep(1,10))
+model10A.Permanova.env3$Level<-c(rep(1,10))
+model10A.Permanova.env4$Level<-c(rep(1,10))
+model10A.Permanova.env5$Level<-c(rep(1,10))
+
+model10B.Permanova.model$Level<-c(rep(2,10))
+model10B.Permanova.env1$Level<-c(rep(2,10))
+model10B.Permanova.env2$Level<-c(rep(2,10))
+model10B.Permanova.env3$Level<-c(rep(2,10))
+model10B.Permanova.env4$Level<-c(rep(2,10))
+model10B.Permanova.env5$Level<-c(rep(2,10))
+
+model10C.Permanova.model$Level<-c(rep(3,10))
+model10C.Permanova.env1$Level<-c(rep(3,10))
+model10C.Permanova.env2$Level<-c(rep(3,10))
+model10C.Permanova.env3$Level<-c(rep(3,10))
+model10C.Permanova.env4$Level<-c(rep(3,10))
+model10C.Permanova.env5$Level<-c(rep(3,10))
+
+model10D.Permanova.model$Level<-c(rep(4,10))
+model10D.Permanova.env1$Level<-c(rep(4,10))
+model10D.Permanova.env2$Level<-c(rep(4,10))
+model10D.Permanova.env3$Level<-c(rep(4,10))
+model10D.Permanova.env4$Level<-c(rep(4,10))
+model10D.Permanova.env5$Level<-c(rep(4,10))
 
 permanova.model10Levels.model<-do.call("rbind", list(model10A.Permanova.model,model10B.Permanova.model,model10C.Permanova.model,model10D.Permanova.model))
 permanova.model10Levels.env1<-do.call("rbind", list(model10A.Permanova.env1,model10B.Permanova.env1,model10C.Permanova.env1,model10D.Permanova.env1))
@@ -810,7 +898,13 @@ permanova.model10Levels.env2<-do.call("rbind", list(model10A.Permanova.env2,mode
 permanova.model10Levels.env3<-do.call("rbind", list(model10A.Permanova.env3,model10B.Permanova.env3,model10C.Permanova.env3,model10D.Permanova.env3))
 permanova.model10Levels.env4<-do.call("rbind", list(model10A.Permanova.env4,model10B.Permanova.env4,model10C.Permanova.env4,model10D.Permanova.env4))
 permanova.model10Levels.env5<-do.call("rbind", list(model10A.Permanova.env5,model10B.Permanova.env5,model10C.Permanova.env5,model10D.Permanova.env5))
-permanova.model10Levels.resids<-do.call("rbind", list(model10A.Permanova.resids,model10B.Permanova.resids,model10C.Permanova.resids,model10D.Permanova.resids))
+
+permanova.model10Levels.model<-melt(permanova.model10Levels.model, id.vars = "Level", measure.vars = method2)
+permanova.model10Levels.env1<-melt(permanova.model10Levels.env1, id.vars = "Level", measure.vars = method2)
+permanova.model10Levels.env2<-melt(permanova.model10Levels.env2, id.vars = "Level", measure.vars = method2)
+permanova.model10Levels.env3<-melt(permanova.model10Levels.env3, id.vars = "Level", measure.vars = method2)
+permanova.model10Levels.env4<-melt(permanova.model10Levels.env4, id.vars = "Level", measure.vars = method2)
+permanova.model10Levels.env5<-melt(permanova.model10Levels.env5, id.vars = "Level", measure.vars = method2)
 
 permanova.model10Levels.modelP<-data_summary2(permanova.model10Levels.model, varname="value", groupnames=c("Level", "variable"))
 permanova.model10Levels.env1P<-data_summary2(permanova.model10Levels.env1, varname="value", groupnames=c("Level", "variable"))
@@ -818,7 +912,7 @@ permanova.model10Levels.env2P<-data_summary2(permanova.model10Levels.env2, varna
 permanova.model10Levels.env3P<-data_summary2(permanova.model10Levels.env3, varname="value", groupnames=c("Level", "variable"))
 permanova.model10Levels.env4P<-data_summary2(permanova.model10Levels.env4, varname="value", groupnames=c("Level", "variable"))
 permanova.model10Levels.env5P<-data_summary2(permanova.model10Levels.env5, varname="value", groupnames=c("Level", "variable"))
-permanova.model10Levels.residsP<-data_summary2(permanova.model10Levels.resids, varname="value", groupnames=c("Level", "variable"))
+
 
 ggplot(permanova.model10Levels.modelP, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
@@ -875,17 +969,72 @@ ggplot(permanova.model10Levels.env5P, aes(x=Level, y=value, group = variable, co
   ylab("Permanova env5Ratio (Median +/- min/max)")+
   theme_classic()
 
-ggplot(permanova.model10Levels.residsP, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
+```
+
+```{r}
+permanova.model10Levels.modelP1<-data_summary(permanova.model10Levels.model, varname="value", groupnames=c("Level", "variable"))
+permanova.model10Levels.env1P1<-data_summary(permanova.model10Levels.env1, varname="value", groupnames=c("Level", "variable"))
+permanova.model10Levels.env2P1<-data_summary(permanova.model10Levels.env2, varname="value", groupnames=c("Level", "variable"))
+permanova.model10Levels.env3P1<-data_summary(permanova.model10Levels.env3, varname="value", groupnames=c("Level", "variable"))
+permanova.model10Levels.env4P1<-data_summary(permanova.model10Levels.env4, varname="value", groupnames=c("Level", "variable"))
+permanova.model10Levels.env5P1<-data_summary(permanova.model10Levels.env5, varname="value", groupnames=c("Level", "variable"))
+
+
+ggplot(permanova.model10Levels.modelP1, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
   scale_colour_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.3))+
   geom_point(position=position_dodge(.3))+
   xlab("Degree of Structure")+
-  ylab("Permanova residsRatio (Median +/- min/max)")+
+  ylab("Permanova modelRatio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(permanova.model10Levels.env1P1, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Degree of Structure")+
+  ylab("Permanova env1Ratio (Mean +/- sd)")+
+  theme_classic()
+
+
+ggplot(permanova.model10Levels.env2P1, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Degree of Structure")+
+  ylab("Permanova env2Ratio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(permanova.model10Levels.env3P1, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Degree of Structure")+
+  ylab("Permanova env3Ratio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(permanova.model10Levels.env4P1, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Degree of Structure")+
+  ylab("Permanova env4Ratio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(permanova.model10Levels.env5P1, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Degree of Structure")+
+  ylab("Permanova env5Ratio (Mean +/- sd)")+
   theme_classic()
 ```
-
-
 
 # Normalization vs Sequencing Depth
 Let's say we want to know the effect of undersampling interacts with our normalization protocol to affect our ability to detect relationships between taxa and the environment. We can vary the sequencing depth:
@@ -927,9 +1076,19 @@ SummaryLII.model10.C5<-melt(SummaryLII.model10.C5, id.vars = "Level", measure.va
 model10.SeqLevels<-do.call("rbind", list(SummaryLII.model10.C1,SummaryLII.model10.C2,SummaryLII.model10.C3,SummaryLII.model10.C4,SummaryLII.model10.C5))
 
 # summarize for plotting
-model10.SeqLevels.summary<-data_summary2(model10.SeqLevels, varname="value", groupnames=c("Level", "variable"))
+model10.SeqLevels.summary<-data_summary(model10.SeqLevels, varname="value", groupnames=c("Level", "variable"))
+model10.SeqLevels.summary2<-data_summary2(model10.SeqLevels, varname="value", groupnames=c("Level", "variable"))
 
 # plot
+ggplot(model10.SeqLevels.summary, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.1, position=position_dodge(.3)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Degree of Structure")+
+  ylab("LII Value (Mean +/- sd)")+
+  theme_classic()
+
 ggplot(model10.SeqLevels.summary, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
   scale_colour_viridis_d(direction=-1)+
@@ -986,7 +1145,29 @@ SV.lmRatio.model10.CLevels<-do.call("rbind", list(SV.lmRatio.model10.C1,SV.lmRat
 SM.lmRatio.model10C.p<-data_summary2(SM.lmRatio.model10.CLevels, varname="value", groupnames=c("Level", "variable"))
 SV.lmRatio.model10C.p<-data_summary2(SV.lmRatio.model10.CLevels, varname="value", groupnames=c("Level", "variable"))
 # plot
+
+SM.lmRatio.model10C.p2<-data_summary2(SM.lmRatio.model10.CLevels, varname="value", groupnames=c("Level", "variable"))
+SV.lmRatio.model10C.p2<-data_summary2(SV.lmRatio.model10.CLevels, varname="value", groupnames=c("Level", "variable"))
+# plot
 ggplot(SM.lmRatio.model10C.p, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  scale_color_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Degree of Structure")+
+  ylab("Median lmRatio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(SV.lmRatio.model10C.p, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  scale_color_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Degree of Structure")+
+  ylab("Variance lmRatio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(SM.lmRatio.model10C.p2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.3))+
@@ -995,7 +1176,7 @@ ggplot(SM.lmRatio.model10C.p, aes(x=Level, y=value, group = variable, color=vari
   ylab("Median lmRatio (Median +/- min/max)")+
   theme_classic()
 
-ggplot(SV.lmRatio.model10C.p, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(SV.lmRatio.model10C.p2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.3))+
@@ -1060,9 +1241,29 @@ SV.lmRatioM.model10CLevels<-do.call("rbind", list(SV.lmRatioM.model10.C1,SV.lmRa
 
 
 # summarize for plotting
-SM.lmRatioM.model10C.p<-data_summary2(SM.lmRatioM.model10CLevels, varname="value", groupnames=c("Level", "variable"))
-SV.lmRatioM.model10C.p<-data_summary2(SV.lmRatioM.model10CLevels, varname="value", groupnames=c("Level", "variable"))
+SM.lmRatioM.model10C.p<-data_summary(SM.lmRatioM.model10CLevels, varname="value", groupnames=c("Level", "variable"))
+SV.lmRatioM.model10C.p<-data_summary(SV.lmRatioM.model10CLevels, varname="value", groupnames=c("Level", "variable"))
+SM.lmRatioM.model10C.p2<-data_summary2(SM.lmRatioM.model10CLevels, varname="value", groupnames=c("Level", "variable"))
+SV.lmRatioM.model10C.p2<-data_summary2(SV.lmRatioM.model10CLevels, varname="value", groupnames=c("Level", "variable"))
 # plot
+ggplot(SM.lmRatioM.model10C.p, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(30)) +
+  scale_color_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(30))+
+  geom_point(position=position_dodge(30))+
+  xlab("Sequencing Depth")+
+  ylab("Median lmRatio.model (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(SV.lmRatioM.model10C.p, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(30)) +
+  scale_color_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(30))+
+  geom_point(position=position_dodge(30))+
+  xlab("Sequencing Depth")+
+  ylab("log Variance lmRatio.model (Mean +/- sd)")+
+  theme_classic()
+
 ggplot(SM.lmRatioM.model10C.p, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(30)) +
   scale_color_viridis_d(direction=-1)+
@@ -1146,10 +1347,29 @@ M.TaxRatio.model10Levels<-do.call("rbind", list(M.TaxRatio.model10.C1,M.TaxRatio
 
 
 # summarize for plotting
-V.TaxRatio.model10.Seq.p<-data_summary2(V.TaxRatio.model10Levels, varname="value", groupnames=c("Level", "Var2"))
-M.TaxRatio.model10.Seq.p<-data_summary2(M.TaxRatio.model10Levels, varname="value", groupnames=c("Level", "Var2"))
+V.TaxRatio.model10.Seq.p<-data_summary(V.TaxRatio.model10Levels, varname="value", groupnames=c("Level", "Var2"))
+M.TaxRatio.model10.Seq.p<-data_summary(M.TaxRatio.model10Levels, varname="value", groupnames=c("Level", "Var2"))
+V.TaxRatio.model10.Seq.p2<-data_summary2(V.TaxRatio.model10Levels, varname="value", groupnames=c("Level", "Var2"))
+M.TaxRatio.model10.Seq.p2<-data_summary2(M.TaxRatio.model10Levels, varname="value", groupnames=c("Level", "Var2"))
 # plot
-ggplot(V.TaxRatio.model10.Seq.p, aes(x=Level, y=log10(value), group = Var2, color=Var2))+
+ggplot(V.TaxRatio.model10.Seq.p, aes(x=Level, y=value, group = Var2, color=Var2))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(100)) +
+  scale_color_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(100))+
+  geom_point(position=position_dodge(100))+
+  xlab("Sequencing Depth")+
+  ylab("Variance taxRatio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(M.TaxRatio.model10.Seq.p, aes(x=Level, y=value, group = Var2, color=Var2))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(100)) +
+  scale_color_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(100))+
+  geom_point(position=position_dodge(100))+
+  xlab("Sequencing Depth")+
+  ylab("Median taxRatio (Mean +/- sd)")+
+  theme_classic()
+ggplot(V.TaxRatio.model10.Seq.p2, aes(x=Level, y=log10(value), group = Var2, color=Var2))+
   geom_errorbar(aes(ymin=log10(low), ymax=log10(high)), width=.1, position=position_dodge(100)) +
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(100))+
@@ -1158,7 +1378,7 @@ ggplot(V.TaxRatio.model10.Seq.p, aes(x=Level, y=log10(value), group = Var2, colo
   ylab("log10 Variance taxRatio (Median +/- min/max)")+
   theme_classic()
 
-ggplot(M.TaxRatio.model10.Seq.p, aes(x=Level, y=value, group = Var2, color=Var2))+
+ggplot(M.TaxRatio.model10.Seq.p2, aes(x=Level, y=value, group = Var2, color=Var2))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(100)) +
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(100))+
@@ -1236,13 +1456,85 @@ permanova.seq10Levels.env4<-do.call("rbind", list(model10C1.Permanova.env4,model
 permanova.seq10Levels.env5<-do.call("rbind", list(model10C1.Permanova.env5,model10C2.Permanova.env5,model10C3.Permanova.env5,model10C4.Permanova.env5,model10C5.Permanova.env5))
 permanova.seq10Levels.resids<-do.call("rbind", list(model10C1.Permanova.resids,model10C2.Permanova.resids,model10C3.Permanova.resids,model10C4.Permanova.resids,model10C5.Permanova.resids))
 
-permanova.seq10Levels.modelP<-data_summary2(permanova.seq10Levels.model, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10Levels.env1P<-data_summary2(permanova.seq10Levels.env1, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10Levels.env2P<-data_summary2(permanova.seq10Levels.env2, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10Levels.env3P<-data_summary2(permanova.seq10Levels.env3, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10Levels.env4P<-data_summary2(permanova.seq10Levels.env4, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10Levels.env5P<-data_summary2(permanova.seq10Levels.env5, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10Levels.residsP<-data_summary2(permanova.seq10Levels.resids, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10Levels.modelP<-data_summary(permanova.seq10Levels.model, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10Levels.env1P<-data_summary(permanova.seq10Levels.env1, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10Levels.env2P<-data_summary(permanova.seq10Levels.env2, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10Levels.env3P<-data_summary(permanova.seq10Levels.env3, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10Levels.env4P<-data_summary(permanova.seq10Levels.env4, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10Levels.env5P<-data_summary(permanova.seq10Levels.env5, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10Levels.residsP<-data_summary(permanova.seq10Levels.resids, varname="value", groupnames=c("Level", "variable"))
+
+permanova.seq10Levels.modelP2<-data_summary2(permanova.seq10Levels.model, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10Levels.env1P2<-data_summary2(permanova.seq10Levels.env1, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10Levels.env2P2<-data_summary2(permanova.seq10Levels.env2, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10Levels.env3P2<-data_summary2(permanova.seq10Levels.env3, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10Levels.env4P2<-data_summary2(permanova.seq10Levels.env4, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10Levels.env5P2<-data_summary2(permanova.seq10Levels.env5, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10Levels.residsP2<-data_summary2(permanova.seq10Levels.resids, varname="value", groupnames=c("Level", "variable"))
+
+ggplot(permanova.seq10Levels.modelP, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Sequencing Depth")+
+  ylab("Permanova modelRatio (Median +/- sd)")+
+  theme_classic()
+
+ggplot(permanova.seq10Levels.env1P, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Sequencing Depth")+
+  ylab("Permanova env1Ratio (Mean +/- sd)")+
+  theme_classic()
+
+
+ggplot(permanova.seq10Levels.env2P, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Sequencing Depth")+
+  ylab("Permanova env2Ratio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(permanova.seq10Levels.env3P, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Sequencing Depth")+
+  ylab("Permanova env3Ratio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(permanova.seq10Levels.env4P, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Sequencing Depth")+
+  ylab("Permanova env4Ratio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(permanova.seq10Levels.env5P, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Sequencing Depth")+
+  ylab("Permanova env5Ratio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(permanova.seq10Levels.residsP, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.3))+
+  geom_point(position=position_dodge(.3))+
+  xlab("Sequencing Depth")+
+  ylab("Permanova residsRatio (Mean +/- sd)")+
+  theme_classic()
 
 ggplot(permanova.seq10Levels.modelP, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
@@ -1381,10 +1673,19 @@ SummaryLII.model10.C1V5<-melt(SummaryLII.model10.C1V5, id.vars = "Level", measur
 model10.SeqVarLevels<-do.call("rbind", list(SummaryLII.model10.C1V1,SummaryLII.model10.C1V2,SummaryLII.model10.C1V3,SummaryLII.model10.C1V4,SummaryLII.model10.C1V5))
 
 # summarize for plotting
-model10.SeqVarLevels.summary<-data_summary2(model10.SeqVarLevels, varname="value", groupnames=c("Level", "variable"))
-
+model10.SeqVarLevels.summary<-data_summary(model10.SeqVarLevels, varname="value", groupnames=c("Level", "variable"))
+model10.SeqVarLevels.summary2<-data_summary2(model10.SeqVarLevels, varname="value", groupnames=c("Level", "variable"))
 # plot
 ggplot(model10.SeqVarLevels.summary, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.1)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.1))+
+  geom_point(position=position_dodge(.1))+
+  xlab("Degree of Structure")+
+  ylab("LII Value (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(model10.SeqVarLevels.summary2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.1)) +
   scale_colour_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.1))+
@@ -1392,7 +1693,6 @@ ggplot(model10.SeqVarLevels.summary, aes(x=Level, y=value, group = variable, col
   xlab("Degree of Structure")+
   ylab("LII Value (Median +/- min/max)")+
   theme_classic()
-
 ```
 
 
@@ -1439,10 +1739,29 @@ SV.lmRatio.model10.CVLevels<-do.call("rbind", list(SV.lmRatio.model10.C1V1,SV.lm
 
 
 # summarize for plotting
-SM.lmRatio.model10CV.p<-data_summary2(SM.lmRatio.model10.CVLevels, varname="value", groupnames=c("Level", "variable"))
-SV.lmRatio.model10CV.p<-data_summary2(SV.lmRatio.model10.CVLevels, varname="value", groupnames=c("Level", "variable"))
+SM.lmRatio.model10CV.p<-data_summary(SM.lmRatio.model10.CVLevels, varname="value", groupnames=c("Level", "variable"))
+SV.lmRatio.model10CV.p<-data_summary(SV.lmRatio.model10.CVLevels, varname="value", groupnames=c("Level", "variable"))
+SM.lmRatio.model10CV.p2<-data_summary2(SM.lmRatio.model10.CVLevels, varname="value", groupnames=c("Level", "variable"))
+SV.lmRatio.model10CV.p2<-data_summary2(SV.lmRatio.model10.CVLevels, varname="value", groupnames=c("Level", "variable"))
 # plot
 ggplot(SM.lmRatio.model10CV.p, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.01)) +
+  scale_color_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.01))+
+  geom_point(position=position_dodge(.01))+
+  xlab("Degree of Structure")+
+  ylab("Median lmRatio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(SV.lmRatio.model10CV.p, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.01)) +
+  scale_color_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.01))+
+  geom_point(position=position_dodge(.01))+
+  xlab("Degree of Structure")+
+  ylab("Variance lmRatio (Mean +/- sd)")+
+  theme_classic()
+ggplot(SM.lmRatio.model10CV.p2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.01)) +
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.01))+
@@ -1451,7 +1770,7 @@ ggplot(SM.lmRatio.model10CV.p, aes(x=Level, y=value, group = variable, color=var
   ylab("Median lmRatio (Median +/- min/max)")+
   theme_classic()
 
-ggplot(SV.lmRatio.model10CV.p, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(SV.lmRatio.model10CV.p2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.01)) +
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.01))+
@@ -1460,6 +1779,7 @@ ggplot(SV.lmRatio.model10CV.p, aes(x=Level, y=value, group = variable, color=var
   ylab("Variance lmRatio (Median +/- min/max)")+
   theme_classic()
 ```
+
 ```{r}
 #sequence variants lm model ####
 SM.lmRatio.model10.MC1V1<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C1V1,method2))
@@ -1502,10 +1822,31 @@ SV.lmRatio.model10.MCVLevels<-do.call("rbind", list(SV.lmRatio.model10.MC1V1,SV.
 
 
 # summarize for plotting
-SM.lmRatio.model10MCV.p<-data_summary2(SM.lmRatio.model10.MCVLevels, varname="value", groupnames=c("Level", "variable"))
-SV.lmRatio.model10MCV.p<-data_summary2(SV.lmRatio.model10.MCVLevels, varname="value", groupnames=c("Level", "variable"))
+SM.lmRatio.model10MCV.p<-data_summary(SM.lmRatio.model10.MCVLevels, varname="value", groupnames=c("Level", "variable"))
+SV.lmRatio.model10MCV.p<-data_summary(SV.lmRatio.model10.MCVLevels, varname="value", groupnames=c("Level", "variable"))
+
+SM.lmRatio.model10MCV.p2<-data_summary2(SM.lmRatio.model10.MCVLevels, varname="value", groupnames=c("Level", "variable"))
+SV.lmRatio.model10MCV.p2<-data_summary2(SV.lmRatio.model10.MCVLevels, varname="value", groupnames=c("Level", "variable"))
 # plot
 ggplot(SM.lmRatio.model10MCV.p, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.01)) +
+  scale_color_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.01))+
+  geom_point(position=position_dodge(.01))+
+  xlab("Degree of Structure")+
+  ylab("Median lmRatio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(SV.lmRatio.model10MCV.p, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.01)) +
+  scale_color_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.01))+
+  geom_point(position=position_dodge(.01))+
+  xlab("Degree of Structure")+
+  ylab("Variance lmRatio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(SM.lmRatio.model10MCV.p2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.01)) +
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.01))+
@@ -1514,7 +1855,7 @@ ggplot(SM.lmRatio.model10MCV.p, aes(x=Level, y=value, group = variable, color=va
   ylab("Median lmRatio (Median +/- min/max)")+
   theme_classic()
 
-ggplot(SV.lmRatio.model10MCV.p, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(SV.lmRatio.model10MCV.p2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.01)) +
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.01))+
@@ -1575,11 +1916,33 @@ M.TaxRatio.model10VLevels<-do.call("rbind", list(M.TaxRatio.model10.C1V1,M.TaxRa
 
 
 # summarize for plotting
-V.TaxRatio.model10.SeqV.p<-data_summary2(V.TaxRatio.model10VLevels, varname="value", groupnames=c("Level", "Var2"))
-M.TaxRatio.model10.SeqV.p<-data_summary2(M.TaxRatio.model10VLevels, varname="value", groupnames=c("Level", "Var2"))
+V.TaxRatio.model10.SeqV.p<-data_summary(V.TaxRatio.model10VLevels, varname="value", groupnames=c("Level", "Var2"))
+M.TaxRatio.model10.SeqV.p<-data_summary(M.TaxRatio.model10VLevels, varname="value", groupnames=c("Level", "Var2"))
 # plot
-ggplot(V.TaxRatio.model10.SeqV.p, aes(x=Level, y=log10(value), group = Var2, color=Var2))+
-  geom_errorbar(aes(ymin=log10(low), ymax=log10(high)), width=.1, position=position_dodge(0.1)) +
+
+V.TaxRatio.model10.SeqV.p2<-data_summary2(V.TaxRatio.model10VLevels, varname="value", groupnames=c("Level", "Var2"))
+M.TaxRatio.model10.SeqV.p2<-data_summary2(M.TaxRatio.model10VLevels, varname="value", groupnames=c("Level", "Var2"))
+# plot
+ggplot(V.TaxRatio.model10.SeqV.p, aes(x=Level, y=value, group = Var2, color=Var2))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(0.1)) +
+  scale_color_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(0.1))+
+  geom_point(position=position_dodge(0.1))+
+  xlab("Sequencing Depth")+
+  ylab("log10 Variance taxRatio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(M.TaxRatio.model10.SeqV.p, aes(x=Level, y=value, group = Var2, color=Var2))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(0.1)) +
+  scale_color_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(0.1))+
+  geom_point(position=position_dodge(0.1))+
+  xlab("Sequencing Depth")+
+  ylab("Median taxRatio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(V.TaxRatio.model10.SeqV.p2, aes(x=Level, y=value, group = Var2, color=Var2))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(0.1)) +
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(0.1))+
   geom_point(position=position_dodge(0.1))+
@@ -1587,7 +1950,7 @@ ggplot(V.TaxRatio.model10.SeqV.p, aes(x=Level, y=log10(value), group = Var2, col
   ylab("log10 Variance taxRatio (Median +/- min/max)")+
   theme_classic()
 
-ggplot(M.TaxRatio.model10.SeqV.p, aes(x=Level, y=value, group = Var2, color=Var2))+
+ggplot(M.TaxRatio.model10.SeqV.p2, aes(x=Level, y=value, group = Var2, color=Var2))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(0.1)) +
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(0.1))+
@@ -1657,15 +2020,86 @@ permanova.seq10VLevels.env4<-do.call("rbind", list(model10C1V1.Permanova.env4,mo
 permanova.seq10VLevels.env5<-do.call("rbind", list(model10C1V1.Permanova.env5,model10C1V2.Permanova.env5,model10C1V3.Permanova.env5,model10C1V4.Permanova.env5,model10C1V5.Permanova.env5,model10C1V5.Permanova.env5))
 permanova.seq10VLevels.resids<-do.call("rbind", list(model10C1V1.Permanova.resids,model10C1V2.Permanova.resids,model10C1V3.Permanova.resids,model10C1V4.Permanova.resids,model10C1V5.Permanova.resids, model10C1V5.Permanova.resids))
 
-permanova.seq10VLevels.modelP<-data_summary2(permanova.seq10VLevels.model, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10VLevels.env1P<-data_summary2(permanova.seq10VLevels.env1, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10VLevels.env2P<-data_summary2(permanova.seq10VLevels.env2, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10VLevels.env3P<-data_summary2(permanova.seq10VLevels.env3, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10VLevels.env4P<-data_summary2(permanova.seq10VLevels.env4, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10VLevels.env5P<-data_summary2(permanova.seq10VLevels.env5, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10VLevels.residsP<-data_summary2(permanova.seq10VLevels.resids, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10VLevels.modelP<-data_summary(permanova.seq10VLevels.model, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10VLevels.env1P<-data_summary(permanova.seq10VLevels.env1, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10VLevels.env2P<-data_summary(permanova.seq10VLevels.env2, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10VLevels.env3P<-data_summary(permanova.seq10VLevels.env3, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10VLevels.env4P<-data_summary(permanova.seq10VLevels.env4, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10VLevels.env5P<-data_summary(permanova.seq10VLevels.env5, varname="value", groupnames=c("Level", "variable"))
+
+permanova.seq10VLevels.modelP2<-data_summary2(permanova.seq10VLevels.model, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10VLevels.env1P2<-data_summary2(permanova.seq10VLevels.env1, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10VLevels.env2P2<-data_summary2(permanova.seq10VLevels.env2, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10VLevels.env3P2<-data_summary2(permanova.seq10VLevels.env3, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10VLevels.env4P2<-data_summary2(permanova.seq10VLevels.env4, varname="value", groupnames=c("Level", "variable"))
+permanova.seq10VLevels.env5P2<-data_summary2(permanova.seq10VLevels.env5, varname="value", groupnames=c("Level", "variable"))
+
 
 ggplot(permanova.seq10VLevels.modelP, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.03)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.03))+
+  geom_point(position=position_dodge(.03))+
+  xlab("Sequencing Relative Variance")+
+  ylab("Permanova modelRatio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(permanova.seq10VLevels.env1P, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.03)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.03))+
+  geom_point(position=position_dodge(.03))+
+  xlab("Sequencing Relative Variance")+
+  ylab("Permanova env1Ratio (Mean +/- sd)")+
+  theme_classic()
+
+
+ggplot(permanova.seq10VLevels.env2P, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.03)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.03))+
+  geom_point(position=position_dodge(.03))+
+  xlab("Sequencing Relative Variance")+
+  ylab("Permanova env2Ratio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(permanova.seq10VLevels.env3P, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.03)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.03))+
+  geom_point(position=position_dodge(.03))+
+  xlab("Sequencing Relative Variance")+
+  ylab("Permanova env3Ratio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(permanova.seq10VLevels.env4P, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.03)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.03))+
+  geom_point(position=position_dodge(.03))+
+  xlab("Sequencing Relative Variance")+
+  ylab("Permanova env4Ratio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(permanova.seq10VLevels.env5P, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.03)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.03))+
+  geom_point(position=position_dodge(.03))+
+  xlab("Sequencing Relative Variance")+
+  ylab("Permanova env5Ratio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(permanova.seq10VLevels.residsP, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.03)) +
+  scale_colour_viridis_d(direction=-1)+
+  geom_line(position=position_dodge(.03))+
+  geom_point(position=position_dodge(.03))+
+  xlab("Sequencing Relative Variance")+
+  ylab("Permanova residsRatio (Mean +/- sd)")+
+  theme_classic()
+
+ggplot(permanova.seq10VLevels.modelP2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.03)) +
   scale_colour_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.03))+
@@ -1674,7 +2108,7 @@ ggplot(permanova.seq10VLevels.modelP, aes(x=Level, y=value, group = variable, co
   ylab("Permanova modelRatio (Median +/- min/max)")+
   theme_classic()
 
-ggplot(permanova.seq10VLevels.env1P, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(permanova.seq10VLevels.env1P2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.03)) +
   scale_colour_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.03))+
@@ -1684,7 +2118,7 @@ ggplot(permanova.seq10VLevels.env1P, aes(x=Level, y=value, group = variable, col
   theme_classic()
 
 
-ggplot(permanova.seq10VLevels.env2P, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(permanova.seq10VLevels.env2P2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.03)) +
   scale_colour_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.03))+
@@ -1693,7 +2127,7 @@ ggplot(permanova.seq10VLevels.env2P, aes(x=Level, y=value, group = variable, col
   ylab("Permanova env2Ratio (Median +/- min/max)")+
   theme_classic()
 
-ggplot(permanova.seq10VLevels.env3P, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(permanova.seq10VLevels.env3P2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.03)) +
   scale_colour_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.03))+
@@ -1702,7 +2136,7 @@ ggplot(permanova.seq10VLevels.env3P, aes(x=Level, y=value, group = variable, col
   ylab("Permanova env3Ratio (Median +/- min/max)")+
   theme_classic()
 
-ggplot(permanova.seq10VLevels.env4P, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(permanova.seq10VLevels.env4P2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.03)) +
   scale_colour_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.03))+
@@ -1711,7 +2145,7 @@ ggplot(permanova.seq10VLevels.env4P, aes(x=Level, y=value, group = variable, col
   ylab("Permanova env4Ratio (Median +/- min/max)")+
   theme_classic()
 
-ggplot(permanova.seq10VLevels.env5P, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(permanova.seq10VLevels.env5P2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.03)) +
   scale_colour_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.03))+
@@ -1720,14 +2154,7 @@ ggplot(permanova.seq10VLevels.env5P, aes(x=Level, y=value, group = variable, col
   ylab("Permanova env5Ratio (Median +/- min/max)")+
   theme_classic()
 
-ggplot(permanova.seq10VLevels.residsP, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.03)) +
-  scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.03))+
-  geom_point(position=position_dodge(.03))+
-  xlab("Sequencing Relative Variance")+
-  ylab("Permanova residsRatio (Median +/- min/max)")+
-  theme_classic()
+
 ```
 
 
@@ -1772,7 +2199,7 @@ getNetStats<-function(x, method){
   out
 }
 
-method2<-c("model", "raw", "QSeq0.5", "QSeq10")
+method3<-c("model", "raw", "QSeq0.5", "QSeq10")
 
 plotstats.A<-getNetStats(model10.A, method2)
 
