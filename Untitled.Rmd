@@ -30,10 +30,10 @@ With those disclaimers out of the way, let's dig in.
 First, let's install Model.Microbiome:
 ```{r}
 # update anything from my local computer (for me as I work, not you...) ####
-setwd("~/Users/maullabmacbookpro/Documents/GitHub/Model.Microbiome")
-library(devtools)
-library(roxygen2)
-document()
+#setwd("/Users/maullabmacbookpro/Documents/GitHub/Model.Microbiome")
+#library(devtools)
+#library(roxygen2)
+#document()
 
 #now install ####
 devtools::install_github("djeppschmidt/Model.Microbiome")
@@ -469,9 +469,9 @@ Here we can see clearly that the degree of structure in the dataset interacts wi
 And some statistics:
 
 ```{r}
-summary(aov(model10Levels.summary$value~model10Levels.summary$Level*model10Levels.summary$variable))
+summary(aov(model10Levels$value~model10Levels$Level*model10Levels$variable))
 
-TukeyHSD(aov(model10Levels.summary$value~model10Levels.summary$Level*model10Levels.summary$variable))
+TukeyHSD(aov(model10Levels$value~model10Levels$Level*model10Levels$variable))
 ```
 Conclusion: we can see clearly that the degree of structure in the dataset interacts with the normalization method to affect it's accuracy. In all cases the QSeq normaliation method out performs un-normalized data at low structure, but at high levels of structure only QSeq2 and QSeq3 parameters continue to consistently outperform the raw variables. Remeber that LII reports the degradation of R squared and so is a direct measure of lost information. Let's now look at how this results in a loss of environmental signal.
 
@@ -590,13 +590,13 @@ ggplot(SV.lmRatio.model10.p, aes(x=Level, y=log(value), group = variable, color=
 ```
 ... and run statistics to see the effect:
 ```{r}
-summary(aov(SM.lmRatio.model10.p$value~SM.lmRatio.model10.p$Level*SM.lmRatio.model10.p$variable))
+summary(aov(SM.lmRatio.model10Levels$value~SM.lmRatio.model10Levels$Level*SM.lmRatio.model10Levels$variable))
 
-TukeyHSD(aov(SM.lmRatio.model10.p$value~SM.lmRatio.model10.p$Level*SM.lmRatio.model10.p$variable))
+TukeyHSD(aov(SM.lmRatio.model10Levels$value~SM.lmRatio.model10Levels$Level*SM.lmRatio.model10Levels$variable))
 
-summary(aov(SV.lmRatio.model10.p$value~SV.lmRatio.model10.p$Level*SV.lmRatio.model10.p$variable))
+summary(aov(SV.lmRatio.model10Levels$value~SV.lmRatio.model10Levels$Level*SV.lmRatio.model10Levels$variable))
 
-TukeyHSD(aov(SV.lmRatio.model10.p$value~SV.lmRatio.model10.p$Level*SV.lmRatio.model10.p$variable))
+TukeyHSD(aov(SV.lmRatio.model10Levels$value~SV.lmRatio.model10Levels$Level*SV.lmRatio.model10Levels$variable))
 
 
 ```
@@ -679,7 +679,7 @@ ggplot(SM.lmRatioM.model10.p1, aes(x=Level, y=value, group = variable, color=var
   geom_line(position=position_dodge(.3))+
   geom_point(position=position_dodge(.3))+
   xlab("Degree of Structure")+
-  ylab("Median lmRatio.model (Median +/- min/max)")+
+  ylab("Median lmRatio.model (Mean +/- sd)")+
   theme_classic()
 
 ggplot(SV.lmRatioM.model10.p1, aes(x=Level, y=value, group = variable, color=variable))+
@@ -688,7 +688,7 @@ ggplot(SV.lmRatioM.model10.p1, aes(x=Level, y=value, group = variable, color=var
   geom_line(position=position_dodge(.3))+
   geom_point(position=position_dodge(.3))+
   xlab("Degree of Structure")+
-  ylab("Variance lmRatio.model (Median +/- min/max)")+
+  ylab("Variance lmRatio.model (Mean +/- sd)")+
   
   theme_classic()
 ggplot(SM.lmRatioM.model10.p, aes(x=Level, y=value, group = variable, color=variable))+
@@ -715,13 +715,13 @@ ggplot(SV.lmRatioM.model10.p, aes(x=Level, y=log(value), group = variable, color
 And again we do the stats:
 
 ```{r}
-summary(aov(SM.lmRatioM.model10.p$value~SM.lmRatioM.model10.p$Level*SM.lmRatioM.model10.p$variable))
+summary(aov(SM.lmRatioM.model10Levels$value~SM.lmRatioM.model10Levels$Level*SM.lmRatioM.model10Levels$variable))
 
-TukeyHSD(aov(SM.lmRatioM.model10.p$value~SM.lmRatioM.model10.p$variable)) # something wrong here?
+TukeyHSD(aov(SM.lmRatioM.model10Levels$value~SM.lmRatioM.model10Levels$variable)) # something wrong here?
 
-summary(aov(SV.lmRatioM.model10.p$value~SV.lmRatioM.model10.p$Level*SV.lmRatioM.model10.p$variable))
+summary(aov(SV.lmRatioM.model10Levels$value~SV.lmRatioM.model10Levels$Level*SV.lmRatioM.model10Levels$variable))
 
-TukeyHSD(aov(SV.lmRatioM.model10.p$value~SV.lmRatioM.model10.p$Level*SV.lmRatioM.model10.p$variable))
+TukeyHSD(aov(SV.lmRatioM.model10Levels$value~SV.lmRatioM.model10Levels$Level*SV.lmRatioM.model10Levels$variable))
 
 ```
 An emerging pattern that we see here is that raw data without any processing performs much worst when there is less structure and environmental variables can act more as a filter. Also, in our normalization method QSeq, higher sampling variables that don't omit low abundance taxa perform better. Higher abundance will continue to perform even better.
@@ -809,20 +809,20 @@ ggplot(M.TaxRatio.model10.p2, aes(x=Level, y=value, group = Var2, color=Var2))+
   geom_line(position=position_dodge(.3))+
   geom_point(position=position_dodge(.3))+
   xlab("Degree of Structure")+
-  ylab("Median taxRatio (Median +/- min/max)")+
+  ylab("log Median taxRatio (Median +/- min/max)")+
   theme_classic()
 
 ```
-In terms of the median, it appears that at all levels of structure, QSeq10 performs the best; that QSeq0.5 is generally not particularly great; and raw count data performs the worst at very unstructured data. In terms of the variance, it looks like all the QSeq outperform raw, but aren't very differentiated among themselves. But let's check the stats:
+In terms of the median, it appears that at all levels of structure, QSeq10 methods are nominally the same.QSeq0.5 is generally not particularly great; and raw count data performs the worst at very unstructured data. In terms of the variance, it looks like all the QSeq outperform raw, but aren't very differentiated among themselves. But let's check the stats:
 
 ```{r}
-summary(aov(M.TaxRatio.model10.p$value~M.TaxRatio.model10.p$Level*M.TaxRatio.model10.p$Var2))
+summary(aov(M.TaxRatio.model10Levels$value~M.TaxRatio.model10Levels$Level*M.TaxRatio.model10Levels$Var2))
 
-TukeyHSD(aov(M.TaxRatio.model10.p$value~M.TaxRatio.model10.p$Level*M.TaxRatio.model10.p$Var2))
+TukeyHSD(aov(M.TaxRatio.model10Levels$value~M.TaxRatio.model10Levels$Var2))
 
-summary(aov(V.TaxRatio.model10.p$value~V.TaxRatio.model10.p$Level*V.TaxRatio.model10.p$Var2))
+summary(aov(V.TaxRatio.model10Levels$value~V.TaxRatio.model10Levels$Level*V.TaxRatio.model10Levels$Var2))
 
-TukeyHSD(aov(V.TaxRatio.model10.p$value~V.TaxRatio.model10.p$Level*V.TaxRatio.model10.p$Var2))
+TukeyHSD(aov(V.TaxRatio.model10Levels$value~V.TaxRatio.model10Levels$Level*V.TaxRatio.model10Levels$Var2))
 
 #leveneTest(value~as.factor(Level), data=V.TaxRatio.model10.p)
 ```
@@ -1035,7 +1035,22 @@ ggplot(permanova.model10Levels.env5P1, aes(x=Level, y=value, group = variable, c
   ylab("Permanova env5Ratio (Mean +/- sd)")+
   theme_classic()
 ```
+```{r}
 
+summary(aov(permanova.model10Levels.model$value~permanova.model10Levels.model$Level*permanova.model10Levels.model$variable))
+summary(aov(permanova.model10Levels.env1$value~permanova.model10Levels.env1$Level*permanova.model10Levels.env1$variable))
+summary(aov(permanova.model10Levels.env2$value~permanova.model10Levels.env2$Level*permanova.model10Levels.env2$variable))
+summary(aov(permanova.model10Levels.env3$value~permanova.model10Levels.env3$Level*permanova.model10Levels.env3$variable))
+summary(aov(permanova.model10Levels.env4$value~permanova.model10Levels.env4$Level*permanova.model10Levels.env4$variable))
+summary(aov(permanova.model10Levels.env5$value~permanova.model10Levels.env5$Level*permanova.model10Levels.env5$variable))
+
+leveneTest(permanova.model10Levels.model$value~permanova.model10Levels.model$variable)
+leveneTest(permanova.model10Levels.env1$value~permanova.model10Levels.env1$variable)
+leveneTest(permanova.model10Levels.env2$value~permanova.model10Levels.env2$variable)
+leveneTest(permanova.model10Levels.env3$value~permanova.model10Levels.env3$variable)
+leveneTest(permanova.model10Levels.env4$value~permanova.model10Levels.env4$variable)
+leveneTest(permanova.model10Levels.env5$value~permanova.model10Levels.env5$variable)
+```
 # Normalization vs Sequencing Depth
 Let's say we want to know the effect of undersampling interacts with our normalization protocol to affect our ability to detect relationships between taxa and the environment. We can vary the sequencing depth:
 ```{r}
@@ -1081,20 +1096,20 @@ model10.SeqLevels.summary2<-data_summary2(model10.SeqLevels, varname="value", gr
 
 # plot
 ggplot(model10.SeqLevels.summary, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.1, position=position_dodge(.3)) +
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(30)) +
   scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.3))+
-  geom_point(position=position_dodge(.3))+
-  xlab("Degree of Structure")+
+  geom_line(position=position_dodge(30))+
+  geom_point(position=position_dodge(30))+
+  xlab("Sequencing Depth")+
   ylab("LII Value (Mean +/- sd)")+
   theme_classic()
 
-ggplot(model10.SeqLevels.summary, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
+ggplot(model10.SeqLevels.summary2, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(30)) +
   scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.3))+
-  geom_point(position=position_dodge(.3))+
-  xlab("Degree of Structure")+
+  geom_line(position=position_dodge(30))+
+  geom_point(position=position_dodge(30))+
+  xlab("Sequencing Depth")+
   ylab("LII Value (Median +/- min/max)")+
   theme_classic()
 ```
@@ -1114,27 +1129,27 @@ SM.lmRatio.model10.C5<-as.data.frame(Summarize.lmRatiotab.Median(model10.C5,meth
 SV.lmRatio.model10.C5<-as.data.frame(Summarize.lmRatiotab.Var(model10.C5,method2))
 # prepare data for merging datasets
 
-SM.lmRatio.model10.C1$Level<-c(rep(1,10))
-SV.lmRatio.model10.C1$Level<-c(rep(1,10))
-SM.lmRatio.model10.C2$Level<-c(rep(2,10))
-SV.lmRatio.model10.C2$Level<-c(rep(2,10))
-SM.lmRatio.model10.C3$Level<-c(rep(3,10))
-SV.lmRatio.model10.C3$Level<-c(rep(3,10))
-SM.lmRatio.model10.C4$Level<-c(rep(4,10))
-SV.lmRatio.model10.C4$Level<-c(rep(4,10))
-SM.lmRatio.model10.C5$Level<-c(rep(5,10))
-SV.lmRatio.model10.C5$Level<-c(rep(5,10))
+SM.lmRatio.model10.C1$Level<-c(rep(100,10))
+SV.lmRatio.model10.C1$Level<-c(rep(100,10))
+SM.lmRatio.model10.C2$Level<-c(rep(200,10))
+SV.lmRatio.model10.C2$Level<-c(rep(200,10))
+SM.lmRatio.model10.C3$Level<-c(rep(500,10))
+SV.lmRatio.model10.C3$Level<-c(rep(500,10))
+SM.lmRatio.model10.C4$Level<-c(rep(1000,10))
+SV.lmRatio.model10.C4$Level<-c(rep(1000,10))
+SM.lmRatio.model10.C5$Level<-c(rep(2000,10))
+SV.lmRatio.model10.C5$Level<-c(rep(2000,10))
 
-SM.lmRatio.model10.C1<-melt(SM.lmRatio.model10.C1, id.vars = "Level", measure.vars = method)
-SV.lmRatio.model10.C1<-melt(SV.lmRatio.model10.C1, id.vars = "Level", measure.vars = method)
-SM.lmRatio.model10.C2<-melt(SM.lmRatio.model10.C2, id.vars = "Level", measure.vars = method)
-SV.lmRatio.model10.C2<-melt(SV.lmRatio.model10.C2, id.vars = "Level", measure.vars = method)
-SM.lmRatio.model10.C3<-melt(SM.lmRatio.model10.C3, id.vars = "Level", measure.vars = method)
-SV.lmRatio.model10.C3<-melt(SV.lmRatio.model10.C3, id.vars = "Level", measure.vars = method)
-SM.lmRatio.model10.C4<-melt(SM.lmRatio.model10.C4, id.vars = "Level", measure.vars = method)
-SV.lmRatio.model10.C4<-melt(SV.lmRatio.model10.C4, id.vars = "Level", measure.vars = method)
-SM.lmRatio.model10.C5<-melt(SM.lmRatio.model10.C5, id.vars = "Level", measure.vars = method)
-SV.lmRatio.model10.C5<-melt(SV.lmRatio.model10.C5, id.vars = "Level", measure.vars = method)
+SM.lmRatio.model10.C1<-melt(SM.lmRatio.model10.C1, id.vars = "Level", measure.vars = method2)
+SV.lmRatio.model10.C1<-melt(SV.lmRatio.model10.C1, id.vars = "Level", measure.vars = method2)
+SM.lmRatio.model10.C2<-melt(SM.lmRatio.model10.C2, id.vars = "Level", measure.vars = method2)
+SV.lmRatio.model10.C2<-melt(SV.lmRatio.model10.C2, id.vars = "Level", measure.vars = method2)
+SM.lmRatio.model10.C3<-melt(SM.lmRatio.model10.C3, id.vars = "Level", measure.vars = method2)
+SV.lmRatio.model10.C3<-melt(SV.lmRatio.model10.C3, id.vars = "Level", measure.vars = method2)
+SM.lmRatio.model10.C4<-melt(SM.lmRatio.model10.C4, id.vars = "Level", measure.vars = method2)
+SV.lmRatio.model10.C4<-melt(SV.lmRatio.model10.C4, id.vars = "Level", measure.vars = method2)
+SM.lmRatio.model10.C5<-melt(SM.lmRatio.model10.C5, id.vars = "Level", measure.vars = method2)
+SV.lmRatio.model10.C5<-melt(SV.lmRatio.model10.C5, id.vars = "Level", measure.vars = method2)
 
 # merge datasets
 SM.lmRatio.model10.CLevels<-do.call("rbind", list(SM.lmRatio.model10.C1,SM.lmRatio.model10.C2,SM.lmRatio.model10.C3,SM.lmRatio.model10.C4, SM.lmRatio.model10.C5))
@@ -1142,98 +1157,98 @@ SV.lmRatio.model10.CLevels<-do.call("rbind", list(SV.lmRatio.model10.C1,SV.lmRat
 
 
 # summarize for plotting
-SM.lmRatio.model10C.p<-data_summary2(SM.lmRatio.model10.CLevels, varname="value", groupnames=c("Level", "variable"))
-SV.lmRatio.model10C.p<-data_summary2(SV.lmRatio.model10.CLevels, varname="value", groupnames=c("Level", "variable"))
+SM.lmRatio.model10C.p<-data_summary(SM.lmRatio.model10.CLevels, varname="value", groupnames=c("Level", "variable"))
+SV.lmRatio.model10C.p<-data_summary(SV.lmRatio.model10.CLevels, varname="value", groupnames=c("Level", "variable"))
 # plot
 
 SM.lmRatio.model10C.p2<-data_summary2(SM.lmRatio.model10.CLevels, varname="value", groupnames=c("Level", "variable"))
 SV.lmRatio.model10C.p2<-data_summary2(SV.lmRatio.model10.CLevels, varname="value", groupnames=c("Level", "variable"))
 # plot
 ggplot(SM.lmRatio.model10C.p, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(30)) +
   scale_color_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.3))+
-  geom_point(position=position_dodge(.3))+
+  geom_line(position=position_dodge(30))+
+  geom_point(position=position_dodge(30))+
   xlab("Degree of Structure")+
   ylab("Median lmRatio (Mean +/- sd)")+
   theme_classic()
 
 ggplot(SV.lmRatio.model10C.p, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(30)) +
   scale_color_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.3))+
-  geom_point(position=position_dodge(.3))+
+  geom_line(position=position_dodge(30))+
+  geom_point(position=position_dodge(30))+
   xlab("Degree of Structure")+
   ylab("Variance lmRatio (Mean +/- sd)")+
   theme_classic()
 
 ggplot(SM.lmRatio.model10C.p2, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(30)) +
   scale_color_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.3))+
-  geom_point(position=position_dodge(.3))+
+  geom_line(position=position_dodge(30))+
+  geom_point(position=position_dodge(30))+
   xlab("Degree of Structure")+
   ylab("Median lmRatio (Median +/- min/max)")+
   theme_classic()
 
 ggplot(SV.lmRatio.model10C.p2, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(30)) +
   scale_color_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.3))+
-  geom_point(position=position_dodge(.3))+
+  geom_line(position=position_dodge(30))+
+  geom_point(position=position_dodge(30))+
   xlab("Degree of Structure")+
   ylab("Variance lmRatio (Median +/- min/max)")+
   theme_classic()
 ```
 ... and run statistics to see the effect:
 ```{r}
-summary(aov(SM.lmRatio.model10C.p$value~SM.lmRatio.model10C.p$Level*SM.lmRatio.model10C.p$variable))
+summary(aov(SM.lmRatio.model10.CLevels$value~SM.lmRatio.model10.CLevels$Level*SM.lmRatio.model10.CLevels$variable))
 
-TukeyHSD(aov(SM.lmRatio.model10C.p$value~SM.lmRatio.model10C.p$Level*SM.lmRatio.model10C.p$variable))
+TukeyHSD(aov(SM.lmRatio.model10.CLevels$value~SM.lmRatio.model10.CLevels$Level*SM.lmRatio.model10.CLevels$variable))
 
-summary(aov(SV.lmRatio.model10C.p$value~SV.lmRatio.model10C.p$Level*SV.lmRatio.model10C.p$variable))
+summary(aov(SV.lmRatio.model10.CLevels$value~SV.lmRatio.model10.CLevels$Level*SV.lmRatio.model10.CLevels$variable))
 
-TukeyHSD(aov(SV.lmRatio.model10C.p$value~SV.lmRatio.model10C.p$Level*SV.lmRatio.model10C.p$variable))
+TukeyHSD(aov(SV.lmRatio.model10.CLevels$value~SV.lmRatio.model10.CLevels$Level*SV.lmRatio.model10.CLevels$variable))
 
-leveneTest(value~Level*variable, data=SV.lmRatio.model10C.p)
+leveneTest(value~as.factor(Level)*variable, data=SV.lmRatio.model10.CLevels)
 ```
 
 And same steps but for the categorical variables:
 ```{r}
 # lm ratio model sequencing depth ####
-SM.lmRatioM.model10.C1<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C1,method))
-SV.lmRatioM.model10.C1<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C1,method))
-SM.lmRatioM.model10.C2<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C2,method))
-SV.lmRatioM.model10.C2<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C2,method))
-SM.lmRatioM.model10.C3<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C3,method))
-SV.lmRatioM.model10.C3<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C3,method))
-SM.lmRatioM.model10.C4<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C4,method))
-SV.lmRatioM.model10.C4<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C4,method))
-SM.lmRatioM.model10.C5<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C5,method))
-SV.lmRatioM.model10.C5<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C5,method))
+SM.lmRatioM.model10.C1<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C1,method2))
+SV.lmRatioM.model10.C1<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C1,method2))
+SM.lmRatioM.model10.C2<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C2,method2))
+SV.lmRatioM.model10.C2<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C2,method2))
+SM.lmRatioM.model10.C3<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C3,method2))
+SV.lmRatioM.model10.C3<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C3,method2))
+SM.lmRatioM.model10.C4<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C4,method2))
+SV.lmRatioM.model10.C4<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C4,method2))
+SM.lmRatioM.model10.C5<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C5,method2))
+SV.lmRatioM.model10.C5<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C5,method2))
 # prepare data for merging datasets
 
-SM.lmRatioM.model10.C1$Level<-c(rep(50,10))
-SV.lmRatioM.model10.C1$Level<-c(rep(50,10))
-SM.lmRatioM.model10.C2$Level<-c(rep(100,10))
-SV.lmRatioM.model10.C2$Level<-c(rep(100,10))
-SM.lmRatioM.model10.C3$Level<-c(rep(200,10))
-SV.lmRatioM.model10.C3$Level<-c(rep(200,10))
-SM.lmRatioM.model10.C4$Level<-c(rep(500,10))
-SV.lmRatioM.model10.C4$Level<-c(rep(500,10))
-SM.lmRatioM.model10.C5$Level<-c(rep(1000,10))
-SV.lmRatioM.model10.C5$Level<-c(rep(1000,10))
+SM.lmRatioM.model10.C1$Level<-c(rep(100,10))
+SV.lmRatioM.model10.C1$Level<-c(rep(100,10))
+SM.lmRatioM.model10.C2$Level<-c(rep(200,10))
+SV.lmRatioM.model10.C2$Level<-c(rep(200,10))
+SM.lmRatioM.model10.C3$Level<-c(rep(500,10))
+SV.lmRatioM.model10.C3$Level<-c(rep(500,10))
+SM.lmRatioM.model10.C4$Level<-c(rep(1000,10))
+SV.lmRatioM.model10.C4$Level<-c(rep(1000,10))
+SM.lmRatioM.model10.C5$Level<-c(rep(2000,10))
+SV.lmRatioM.model10.C5$Level<-c(rep(2000,10))
 
-SM.lmRatioM.model10.C1<-melt(SM.lmRatioM.model10.C1, id.vars = "Level", measure.vars = method)
-SV.lmRatioM.model10.C1<-melt(SV.lmRatioM.model10.C1, id.vars = "Level", measure.vars = method)
-SM.lmRatioM.model10.C2<-melt(SM.lmRatioM.model10.C2, id.vars = "Level", measure.vars = method)
-SV.lmRatioM.model10.C2<-melt(SV.lmRatioM.model10.C2, id.vars = "Level", measure.vars = method)
-SM.lmRatioM.model10.C3<-melt(SM.lmRatioM.model10.C3, id.vars = "Level", measure.vars = method)
-SV.lmRatioM.model10.C3<-melt(SV.lmRatioM.model10.C3, id.vars = "Level", measure.vars = method)
-SM.lmRatioM.model10.C4<-melt(SM.lmRatioM.model10.C4, id.vars = "Level", measure.vars = method)
-SV.lmRatioM.model10.C4<-melt(SV.lmRatioM.model10.C4, id.vars = "Level", measure.vars = method)
-SM.lmRatioM.model10.C5<-melt(SM.lmRatioM.model10.C5, id.vars = "Level", measure.vars = method)
-SV.lmRatioM.model10.C5<-melt(SV.lmRatioM.model10.C5, id.vars = "Level", measure.vars = method)
+SM.lmRatioM.model10.C1<-melt(SM.lmRatioM.model10.C1, id.vars = "Level", measure.vars = method2)
+SV.lmRatioM.model10.C1<-melt(SV.lmRatioM.model10.C1, id.vars = "Level", measure.vars = method2)
+SM.lmRatioM.model10.C2<-melt(SM.lmRatioM.model10.C2, id.vars = "Level", measure.vars = method2)
+SV.lmRatioM.model10.C2<-melt(SV.lmRatioM.model10.C2, id.vars = "Level", measure.vars = method2)
+SM.lmRatioM.model10.C3<-melt(SM.lmRatioM.model10.C3, id.vars = "Level", measure.vars = method2)
+SV.lmRatioM.model10.C3<-melt(SV.lmRatioM.model10.C3, id.vars = "Level", measure.vars = method2)
+SM.lmRatioM.model10.C4<-melt(SM.lmRatioM.model10.C4, id.vars = "Level", measure.vars = method2)
+SV.lmRatioM.model10.C4<-melt(SV.lmRatioM.model10.C4, id.vars = "Level", measure.vars = method2)
+SM.lmRatioM.model10.C5<-melt(SM.lmRatioM.model10.C5, id.vars = "Level", measure.vars = method2)
+SV.lmRatioM.model10.C5<-melt(SV.lmRatioM.model10.C5, id.vars = "Level", measure.vars = method2)
 
 # merge datasets
 SM.lmRatioM.model10CLevels<-do.call("rbind", list(SM.lmRatioM.model10.C1,SM.lmRatioM.model10.C2,SM.lmRatioM.model10.C3,SM.lmRatioM.model10.C4, SM.lmRatioM.model10.C5))
@@ -1264,7 +1279,7 @@ ggplot(SV.lmRatioM.model10C.p, aes(x=Level, y=value, group = variable, color=var
   ylab("log Variance lmRatio.model (Mean +/- sd)")+
   theme_classic()
 
-ggplot(SM.lmRatioM.model10C.p, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(SM.lmRatioM.model10C.p2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(30)) +
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(30))+
@@ -1273,7 +1288,7 @@ ggplot(SM.lmRatioM.model10C.p, aes(x=Level, y=value, group = variable, color=var
   ylab("Median lmRatio.model (Median +/- min/max)")+
   theme_classic()
 
-ggplot(SV.lmRatioM.model10C.p, aes(x=Level, y=log(value), group = variable, color=variable))+
+ggplot(SV.lmRatioM.model10C.p2, aes(x=Level, y=log(value), group = variable, color=variable))+
   geom_errorbar(aes(ymin=log(low), ymax=log(high)), width=.1, position=position_dodge(30)) +
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(30))+
@@ -1287,23 +1302,23 @@ ggplot(SV.lmRatioM.model10C.p, aes(x=Level, y=log(value), group = variable, colo
 And again we do the stats:
 
 ```{r}
-summary(aov(SM.lmRatioM.model10C.p$value~SM.lmRatioM.model10C.p$Level*SM.lmRatioM.model10C.p$variable))
+summary(aov(SM.lmRatioM.model10CLevels$value~SM.lmRatioM.model10CLevels$Level*SM.lmRatioM.model10CLevels$variable))
 
-TukeyHSD(aov(SM.lmRatioM.model10C.p$value~SM.lmRatioM.model10C.p$Level*SM.lmRatioM.model10C.p$variable))
+TukeyHSD(aov(SM.lmRatioM.model10CLevels$value~SM.lmRatioM.model10CLevels$Level*SM.lmRatioM.model10CLevels$variable))
 
-summary(aov(SV.lmRatioM.model10C.p$value~SV.lmRatioM.model10C.p$Level*SV.lmRatioM.model10C.p$variable))
+summary(aov(SV.lmRatioM.model10CLevels$value~SV.lmRatioM.model10CLevels$Level*SV.lmRatioM.model10CLevels$variable))
 
-TukeyHSD(aov(SV.lmRatioM.model10C.p$value~SV.lmRatioM.model10C.p$Level*SV.lmRatioM.model10C.p$variable))
+TukeyHSD(aov(SV.lmRatioM.model10CLevels$value~SV.lmRatioM.model10CLevels$Level*SV.lmRatioM.model10CLevels$variable))
 
 ```
 
 Sequencing Depth:
 ```{r}
-TaxRatio.model10.C1<-getTaxCor.Tab(model10.C1,method3)
-TaxRatio.model10.C2<-getTaxCor.Tab(model10.C2,method3)
-TaxRatio.model10.C3<-getTaxCor.Tab(model10.C3,method3)
-TaxRatio.model10.C4<-getTaxCor.Tab(model10.C4,method3)
-TaxRatio.model10.C5<-getTaxCor.Tab(model10.C5,method3)
+TaxRatio.model10.C1<-getTaxCor.Tab(model10.C1,method2)
+TaxRatio.model10.C2<-getTaxCor.Tab(model10.C2,method2)
+TaxRatio.model10.C3<-getTaxCor.Tab(model10.C3,method2)
+TaxRatio.model10.C4<-getTaxCor.Tab(model10.C4,method2)
+TaxRatio.model10.C5<-getTaxCor.Tab(model10.C5,method2)
 
 V.TaxRatio.model10.C1<-melt(TaxRatio.model10.C1$V.tax)
 M.TaxRatio.model10.C1<-melt(TaxRatio.model10.C1$Median.tax)
@@ -1390,217 +1405,205 @@ ggplot(M.TaxRatio.model10.Seq.p2, aes(x=Level, y=value, group = Var2, color=Var2
 ```
 
 ```{r}
-summary(aov(M.TaxRatio.model10.Seq.p$value~M.TaxRatio.model10.Seq.p$Level*M.TaxRatio.model10.Seq.p$Var2))
+summary(aov(M.TaxRatio.model10Levels$value~M.TaxRatio.model10Levels$Level*M.TaxRatio.model10Levels$Var2))
 
 TukeyHSD(aov(M.TaxRatio.model10.Seq.p$value~M.TaxRatio.model10.Seq.p$Level*M.TaxRatio.model10.Seq.p$Var2))
 
-summary(aov(V.TaxRatio.model10.Seq.p$value~V.TaxRatio.model10.Seq.p$Level*V.TaxRatio.model10.Seq.p$Var2))
+summary(aov(V.TaxRatio.model10Levels$value~V.TaxRatio.model10Levels$Level*V.TaxRatio.model10Levels$Var2))
 
-TukeyHSD(aov(V.TaxRatio.model10.Seq.p$value~V.TaxRatio.model10.Seq.p$Level*V.TaxRatio.model10.Seq.p$Var2))
+TukeyHSD(aov(V.TaxRatio.model10Levels$value~V.TaxRatio.model10Levels$Level*V.TaxRatio.model10Levels$Var2))
 ```
 
 ```{r}
-# get permanova sequencing depth ####
-model10C1_ptab<-Summarize.Ptable(model10.C1,method2)
-model10C2_ptab<-Summarize.Ptable(model10.C2,method2)
-model10C3_ptab<-Summarize.Ptable(model10.C3,method2)
-model10C4_ptab<-Summarize.Ptable(model10.C4,method2)
-model10C5_ptab<-Summarize.Ptable(model10.C5,method2) # come back to check why didn't work
-
-model10C1.Permanova.model<-ext.p(model10C1_ptab$model, 100, method2)
-model10C1.Permanova.env1<-ext.p(model10C1_ptab$env1, 100, method2)
-model10C1.Permanova.env2<-ext.p(model10C1_ptab$env2, 100, method2)
-model10C1.Permanova.env3<-ext.p(model10C1_ptab$env3, 100, method2)
-model10C1.Permanova.env4<-ext.p(model10C1_ptab$env4, 100, method2)
-model10C1.Permanova.env5<-ext.p(model10C1_ptab$env5, 100, method2)
-model10C1.Permanova.resids<-ext.p(model10C1_ptab$resids, 100, method2)
-
-model10C2.Permanova.model<-ext.p(model10C2_ptab$model, 200, method2)
-model10C2.Permanova.env1<-ext.p(model10C2_ptab$env1, 200, method2)
-model10C2.Permanova.env2<-ext.p(model10C2_ptab$env2, 200, method2)
-model10C2.Permanova.env3<-ext.p(model10C2_ptab$env3, 200, method2)
-model10C2.Permanova.env4<-ext.p(model10C2_ptab$env4, 200, method2)
-model10C2.Permanova.env5<-ext.p(model10C2_ptab$env5, 200, method2)
-model10C2.Permanova.resids<-ext.p(model10C2_ptab$resids, 200, method2)
-
-model10C3.Permanova.model<-ext.p(model10C3_ptab$model, 500, method2)
-model10C3.Permanova.env1<-ext.p(model10C3_ptab$env1, 500, method2)
-model10C3.Permanova.env2<-ext.p(model10C3_ptab$env2, 500, method2)
-model10C3.Permanova.env3<-ext.p(model10C3_ptab$env3, 500, method2)
-model10C3.Permanova.env4<-ext.p(model10C3_ptab$env4, 500, method2)
-model10C3.Permanova.env5<-ext.p(model10C3_ptab$env5, 500, method2)
-model10C3.Permanova.resids<-ext.p(model10C3_ptab$resids, 500, method2)
-
-model10C4.Permanova.model<-ext.p(model10C4_ptab$model, 1000, method2)
-model10C4.Permanova.env1<-ext.p(model10C4_ptab$env1, 1000, method2)
-model10C4.Permanova.env2<-ext.p(model10C4_ptab$env2, 1000, method2)
-model10C4.Permanova.env3<-ext.p(model10C4_ptab$env3, 1000, method2)
-model10C4.Permanova.env4<-ext.p(model10C4_ptab$env4, 1000, method2)
-model10C4.Permanova.env5<-ext.p(model10C4_ptab$env5, 1000, method2)
-model10C4.Permanova.resids<-ext.p(model10C4_ptab$resids, 1000, method2)
-
-model10C5.Permanova.model<-ext.p(model10C5_ptab$model, 2000, method2)
-model10C5.Permanova.env1<-ext.p(model10C5_ptab$env1, 2000, method2)
-model10C5.Permanova.env2<-ext.p(model10C5_ptab$env2, 2000, method2)
-model10C5.Permanova.env3<-ext.p(model10C5_ptab$env3, 2000, method2)
-model10C5.Permanova.env4<-ext.p(model10C5_ptab$env4, 2000, method2)
-model10C5.Permanova.env5<-ext.p(model10C5_ptab$env5, 2000, method2)
-model10C5.Permanova.resids<-ext.p(model10C5_ptab$resids, 2000, method2)
+model10C1.Permanova.model<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1,method2, "CategoryRratio"))
+model10C1.Permanova.env1<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1, method2, "F1Rratio"))
+model10C1.Permanova.env2<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1, method2, "F2Rratio"))
+model10C1.Permanova.env3<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1, method2, "F3Rratio"))
+model10C1.Permanova.env4<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1, method2, "F4Rratio"))
+model10C1.Permanova.env5<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1,method2, "F5Rratio"))
 
 
-permanova.seq10Levels.model<-do.call("rbind", list(model10C1.Permanova.model,model10C2.Permanova.model,model10C3.Permanova.model,model10C4.Permanova.model,model10C4.Permanova.model))
-permanova.seq10Levels.env1<-do.call("rbind", list(model10C1.Permanova.env1,model10C2.Permanova.env1,model10C3.Permanova.env1,model10C4.Permanova.env1,model10C4.Permanova.env1))
-permanova.seq10Levels.env2<-do.call("rbind", list(model10C1.Permanova.env2,model10C2.Permanova.env2,model10C3.Permanova.env2,model10C4.Permanova.env2,model10C5.Permanova.env2))
-permanova.seq10Levels.env3<-do.call("rbind", list(model10C1.Permanova.env3,model10C2.Permanova.env3,model10C3.Permanova.env3,model10C4.Permanova.env3,model10C5.Permanova.env3))
-permanova.seq10Levels.env4<-do.call("rbind", list(model10C1.Permanova.env4,model10C2.Permanova.env4,model10C3.Permanova.env4,model10C4.Permanova.env4,model10C5.Permanova.env4))
-permanova.seq10Levels.env5<-do.call("rbind", list(model10C1.Permanova.env5,model10C2.Permanova.env5,model10C3.Permanova.env5,model10C4.Permanova.env5,model10C5.Permanova.env5))
-permanova.seq10Levels.resids<-do.call("rbind", list(model10C1.Permanova.resids,model10C2.Permanova.resids,model10C3.Permanova.resids,model10C4.Permanova.resids,model10C5.Permanova.resids))
+model10C2.Permanova.model<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C2, method2, "CategoryRratio"))
+model10C2.Permanova.env1<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C2, method2, "F1Rratio"))
+model10C2.Permanova.env2<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C2, method2, "F2Rratio"))
+model10C2.Permanova.env3<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C2, method2, "F3Rratio"))
+model10C2.Permanova.env4<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C2, method2, "F4Rratio"))
+model10C2.Permanova.env5<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C2, method2, "F5Rratio"))
 
-permanova.seq10Levels.modelP<-data_summary(permanova.seq10Levels.model, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10Levels.env1P<-data_summary(permanova.seq10Levels.env1, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10Levels.env2P<-data_summary(permanova.seq10Levels.env2, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10Levels.env3P<-data_summary(permanova.seq10Levels.env3, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10Levels.env4P<-data_summary(permanova.seq10Levels.env4, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10Levels.env5P<-data_summary(permanova.seq10Levels.env5, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10Levels.residsP<-data_summary(permanova.seq10Levels.resids, varname="value", groupnames=c("Level", "variable"))
 
-permanova.seq10Levels.modelP2<-data_summary2(permanova.seq10Levels.model, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10Levels.env1P2<-data_summary2(permanova.seq10Levels.env1, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10Levels.env2P2<-data_summary2(permanova.seq10Levels.env2, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10Levels.env3P2<-data_summary2(permanova.seq10Levels.env3, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10Levels.env4P2<-data_summary2(permanova.seq10Levels.env4, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10Levels.env5P2<-data_summary2(permanova.seq10Levels.env5, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10Levels.residsP2<-data_summary2(permanova.seq10Levels.resids, varname="value", groupnames=c("Level", "variable"))
+model10C3.Permanova.model<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C3, method2, "CategoryRratio"))
+model10C3.Permanova.env1<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C3, method2, "F1Rratio"))
+model10C3.Permanova.env2<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C3, method2, "F2Rratio"))
+model10C3.Permanova.env3<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C3, method2, "F3Rratio"))
+model10C3.Permanova.env4<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C3, method2, "F4Rratio"))
+model10C3.Permanova.env5<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C3, method2, "F5Rratio"))
 
-ggplot(permanova.seq10Levels.modelP, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
+
+model10C4.Permanova.model<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C4, method2, "CategoryRratio"))
+model10C4.Permanova.env1<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C4, method2, "F1Rratio"))
+model10C4.Permanova.env2<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C4, method2, "F2Rratio"))
+model10C4.Permanova.env3<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C4, method2, "F3Rratio"))
+model10C4.Permanova.env4<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C4, method2, "F4Rratio"))
+model10C4.Permanova.env5<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C4, method2, "F5Rratio"))
+
+model10C5.Permanova.model<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C5, method2, "CategoryRratio"))
+model10C5.Permanova.env1<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C5, method2, "F1Rratio"))
+model10C5.Permanova.env2<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C5, method2, "F2Rratio"))
+model10C5.Permanova.env3<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C5, method2, "F3Rratio"))
+model10C5.Permanova.env4<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C5, method2, "F4Rratio"))
+model10C5.Permanova.env5<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C5, method2, "F5Rratio"))
+
+model10C1.Permanova.model$Level<-c(rep(100,10))
+model10C1.Permanova.env1$Level<-c(rep(100,10))
+model10C1.Permanova.env2$Level<-c(rep(100,10))
+model10C1.Permanova.env3$Level<-c(rep(100,10))
+model10C1.Permanova.env4$Level<-c(rep(100,10))
+model10C1.Permanova.env5$Level<-c(rep(100,10))
+
+model10C2.Permanova.model$Level<-c(rep(200,10))
+model10C2.Permanova.env1$Level<-c(rep(200,10))
+model10C2.Permanova.env2$Level<-c(rep(200,10))
+model10C2.Permanova.env3$Level<-c(rep(200,10))
+model10C2.Permanova.env4$Level<-c(rep(200,10))
+model10C2.Permanova.env5$Level<-c(rep(200,10))
+
+model10C3.Permanova.model$Level<-c(rep(500,10))
+model10C3.Permanova.env1$Level<-c(rep(500,10))
+model10C3.Permanova.env2$Level<-c(rep(500,10))
+model10C3.Permanova.env3$Level<-c(rep(500,10))
+model10C3.Permanova.env4$Level<-c(rep(500,10))
+model10C3.Permanova.env5$Level<-c(rep(500,10))
+
+model10C4.Permanova.model$Level<-c(rep(1000,10))
+model10C4.Permanova.env1$Level<-c(rep(1000,10))
+model10C4.Permanova.env2$Level<-c(rep(1000,10))
+model10C4.Permanova.env3$Level<-c(rep(1000,10))
+model10C4.Permanova.env4$Level<-c(rep(1000,10))
+model10C4.Permanova.env5$Level<-c(rep(1000,10))
+
+model10C5.Permanova.model$Level<-c(rep(2000,10))
+model10C5.Permanova.env1$Level<-c(rep(2000,10))
+model10C5.Permanova.env2$Level<-c(rep(2000,10))
+model10C5.Permanova.env3$Level<-c(rep(2000,10))
+model10C5.Permanova.env4$Level<-c(rep(2000,10))
+model10C5.Permanova.env5$Level<-c(rep(2000,10))
+
+permanova.model10CLevels.model<-do.call("rbind", list(model10C1.Permanova.model,model10C2.Permanova.model,model10C3.Permanova.model,model10C4.Permanova.model,model10C5.Permanova.model))
+permanova.model10CLevels.env1<-do.call("rbind", list(model10C1.Permanova.env1,model10C2.Permanova.env1,model10C3.Permanova.env1,model10C4.Permanova.env1,model10C5.Permanova.env1))
+permanova.model10CLevels.env2<-do.call("rbind", list(model10C1.Permanova.env2,model10C2.Permanova.env2,model10C3.Permanova.env2,model10C4.Permanova.env2,model10C5.Permanova.env2))
+permanova.model10CLevels.env3<-do.call("rbind", list(model10C1.Permanova.env3,model10C2.Permanova.env3,model10C3.Permanova.env3,model10C4.Permanova.env3,model10C5.Permanova.env3))
+permanova.model10CLevels.env4<-do.call("rbind", list(model10C1.Permanova.env4,model10C2.Permanova.env4,model10C3.Permanova.env4,model10C4.Permanova.env4,model10C5.Permanova.env4))
+permanova.model10CLevels.env5<-do.call("rbind", list(model10C1.Permanova.env5,model10C2.Permanova.env5,model10C3.Permanova.env5,model10C4.Permanova.env5,model10C5.Permanova.env5))
+
+permanova.model10CLevels.model<-melt(permanova.model10CLevels.model, id.vars = "Level", measure.vars = method2)
+permanova.model10CLevels.env1<-melt(permanova.model10CLevels.env1, id.vars = "Level", measure.vars = method2)
+permanova.model10CLevels.env2<-melt(permanova.model10CLevels.env2, id.vars = "Level", measure.vars = method2)
+permanova.model10CLevels.env3<-melt(permanova.model10CLevels.env3, id.vars = "Level", measure.vars = method2)
+permanova.model10CLevels.env4<-melt(permanova.model10CLevels.env4, id.vars = "Level", measure.vars = method2)
+permanova.model10CLevels.env5<-melt(permanova.model10CLevels.env5, id.vars = "Level", measure.vars = method2)
+
+permanova.model10CLevels.modelP<-data_summary2(permanova.model10CLevels.model, varname="value", groupnames=c("Level", "variable"))
+permanova.model10CLevels.env1P<-data_summary2(permanova.model10CLevels.env1, varname="value", groupnames=c("Level", "variable"))
+permanova.model10CLevels.env2P<-data_summary2(permanova.model10CLevels.env2, varname="value", groupnames=c("Level", "variable"))
+permanova.model10CLevels.env3P<-data_summary2(permanova.model10CLevels.env3, varname="value", groupnames=c("Level", "variable"))
+permanova.model10CLevels.env4P<-data_summary2(permanova.model10CLevels.env4, varname="value", groupnames=c("Level", "variable"))
+permanova.model10CLevels.env5P<-data_summary2(permanova.model10CLevels.env5, varname="value", groupnames=c("Level", "variable"))
+
+
+ggplot(permanova.model10CLevels.modelP, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(30)) +
   scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.3))+
-  geom_point(position=position_dodge(.3))+
-  xlab("Sequencing Depth")+
-  ylab("Permanova modelRatio (Median +/- sd)")+
-  theme_classic()
-
-ggplot(permanova.seq10Levels.env1P, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
-  scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.3))+
-  geom_point(position=position_dodge(.3))+
-  xlab("Sequencing Depth")+
-  ylab("Permanova env1Ratio (Mean +/- sd)")+
-  theme_classic()
-
-
-ggplot(permanova.seq10Levels.env2P, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
-  scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.3))+
-  geom_point(position=position_dodge(.3))+
-  xlab("Sequencing Depth")+
-  ylab("Permanova env2Ratio (Mean +/- sd)")+
-  theme_classic()
-
-ggplot(permanova.seq10Levels.env3P, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
-  scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.3))+
-  geom_point(position=position_dodge(.3))+
-  xlab("Sequencing Depth")+
-  ylab("Permanova env3Ratio (Mean +/- sd)")+
-  theme_classic()
-
-ggplot(permanova.seq10Levels.env4P, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
-  scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.3))+
-  geom_point(position=position_dodge(.3))+
-  xlab("Sequencing Depth")+
-  ylab("Permanova env4Ratio (Mean +/- sd)")+
-  theme_classic()
-
-ggplot(permanova.seq10Levels.env5P, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
-  scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.3))+
-  geom_point(position=position_dodge(.3))+
-  xlab("Sequencing Depth")+
-  ylab("Permanova env5Ratio (Mean +/- sd)")+
-  theme_classic()
-
-ggplot(permanova.seq10Levels.residsP, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.3)) +
-  scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.3))+
-  geom_point(position=position_dodge(.3))+
-  xlab("Sequencing Depth")+
-  ylab("Permanova residsRatio (Mean +/- sd)")+
-  theme_classic()
-
-ggplot(permanova.seq10Levels.modelP, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
-  scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.3))+
-  geom_point(position=position_dodge(.3))+
-  xlab("Sequencing Depth")+
+  geom_line(position=position_dodge(30))+
+  geom_point(position=position_dodge(30))+
+  xlab("Degree of Structure")+
   ylab("Permanova modelRatio (Median +/- min/max)")+
   theme_classic()
 
-ggplot(permanova.seq10Levels.env1P, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
+ggplot(permanova.model10CLevels.env1P, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(30)) +
   scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.3))+
-  geom_point(position=position_dodge(.3))+
-  xlab("Sequencing Depth")+
+  geom_line(position=position_dodge(30))+
+  geom_point(position=position_dodge(30))+
+  xlab("Degree of Structure")+
   ylab("Permanova env1Ratio (Median +/- min/max)")+
   theme_classic()
 
 
-ggplot(permanova.seq10Levels.env2P, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
+ggplot(permanova.model10CLevels.env2P, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(30)) +
   scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.3))+
-  geom_point(position=position_dodge(.3))+
-  xlab("Sequencing Depth")+
+  geom_line(position=position_dodge(30))+
+  geom_point(position=position_dodge(30))+
+  xlab("Degree of Structure")+
   ylab("Permanova env2Ratio (Median +/- min/max)")+
   theme_classic()
 
-ggplot(permanova.seq10Levels.env3P, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
+ggplot(permanova.model10CLevels.env3P, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(30)) +
   scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.3))+
-  geom_point(position=position_dodge(.3))+
-  xlab("Sequencing Depth")+
+  geom_line(position=position_dodge(30))+
+  geom_point(position=position_dodge(30))+
+  xlab("Degree of Structure")+
   ylab("Permanova env3Ratio (Median +/- min/max)")+
   theme_classic()
 
-ggplot(permanova.seq10Levels.env4P, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
+ggplot(permanova.model10CLevels.env4P, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(30)) +
   scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.3))+
-  geom_point(position=position_dodge(.3))+
-  xlab("Sequencing Depth")+
+  geom_line(position=position_dodge(30))+
+  geom_point(position=position_dodge(30))+
+  xlab("Degree of Structure")+
   ylab("Permanova env4Ratio (Median +/- min/max)")+
   theme_classic()
 
-ggplot(permanova.seq10Levels.env5P, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
+ggplot(permanova.model10CLevels.env5P, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(30)) +
   scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.3))+
-  geom_point(position=position_dodge(.3))+
-  xlab("Sequencing Depth")+
+  geom_line(position=position_dodge(30))+
+  geom_point(position=position_dodge(30))+
+  xlab("Degree of Structure")+
   ylab("Permanova env5Ratio (Median +/- min/max)")+
   theme_classic()
-
-ggplot(permanova.seq10Levels.residsP, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
-  scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.3))+
-  geom_point(position=position_dodge(.3))+
-  xlab("Sequencing Depth")+
-  ylab("Permanova residsRatio (Median +/- min/max)")+
-  theme_classic()
 ```
+```{r}
+summary(aov(permanova.model10CLevels.model$value~permanova.model10CLevels.model$Level*permanova.model10CLevels.model$variable))
 
+TukeyHSD(aov(permanova.model10CLevels.model$value~permanova.model10CLevels.model$Level*permanova.model10CLevels.model$variable))
+
+summary(aov(permanova.model10CLevels.env1$value~permanova.model10CLevels.env1$Level*permanova.model10CLevels.env1$variable))
+
+TukeyHSD(aov(permanova.model10CLevels.env1$value~permanova.model10CLevels.env1$Level*permanova.model10CLevels.env1$variable))
+
+summary(aov(permanova.model10CLevels.env2$value~permanova.model10CLevels.env2$Level*permanova.model10CLevels.env2$variable))
+
+TukeyHSD(aov(permanova.model10CLevels.env2$value~permanova.model10CLevels.env2$Level*permanova.model10CLevels.env2$variable))
+
+summary(aov(permanova.model10CLevels.env3$value~permanova.model10CLevels.env3$Level*permanova.model10CLevels.env3$variable))
+
+TukeyHSD(aov(permanova.model10CLevels.env3$value~permanova.model10CLevels.env3$Level*permanova.model10CLevels.env3$variable))
+
+summary(aov(permanova.model10CLevels.env4$value~permanova.model10CLevels.env4$Level*permanova.model10CLevels.env4$variable))
+
+TukeyHSD(aov(permanova.model10CLevels.env4$value~permanova.model10CLevels.env4$Level*permanova.model10CLevels.env4$variable))
+
+summary(aov(permanova.model10CLevels.env5$value~permanova.model10CLevels.env5$Level*permanova.model10CLevels.env5$variable))
+
+TukeyHSD(aov(permanova.model10CLevels.env5$value~permanova.model10CLevels.env5$Level*permanova.model10CLevels.env5$variable))
+
+
+
+leveneTest(permanova.model10CLevels.model$value~permanova.model10CLevels.model$variable)
+leveneTest(permanova.model10CLevels.env1$value~permanova.model10CLevels.env1$variable)
+leveneTest(permanova.model10CLevels.env2$value~permanova.model10CLevels.env2$variable)
+leveneTest(permanova.model10CLevels.env3$value~permanova.model10CLevels.env3$variable)
+leveneTest(permanova.model10CLevels.env4$value~permanova.model10CLevels.env4$variable)
+leveneTest(permanova.model10CLevels.env5$value~permanova.model10CLevels.env5$variable)
+
+
+
+
+
+```
 
 Thus far we have looked at the effect of normalization on detecting important relationships between taxa and the modeled environment. Now let's look at how relationships among taxa are affected by normalization (or lack therof). We will be conducting a network analysis for this section. In the following section, each taxon is represented by a vertice, and relationships between taxa are represented as edges. To construct a network, we typically correlate taxa, then choose a threshold for netowrk construction. Taxa that have a high enough correlation coefficient are connected with an edge, and those falling below the threshold are not connected. We are generally interested in 3 network metrics:
 
@@ -1653,7 +1656,7 @@ model10.C1V5<-BENCHMARK.MM(reps=10, commonN=20, groupN=20, singleN=15, D=500, V=
 ```{r}
 # sequencing variants LII ####
 
-SummaryLII.model10.C1V1<-as.data.frame(Summarize.LII(model10.C1V1, method2))
+SummaryLII.model10.C1V1<-as.data.frame(Summarize.LII(model10.C1V1, method2)) # actually C3 ...
 SummaryLII.model10.C1V2<-as.data.frame(Summarize.LII(model10.C1V2, method2)) 
 SummaryLII.model10.C1V3<-as.data.frame(Summarize.LII(model10.C1V3, method2))
 SummaryLII.model10.C1V4<-as.data.frame(Summarize.LII(model10.C1V4, method2))
@@ -1681,7 +1684,7 @@ ggplot(model10.SeqVarLevels.summary, aes(x=Level, y=value, group = variable, col
   scale_colour_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.1))+
   geom_point(position=position_dodge(.1))+
-  xlab("Degree of Structure")+
+  xlab("Sequencing Variance")+
   ylab("LII Value (Mean +/- sd)")+
   theme_classic()
 
@@ -1690,11 +1693,16 @@ ggplot(model10.SeqVarLevels.summary2, aes(x=Level, y=value, group = variable, co
   scale_colour_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.1))+
   geom_point(position=position_dodge(.1))+
-  xlab("Degree of Structure")+
+  xlab("Sequencing Variance")+
   ylab("LII Value (Median +/- min/max)")+
   theme_classic()
 ```
+```{r}
 
+summary(aov(SummaryLII.model10.C1V1$value~SummaryLII.model10.C1V1$Level*SummaryLII.model10.C1V1$variable))
+TukeyHSD(aov(SummaryLII.model10.C1V1$value~SummaryLII.model10.C1V1$Level*SummaryLII.model10.C1V1$variable))
+
+```
 
 ```{r}
 # sequencing variants lm ####
@@ -1749,7 +1757,7 @@ ggplot(SM.lmRatio.model10CV.p, aes(x=Level, y=value, group = variable, color=var
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.01))+
   geom_point(position=position_dodge(.01))+
-  xlab("Degree of Structure")+
+  xlab("Sequencing Variance")+
   ylab("Median lmRatio (Mean +/- sd)")+
   theme_classic()
 
@@ -1758,7 +1766,7 @@ ggplot(SV.lmRatio.model10CV.p, aes(x=Level, y=value, group = variable, color=var
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.01))+
   geom_point(position=position_dodge(.01))+
-  xlab("Degree of Structure")+
+  xlab("Sequencing Variance")+
   ylab("Variance lmRatio (Mean +/- sd)")+
   theme_classic()
 ggplot(SM.lmRatio.model10CV.p2, aes(x=Level, y=value, group = variable, color=variable))+
@@ -1766,7 +1774,7 @@ ggplot(SM.lmRatio.model10CV.p2, aes(x=Level, y=value, group = variable, color=va
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.01))+
   geom_point(position=position_dodge(.01))+
-  xlab("Degree of Structure")+
+  xlab("Sequencing Variance")+
   ylab("Median lmRatio (Median +/- min/max)")+
   theme_classic()
 
@@ -1775,9 +1783,18 @@ ggplot(SV.lmRatio.model10CV.p2, aes(x=Level, y=value, group = variable, color=va
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.01))+
   geom_point(position=position_dodge(.01))+
-  xlab("Degree of Structure")+
+  xlab("Sequencing Variance")+
   ylab("Variance lmRatio (Median +/- min/max)")+
   theme_classic()
+```
+```{r}
+
+summary(aov(SM.lmRatio.model10.C1V1$value~SM.lmRatio.model10.C1V1$Level*SM.lmRatio.model10.C1V1$variable))
+TukeyHSD(aov(SM.lmRatio.model10.C1V1$value~SM.lmRatio.model10.C1V1$Level*SM.lmRatio.model10.C1V1$variable))
+
+summary(aov(SV.lmRatio.model10.C1V1$value~SV.lmRatio.model10.C1V1$Level*SV.lmRatio.model10.C1V1$variable))
+TukeyHSD(aov(SV.lmRatio.model10.C1V1$value~SV.lmRatio.model10.C1V1$Level*SV.lmRatio.model10.C1V1$variable))
+
 ```
 
 ```{r}
@@ -1833,7 +1850,7 @@ ggplot(SM.lmRatio.model10MCV.p, aes(x=Level, y=value, group = variable, color=va
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.01))+
   geom_point(position=position_dodge(.01))+
-  xlab("Degree of Structure")+
+  xlab("Sequencing Variance")+
   ylab("Median lmRatio (Mean +/- sd)")+
   theme_classic()
 
@@ -1842,7 +1859,7 @@ ggplot(SV.lmRatio.model10MCV.p, aes(x=Level, y=value, group = variable, color=va
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.01))+
   geom_point(position=position_dodge(.01))+
-  xlab("Degree of Structure")+
+  xlab("Sequencing Variance")+
   ylab("Variance lmRatio (Mean +/- sd)")+
   theme_classic()
 
@@ -1851,7 +1868,7 @@ ggplot(SM.lmRatio.model10MCV.p2, aes(x=Level, y=value, group = variable, color=v
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.01))+
   geom_point(position=position_dodge(.01))+
-  xlab("Degree of Structure")+
+  xlab("Sequencing Variance")+
   ylab("Median lmRatio (Median +/- min/max)")+
   theme_classic()
 
@@ -1860,19 +1877,29 @@ ggplot(SV.lmRatio.model10MCV.p2, aes(x=Level, y=value, group = variable, color=v
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.01))+
   geom_point(position=position_dodge(.01))+
-  xlab("Degree of Structure")+
+  xlab("Sequencing Variance")+
   ylab("Variance lmRatio (Median +/- min/max)")+
   theme_classic()
 ```
+```{r}
+
+summary(aov(SM.lmRatio.model10.MC1V1$value~SM.lmRatio.model10.MC1V1$Level*SM.lmRatio.model10.MC1V1$variable))
+TukeyHSD(aov(SM.lmRatio.model10.MC1V1$value~SM.lmRatio.model10.C1V1$Level*SM.lmRatio.model10.MC1V1$variable))
+
+summary(aov(SV.lmRatio.model10.MC1V1$value~SV.lmRatio.model10.MC1V1$Level*SV.lmRatio.model10.MC1V1$variable))
+TukeyHSD(aov(SV.lmRatio.model10.MC1V1$value~SV.lmRatio.model10.MC1V1$Level*SV.lmRatio.model10.MC1V1$variable))
+
+```
+
 
 ```{r}
 # sequencing variants taxcor ####
 
-TaxRatio.model10.C1V1<-getTaxCor.Tab(model10.C1V1,method3)
-TaxRatio.model10.C1V2<-getTaxCor.Tab(model10.C1V2,method3)
-TaxRatio.model10.C1V3<-getTaxCor.Tab(model10.C1V3,method3)
-TaxRatio.model10.C1V4<-getTaxCor.Tab(model10.C1V4,method3)
-TaxRatio.model10.C1V5<-getTaxCor.Tab(model10.C1V5,method3)
+TaxRatio.model10.C1V1<-getTaxCor.Tab(model10.C1V1,method2)
+TaxRatio.model10.C1V2<-getTaxCor.Tab(model10.C1V2,method2)
+TaxRatio.model10.C1V3<-getTaxCor.Tab(model10.C1V3,method2)
+TaxRatio.model10.C1V4<-getTaxCor.Tab(model10.C1V4,method2)
+TaxRatio.model10.C1V5<-getTaxCor.Tab(model10.C1V5,method2)
 
 V.TaxRatio.model10.C1V1<-melt(TaxRatio.model10.C1V1$V.tax)
 M.TaxRatio.model10.C1V1<-melt(TaxRatio.model10.C1V1$Median.tax)
@@ -1963,207 +1990,237 @@ ggplot(M.TaxRatio.model10.SeqV.p2, aes(x=Level, y=value, group = Var2, color=Var
 
 
 ```{r}
+
+summary(aov(V.TaxRatio.model10VLevels$value~V.TaxRatio.model10VLevels$Level*V.TaxRatio.model10VLevels$Var2))
+TukeyHSD(aov(V.TaxRatio.model10VLevels$value~V.TaxRatio.model10VLevels$Level*V.TaxRatio.model10VLevels$Var2))
+
+summary(aov(M.TaxRatio.model10VLevels$value~M.TaxRatio.model10VLevels$Level*M.TaxRatio.model10VLevels$Var2))
+TukeyHSD(aov(M.TaxRatio.model10VLevels$value~M.TaxRatio.model10VLevels$Var2))
+
+```
+
+```{r}
 # sequencing variants PERMANOVA ####
 
-model10C1V1_ptab<-Summarize.Ptable(model10.C1V1,method2)
-model10C1V2_ptab<-Summarize.Ptable(model10.C1V2,method2)
-model10C1V3_ptab<-Summarize.Ptable(model10.C1V3,method2)
-model10C1V4_ptab<-Summarize.Ptable(model10.C1V4,method2)
-model10C1V5_ptab<-Summarize.Ptable(model10.C1V5,method2) 
-
-model10C1V1.Permanova.model<-ext.p(model10C1V1_ptab$model, 0.1, method2)
-model10C1V1.Permanova.env1<-ext.p(model10C1V1_ptab$env1, 0.1, method2)
-model10C1V1.Permanova.env2<-ext.p(model10C1V1_ptab$env2, 0.1, method2)
-model10C1V1.Permanova.env3<-ext.p(model10C1V1_ptab$env3, 0.1, method2)
-model10C1V1.Permanova.env4<-ext.p(model10C1V1_ptab$env4, 0.1, method2)
-model10C1V1.Permanova.env5<-ext.p(model10C1V1_ptab$env5, 0.1, method2)
-model10C1V1.Permanova.resids<-ext.p(model10C1V1_ptab$resids, 0.1, method2)
-
-model10C1V2.Permanova.model<-ext.p(model10C1V2_ptab$model, 0.2, method2)
-model10C1V2.Permanova.env1<-ext.p(model10C1V2_ptab$env1, 0.2, method2)
-model10C1V2.Permanova.env2<-ext.p(model10C1V2_ptab$env2, 0.2, method2)
-model10C1V2.Permanova.env3<-ext.p(model10C1V2_ptab$env3, 0.2, method2)
-model10C1V2.Permanova.env4<-ext.p(model10C1V2_ptab$env4, 0.2, method2)
-model10C1V2.Permanova.env5<-ext.p(model10C1V2_ptab$env5, 0.2, method2)
-model10C1V2.Permanova.resids<-ext.p(model10C1V2_ptab$resids, 0.2, method2)
-
-model10C1V3.Permanova.model<-ext.p(model10C1V3_ptab$model, 0.5, method2)
-model10C1V3.Permanova.env1<-ext.p(model10C1V3_ptab$env1, 0.5, method2)
-model10C1V3.Permanova.env2<-ext.p(model10C1V3_ptab$env2, 0.5, method2)
-model10C1V3.Permanova.env3<-ext.p(model10C1V3_ptab$env3, 0.5, method2)
-model10C1V3.Permanova.env4<-ext.p(model10C1V3_ptab$env4, 0.5, method2)
-model10C1V3.Permanova.env5<-ext.p(model10C1V3_ptab$env5, 0.5, method2)
-model10C1V3.Permanova.resids<-ext.p(model10C1V3_ptab$resids, 0.5, method2)
-
-model10C1V4.Permanova.model<-ext.p(model10C1V4_ptab$model, 1, method2)
-model10C1V4.Permanova.env1<-ext.p(model10C1V4_ptab$env1, 1, method2)
-model10C1V4.Permanova.env2<-ext.p(model10C1V4_ptab$env2, 1, method2)
-model10C1V4.Permanova.env3<-ext.p(model10C1V4_ptab$env3, 1, method2)
-model10C1V4.Permanova.env4<-ext.p(model10C1V4_ptab$env4, 1, method2)
-model10C1V4.Permanova.env5<-ext.p(model10C1V4_ptab$env5, 1, method2)
-model10C1V4.Permanova.resids<-ext.p(model10C1V4_ptab$resids, 1, method2)
-
-model10C1V5.Permanova.model<-ext.p(model10C1V5_ptab$model, 2, method2)
-model10C1V5.Permanova.env1<-ext.p(model10C1V5_ptab$env1, 2, method2)
-model10C1V5.Permanova.env2<-ext.p(model10C1V5_ptab$env2, 2, method2)
-model10C1V5.Permanova.env3<-ext.p(model10C1V5_ptab$env3, 2, method2)
-model10C1V5.Permanova.env4<-ext.p(model10C1V5_ptab$env4, 2, method2)
-model10C1V5.Permanova.env5<-ext.p(model10C1V5_ptab$env5, 2, method2)
-model10C1V5.Permanova.resids<-ext.p(model10C1V5_ptab$resids, 2, method2)
+model10C1V1.Permanova.model<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V1,method2, "CategoryRratio"))
+model10C1V1.Permanova.env1<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V1, method2, "F1Rratio"))
+model10C1V1.Permanova.env2<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V1, method2, "F2Rratio"))
+model10C1V1.Permanova.env3<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V1, method2, "F3Rratio"))
+model10C1V1.Permanova.env4<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V1, method2, "F4Rratio"))
+model10C1V1.Permanova.env5<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V1,method2, "F5Rratio"))
 
 
-permanova.seq10VLevels.model<-do.call("rbind", list(model10C1V1.Permanova.model,model10C1V2.Permanova.model,model10C1V3.Permanova.model,model10C1V4.Permanova.model,model10C1V4.Permanova.model,model10C1V5.Permanova.model))
-permanova.seq10VLevels.env1<-do.call("rbind", list(model10C1V1.Permanova.env1,model10C1V2.Permanova.env1,model10C1V3.Permanova.env1,model10C1V4.Permanova.env1,model10C1V4.Permanova.env1,model10C1V5.Permanova.env1))
-permanova.seq10VLevels.env2<-do.call("rbind", list(model10C1V1.Permanova.env2,model10C1V2.Permanova.env2,model10C1V3.Permanova.env2,model10C1V4.Permanova.env2,model10C1V5.Permanova.env2,model10C1V5.Permanova.env2))
-permanova.seq10VLevels.env3<-do.call("rbind", list(model10C1V1.Permanova.env3,model10C1V2.Permanova.env3,model10C1V3.Permanova.env3,model10C1V4.Permanova.env3,model10C1V5.Permanova.env3,model10C1V5.Permanova.env3))
-permanova.seq10VLevels.env4<-do.call("rbind", list(model10C1V1.Permanova.env4,model10C1V2.Permanova.env4,model10C1V3.Permanova.env4,model10C1V4.Permanova.env4,model10C1V5.Permanova.env4,model10C1V5.Permanova.env4))
-permanova.seq10VLevels.env5<-do.call("rbind", list(model10C1V1.Permanova.env5,model10C1V2.Permanova.env5,model10C1V3.Permanova.env5,model10C1V4.Permanova.env5,model10C1V5.Permanova.env5,model10C1V5.Permanova.env5))
-permanova.seq10VLevels.resids<-do.call("rbind", list(model10C1V1.Permanova.resids,model10C1V2.Permanova.resids,model10C1V3.Permanova.resids,model10C1V4.Permanova.resids,model10C1V5.Permanova.resids, model10C1V5.Permanova.resids))
-
-permanova.seq10VLevels.modelP<-data_summary(permanova.seq10VLevels.model, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10VLevels.env1P<-data_summary(permanova.seq10VLevels.env1, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10VLevels.env2P<-data_summary(permanova.seq10VLevels.env2, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10VLevels.env3P<-data_summary(permanova.seq10VLevels.env3, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10VLevels.env4P<-data_summary(permanova.seq10VLevels.env4, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10VLevels.env5P<-data_summary(permanova.seq10VLevels.env5, varname="value", groupnames=c("Level", "variable"))
-
-permanova.seq10VLevels.modelP2<-data_summary2(permanova.seq10VLevels.model, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10VLevels.env1P2<-data_summary2(permanova.seq10VLevels.env1, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10VLevels.env2P2<-data_summary2(permanova.seq10VLevels.env2, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10VLevels.env3P2<-data_summary2(permanova.seq10VLevels.env3, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10VLevels.env4P2<-data_summary2(permanova.seq10VLevels.env4, varname="value", groupnames=c("Level", "variable"))
-permanova.seq10VLevels.env5P2<-data_summary2(permanova.seq10VLevels.env5, varname="value", groupnames=c("Level", "variable"))
+model10C1V2.Permanova.model<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V2, method2, "CategoryRratio"))
+model10C1V2.Permanova.env1<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V2, method2, "F1Rratio"))
+model10C1V2.Permanova.env2<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V2, method2, "F2Rratio"))
+model10C1V2.Permanova.env3<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V2, method2, "F3Rratio"))
+model10C1V2.Permanova.env4<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V2, method2, "F4Rratio"))
+model10C1V2.Permanova.env5<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V2, method2, "F5Rratio"))
 
 
-ggplot(permanova.seq10VLevels.modelP, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.03)) +
+model10C1V3.Permanova.model<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V3, method2, "CategoryRratio"))
+model10C1V3.Permanova.env1<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V3, method2, "F1Rratio"))
+model10C1V3.Permanova.env2<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V3, method2, "F2Rratio"))
+model10C1V3.Permanova.env3<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V3, method2, "F3Rratio"))
+model10C1V3.Permanova.env4<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V3, method2, "F4Rratio"))
+model10C1V3.Permanova.env5<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V3, method2, "F5Rratio"))
+
+
+model10C1V4.Permanova.model<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V4, method2, "CategoryRratio"))
+model10C1V4.Permanova.env1<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V4, method2, "F1Rratio"))
+model10C1V4.Permanova.env2<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V4, method2, "F2Rratio"))
+model10C1V4.Permanova.env3<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V4, method2, "F3Rratio"))
+model10C1V4.Permanova.env4<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V4, method2, "F4Rratio"))
+model10C1V4.Permanova.env5<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V4, method2, "F5Rratio"))
+
+model10C1V5.Permanova.model<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V5, method2, "CategoryRratio"))
+model10C1V5.Permanova.env1<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V5, method2, "F1Rratio"))
+model10C1V5.Permanova.env2<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V5, method2, "F2Rratio"))
+model10C1V5.Permanova.env3<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V5, method2, "F3Rratio"))
+model10C1V5.Permanova.env4<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V5, method2, "F4Rratio"))
+model10C1V5.Permanova.env5<-as.data.frame(Summarize.PERMANOVA.Rratio(model10.C1V5, method2, "F5Rratio"))
+
+model10C1V1.Permanova.model$Level<-c(rep(0.1,10))
+model10C1V1.Permanova.env1$Level<-c(rep(.100,10))
+model10C1V1.Permanova.env2$Level<-c(rep(.100,10))
+model10C1V1.Permanova.env3$Level<-c(rep(.100,10))
+model10C1V1.Permanova.env4$Level<-c(rep(.100,10))
+model10C1V1.Permanova.env5$Level<-c(rep(.100,10))
+
+model10C1V2.Permanova.model$Level<-c(rep(.200,10))
+model10C1V2.Permanova.env1$Level<-c(rep(.200,10))
+model10C1V2.Permanova.env2$Level<-c(rep(.200,10))
+model10C1V2.Permanova.env3$Level<-c(rep(.200,10))
+model10C1V2.Permanova.env4$Level<-c(rep(.200,10))
+model10C1V2.Permanova.env5$Level<-c(rep(.200,10))
+
+model10C1V3.Permanova.model$Level<-c(rep(.500,10))
+model10C1V3.Permanova.env1$Level<-c(rep(.500,10))
+model10C1V3.Permanova.env2$Level<-c(rep(.500,10))
+model10C1V3.Permanova.env3$Level<-c(rep(.500,10))
+model10C1V3.Permanova.env4$Level<-c(rep(.500,10))
+model10C1V3.Permanova.env5$Level<-c(rep(.500,10))
+
+model10C1V4.Permanova.model$Level<-c(rep(1.000,10))
+model10C1V4.Permanova.env1$Level<-c(rep(1.000,10))
+model10C1V4.Permanova.env2$Level<-c(rep(1.000,10))
+model10C1V4.Permanova.env3$Level<-c(rep(1.000,10))
+model10C1V4.Permanova.env4$Level<-c(rep(1.000,10))
+model10C1V4.Permanova.env5$Level<-c(rep(1.000,10))
+
+model10C1V5.Permanova.model$Level<-c(rep(2.000,10))
+model10C1V5.Permanova.env1$Level<-c(rep(2.000,10))
+model10C1V5.Permanova.env2$Level<-c(rep(2.000,10))
+model10C1V5.Permanova.env3$Level<-c(rep(2.000,10))
+model10C1V5.Permanova.env4$Level<-c(rep(2.000,10))
+model10C1V5.Permanova.env5$Level<-c(rep(2.000,10))
+
+permanova.model10CVLevels.model<-do.call("rbind", list(model10C1V1.Permanova.model,model10C1V2.Permanova.model,model10C1V3.Permanova.model,model10C1V4.Permanova.model,model10C1V5.Permanova.model))
+permanova.model10CVLevels.env1<-do.call("rbind", list(model10C1V1.Permanova.env1,model10C1V2.Permanova.env1,model10C1V3.Permanova.env1,model10C1V4.Permanova.env1,model10C1V5.Permanova.env1))
+permanova.model10CVLevels.env2<-do.call("rbind", list(model10C1V1.Permanova.env2,model10C1V2.Permanova.env2,model10C1V3.Permanova.env2,model10C1V4.Permanova.env2,model10C1V5.Permanova.env2))
+permanova.model10CVLevels.env3<-do.call("rbind", list(model10C1V1.Permanova.env3,model10C1V2.Permanova.env3,model10C1V3.Permanova.env3,model10C1V4.Permanova.env3,model10C1V5.Permanova.env3))
+permanova.model10CVLevels.env4<-do.call("rbind", list(model10C1V1.Permanova.env4,model10C1V2.Permanova.env4,model10C1V3.Permanova.env4,model10C1V4.Permanova.env4,model10C1V5.Permanova.env4))
+permanova.model10CVLevels.env5<-do.call("rbind", list(model10C1V1.Permanova.env5,model10C1V2.Permanova.env5,model10C1V3.Permanova.env5,model10C1V4.Permanova.env5,model10C1V5.Permanova.env5))
+
+permanova.model10CVLevels.model<-melt(permanova.model10CVLevels.model, id.vars = "Level", measure.vars = method2)
+permanova.model10CVLevels.env1<-melt(permanova.model10CVLevels.env1, id.vars = "Level", measure.vars = method2)
+permanova.model10CVLevels.env2<-melt(permanova.model10CVLevels.env2, id.vars = "Level", measure.vars = method2)
+permanova.model10CVLevels.env3<-melt(permanova.model10CVLevels.env3, id.vars = "Level", measure.vars = method2)
+permanova.model10CVLevels.env4<-melt(permanova.model10CVLevels.env4, id.vars = "Level", measure.vars = method2)
+permanova.model10CVLevels.env5<-melt(permanova.model10CVLevels.env5, id.vars = "Level", measure.vars = method2)
+
+permanova.model10CVLevels.modelP<-data_summary2(permanova.model10CVLevels.model, varname="value", groupnames=c("Level", "variable"))
+permanova.model10CVLevels.env1P<-data_summary2(permanova.model10CVLevels.env1, varname="value", groupnames=c("Level", "variable"))
+permanova.model10CVLevels.env2P<-data_summary2(permanova.model10CVLevels.env2, varname="value", groupnames=c("Level", "variable"))
+permanova.model10CVLevels.env3P<-data_summary2(permanova.model10CVLevels.env3, varname="value", groupnames=c("Level", "variable"))
+permanova.model10CVLevels.env4P<-data_summary2(permanova.model10CVLevels.env4, varname="value", groupnames=c("Level", "variable"))
+permanova.model10CVLevels.env5P<-data_summary2(permanova.model10CVLevels.env5, varname="value", groupnames=c("Level", "variable"))
+
+
+ggplot(permanova.model10CVLevels.modelP, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.01)) +
   scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.03))+
-  geom_point(position=position_dodge(.03))+
-  xlab("Sequencing Relative Variance")+
-  ylab("Permanova modelRatio (Mean +/- sd)")+
-  theme_classic()
-
-ggplot(permanova.seq10VLevels.env1P, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.03)) +
-  scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.03))+
-  geom_point(position=position_dodge(.03))+
-  xlab("Sequencing Relative Variance")+
-  ylab("Permanova env1Ratio (Mean +/- sd)")+
-  theme_classic()
-
-
-ggplot(permanova.seq10VLevels.env2P, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.03)) +
-  scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.03))+
-  geom_point(position=position_dodge(.03))+
-  xlab("Sequencing Relative Variance")+
-  ylab("Permanova env2Ratio (Mean +/- sd)")+
-  theme_classic()
-
-ggplot(permanova.seq10VLevels.env3P, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.03)) +
-  scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.03))+
-  geom_point(position=position_dodge(.03))+
-  xlab("Sequencing Relative Variance")+
-  ylab("Permanova env3Ratio (Mean +/- sd)")+
-  theme_classic()
-
-ggplot(permanova.seq10VLevels.env4P, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.03)) +
-  scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.03))+
-  geom_point(position=position_dodge(.03))+
-  xlab("Sequencing Relative Variance")+
-  ylab("Permanova env4Ratio (Mean +/- sd)")+
-  theme_classic()
-
-ggplot(permanova.seq10VLevels.env5P, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.03)) +
-  scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.03))+
-  geom_point(position=position_dodge(.03))+
-  xlab("Sequencing Relative Variance")+
-  ylab("Permanova env5Ratio (Mean +/- sd)")+
-  theme_classic()
-
-ggplot(permanova.seq10VLevels.residsP, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.03)) +
-  scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.03))+
-  geom_point(position=position_dodge(.03))+
-  xlab("Sequencing Relative Variance")+
-  ylab("Permanova residsRatio (Mean +/- sd)")+
-  theme_classic()
-
-ggplot(permanova.seq10VLevels.modelP2, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.03)) +
-  scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.03))+
-  geom_point(position=position_dodge(.03))+
-  xlab("Sequencing Relative Variance")+
+  geom_line(position=position_dodge(0.01))+
+  geom_point(position=position_dodge(0.01))+
+  xlab("Degree of Structure")+
   ylab("Permanova modelRatio (Median +/- min/max)")+
   theme_classic()
 
-ggplot(permanova.seq10VLevels.env1P2, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.03)) +
+ggplot(permanova.model10CVLevels.env1P, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(0.1)) +
   scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.03))+
-  geom_point(position=position_dodge(.03))+
-  xlab("Sequencing Relative Variance")+
+  geom_line(position=position_dodge(0.1))+
+  geom_point(position=position_dodge(0.1))+
+  xlab("Degree of Structure")+
   ylab("Permanova env1Ratio (Median +/- min/max)")+
   theme_classic()
 
 
-ggplot(permanova.seq10VLevels.env2P2, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.03)) +
+ggplot(permanova.model10CVLevels.env2P, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(0.1)) +
   scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.03))+
-  geom_point(position=position_dodge(.03))+
-  xlab("Sequencing Relative Variance")+
+  geom_line(position=position_dodge(0.1))+
+  geom_point(position=position_dodge(0.1))+
+  xlab("Degree of Structure")+
   ylab("Permanova env2Ratio (Median +/- min/max)")+
   theme_classic()
 
-ggplot(permanova.seq10VLevels.env3P2, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.03)) +
+ggplot(permanova.model10CVLevels.env3P, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(0.1)) +
   scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.03))+
-  geom_point(position=position_dodge(.03))+
-  xlab("Sequencing Relative Variance")+
+  geom_line(position=position_dodge(0.1))+
+  geom_point(position=position_dodge(0.1))+
+  xlab("Degree of Structure")+
   ylab("Permanova env3Ratio (Median +/- min/max)")+
   theme_classic()
 
-ggplot(permanova.seq10VLevels.env4P2, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.03)) +
+ggplot(permanova.model10CVLevels.env4P, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(0.1)) +
   scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.03))+
-  geom_point(position=position_dodge(.03))+
-  xlab("Sequencing Relative Variance")+
+  geom_line(position=position_dodge(0.1))+
+  geom_point(position=position_dodge(0.1))+
+  xlab("Degree of Structure")+
   ylab("Permanova env4Ratio (Median +/- min/max)")+
   theme_classic()
 
-ggplot(permanova.seq10VLevels.env5P2, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.03)) +
+ggplot(permanova.model10CVLevels.env5P, aes(x=Level, y=value, group = variable, color=variable))+
+  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(0.1)) +
   scale_colour_viridis_d(direction=-1)+
-  geom_line(position=position_dodge(.03))+
-  geom_point(position=position_dodge(.03))+
-  xlab("Sequencing Relative Variance")+
+  geom_line(position=position_dodge(0.1))+
+  geom_point(position=position_dodge(0.1))+
+  xlab("Degree of Structure")+
   ylab("Permanova env5Ratio (Median +/- min/max)")+
   theme_classic()
-
 
 ```
 
 
 ```{r}
+summary(aov(permanova.model10CVLevels.model$value~permanova.model10CVLevels.model$Level*permanova.model10CVLevels.model$variable))
 
+TukeyHSD(aov(permanova.model10CVLevels.model$value~permanova.model10CVLevels.model$Level*permanova.model10CVLevels.model$variable))
+
+summary(aov(permanova.model10CVLevels.env1$value~permanova.model10CVLevels.env1$Level*permanova.model10CVLevels.env1$variable))
+
+TukeyHSD(aov(permanova.model10CVLevels.env1$value~permanova.model10CVLevels.env1$Level*permanova.model10CVLevels.env1$variable))
+
+summary(aov(permanova.model10CVLevels.env2$value~permanova.model10CVLevels.env2$Level*permanova.model10CVLevels.env2$variable))
+
+TukeyHSD(aov(permanova.model10CVLevels.env2$value~permanova.model10CVLevels.env2$Level*permanova.model10CVLevels.env2$variable))
+
+summary(aov(permanova.model10CVLevels.env3$value~permanova.model10CVLevels.env3$Level*permanova.model10CVLevels.env3$variable))
+
+TukeyHSD(aov(permanova.model10CVLevels.env3$value~permanova.model10CVLevels.env3$Level*permanova.model10CVLevels.env3$variable))
+
+summary(aov(permanova.model10CVLevels.env4$value~permanova.model10CVLevels.env4$Level*permanova.model10CVLevels.env4$variable))
+
+TukeyHSD(aov(permanova.model10CVLevels.env4$value~permanova.model10CVLevels.env4$Level*permanova.model10CVLevels.env4$variable))
+
+summary(aov(permanova.model10CVLevels.env5$value~permanova.model10CVLevels.env5$Level*permanova.model10CVLevels.env5$variable))
+
+TukeyHSD(aov(permanova.model10CVLevels.env5$value~permanova.model10CVLevels.env5$Level*permanova.model10CVLevels.env5$variable))
+
+
+
+leveneTest(permanova.model10CVLevels.model$value~permanova.model10CVLevels.model$variable)
+leveneTest(permanova.model10CVLevels.env1$value~permanova.model10CVLevels.env1$variable)
+leveneTest(permanova.model10CVLevels.env2$value~permanova.model10CVLevels.env2$variable)
+leveneTest(permanova.model10CVLevels.env3$value~permanova.model10CVLevels.env3$variable)
+leveneTest(permanova.model10CVLevels.env4$value~permanova.model10CVLevels.env4$variable)
+leveneTest(permanova.model10CVLevels.env5$value~permanova.model10CVLevels.env5$variable)
 ```
 
 
+````{r}
 
+TaxRatio.model10.B$V.tax
+TaxRatio.model10.B$Median.tax
+model10.B$rep6$model$SpeciesMeta
+
+model10.B$rep6$QSeq10$taxCor.Ratio[order(model10.B$rep6$QSeq10$taxCor.Ratio$value),]
+
+spp130, spp11, spp324
+
+
+model10.B$rep6$QSeq0.5$taxCor.Ratio[order(model10.B$rep6$QSeq10$taxCor.Ratio$value),]
+ggplot(model10.B$rep6$model$SpeciesMeta, aes(x=M.Eval,y=log(QSeq10),col=prevalence))+
+  geom_point()+
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+
+ggplot(model10.B$rep6$model$SpeciesMeta, aes(x=prevalence, y=M.Eval,col=prevalence))+
+  geom_point()+
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+
+ggplot(model10.B$rep1$model$SpeciesMeta, aes(x=prevalence, y=M.Eval,col=prevalence))+
+  geom_point()+
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+
+ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(deseqLII),col=deseqDMI))+geom_point()+ scale_color_viridis_c(option="C")
+
+```
 
 
 ```{r}
