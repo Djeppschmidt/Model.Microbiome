@@ -178,6 +178,7 @@ run.analysis2<-function(commonN, groupN, singleN, D, V, method){
           if(output$model$networkStat$taxcor$Var1==output$raw$networkStat$taxcor$Var1 & output$model$networkStat$taxcor$Var2==output$raw$networkStat$taxcor$Var2){
           tab<-output$model$networkStat$taxcor
           tab$value<-output$raw$networkStat$taxcor$value/output$model$networkStat$taxcor$value
+          #tab$value[is.na(tab$value)]<-0 # not sure how to deal with this ... ?
           output$raw$taxCor.Ratio<-tab}
       # make expected value
           s<-sample_sums(output$raw$comm)
@@ -881,18 +882,18 @@ LII <-function(ps1.R, ps2.T){
   reference<-as.matrix(as.data.frame(t(as.matrix(otu_table(Delta.sppcount(ps1.R, ps1.R, method=0))))))
   reference<-reference[order(rownames(reference)),]
 
-  reference2<-as.matrix(as.data.frame(t(as.matrix(otu_table(Delta.sppcount(ps1.R, ps1.R, method=0))))))
-  reference2<-reference2[order(rownames(reference2)),]
+  #reference2<-as.matrix(as.data.frame(t(as.matrix(otu_table(Delta.sppcount(ps1.R, ps1.R, method=0))))))
+  #reference2<-reference2[order(rownames(reference2)),]
 
   treatment<-as.matrix(as.data.frame(t(as.matrix(otu_table(Delta.sppcount(ps2.T, ps1.R, method=0))))))
   treatment<-treatment[order(rownames(treatment)),]
 
 if(identical(rownames(reference), rownames(treatment))){
   Ci<-sapply(seq.int(dim(reference)[1]), function(i) summary(lm(reference[i,] ~ treatment[i,]))$r.squared)
-  Ci2<-sapply(seq.int(dim(reference)[1]), function(i) summary(lm(reference[i,] ~ reference2[i,]))$r.squared)
-  out$Index<-sum(Ci2-Ci)
+  #Ci2<-sapply(seq.int(dim(reference)[1]), function(i) summary(lm(reference[i,] ~ reference2[i,]))$r.squared)
+  out$Index<-sum(1-abs(Ci))/ntaxa(ps1.R)
   out$R<-Ci
-  out$diff<-Ci2-Ci
+  out$diff<-1-Ci
   names(out$R)<-rownames(reference)
   names(out$diff)<-rownames(reference)
   out} else {print("species do not match")}
@@ -1071,7 +1072,7 @@ getTaxCor.Tab<-function(x, method){
     for(j in 1:length(method)){
       v<-x[[i]][[method[j]]]$taxCor.Ratio$value
       V.tax[i,j]<-var(v)
-      Median.tax[i,j]<-median(v)
+      Median.tax[i,j]<-mean(v)
       }
   }
   rownames(V.tax)<-paste("rep", 1:length(x))

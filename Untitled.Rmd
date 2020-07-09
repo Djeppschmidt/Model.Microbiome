@@ -98,9 +98,11 @@ commonN: Number of taxa that have a global distribution
 groupN: Number of taxa that are group-specific
 singleN: Number of taxa that are sample-specific
 
-CAVEAT: there are 700 species functions that the software selects from. For each of these values, it uses a random selection routine. It includes resampling among the groups. This means that THERE IS A CHANCE THAT A TAXON MAY END UP REPRESENTING SEVERAL GROUPS, OR SAMPLES.
+CAVEAT: there are 700 species functions that the software selects from. For each of these values, it uses a random selection routine. It includes resampling among the groups. This means that:
 
-D: mean sampling depth (e.g. for sequencing)
+THERE IS A CHANCE THAT A TAXON MAY END UP REPRESENTING SEVERAL GROUPS, OR SAMPLES.
+
+D: mean sampling depth (i.e. simulating sequencing)
 V: variance of sampling depth.
 
 method: names of the functions to be used for count normalization (see below for details)
@@ -111,7 +113,7 @@ method<-c("QSeq")
 model<-suppressWarnings(run.analysis2(commonN=30, groupN=20, singleN=5, D=500, V=250, method))
 
 ```
-This creates a single output object that contains the phyloseq objects created before, and a number of different statistics. We'll get to the idices later.In order to get it to work, we need at least one methods function.
+This creates a single output object that contains the phyloseq objects created before, and a number of different statistics. We'll get to the indices later.In order to get it to work, we need at least one methods function.
 
 
 Example method function:
@@ -169,11 +171,17 @@ QSeq10<-function(ps){
     out<-make.scaled2(ps, val=10*mean(sample_sums(ps)), scale)
     out
 }
+
+QSeq100<-function(ps){
+    scale<-sample_data(ps)$DensityF
+    out<-make.scaled2(ps, val=100*mean(sample_sums(ps)), scale)
+    out
+}
 ```
 
 If we want to use all of them in our simulation study, then we simply do:
 ```{r}
-method<-c("QSeq0.5", "QSeq1", "QSeq2", "QSeq3", "QSeq10")
+method<-c("QSeq0.5", "QSeq1", "QSeq2", "QSeq3", "QSeq10", "QSeq100")
 ```
 
 Then we implement it in the analysis pipeline:
@@ -193,32 +201,46 @@ model$QSeq3$comm
 model$QSeq10$comm
 ```
 
-Model.Microbiome also automatically calculates several metrics. For example, it calculates automatically an experiment-wide PERMANOVA for each method:
+Model.Microbiome also automatically calculates several metrics. For example, it calculates automatically an experiment-wide PERMANOVA for each method and each factor. So for example if we look at the reference, we have a seperate permanova for the experimental category:
 ```{r}
-model$model$PERMANOVA # reference condition!
-model$raw$PERMANOVA # not normalized
-model$QSeq0.5$PERMANOVA # lowest mean value
-model$QSeq1$PERMANOVA  #...
-model$QSeq2$PERMANOVA #...
-model$QSeq3$PERMANOVA #...
-model$QSeq10$PERMANOVA # highest mean value
+model$model$PERMANOVA$Category
+
+```
+And each of the environmental factors:
+```{r}
+model$model$PERMANOVA$F1
+model$model$PERMANOVA$F2
+model$model$PERMANOVA$F3
+model$model$PERMANOVA$F4
+model$model$PERMANOVA$F5
+```
+
+We can compare any of these across treatments:
+```{r}
+model$model$PERMANOVA$F1 # reference condition!
+model$raw$PERMANOVA$F1 # not normalized
+model$QSeq0.5$PERMANOVA$F1 # lowest mean value
+model$QSeq1$PERMANOVA$F1  #...
+model$QSeq2$PERMANOVA$F1 #...
+model$QSeq3$PERMANOVA$F1 #...
+model$QSeq10$PERMANOVA$F1
+model$QSeq100$PERMANOVA$F1# highest mean value
 ```
 You'll notice that the QSeq PERMANOVA tables are very similar to the reference PERMANOVA table, and that the un-normalized table is a bit different. This is great! 
 
-Model.Microbiome uses a few statistics to understand bias that is introduced through the normalization process. All the metrics in Model.Microbiome consist of the ouput from an analysis conducted on a normalized dataset divided by the same analysis conducted on the reference community. For example, if we are interested in the relationship between a taxon an the environment, we could construct a linear model where abundance of taxon x depends on enviornment A. The R-squared of this model would represent the amount of information captured by the model. If we applied this model to both the reference community, and the normalized community, then we have a measure of the "actual" relationship and the infered relationship after our normalization. The ratio of these values gives us a comparable and interpretable value where 1 represents a perfect match; greater than 1 means the normalization method leads to overestimating the explanatory power of the environmental factors on the abundance of the taxon; and a value of less than one is interpreted to mean that the normalization underestimates the explanatory value of the environmental parameter. All of the indices are based on this interpretation principle. Here is a brief description of each index:
+Model.Microbiome uses a few metrics to understand bias that is introduced through the normalization process. All the metrics in Model.Microbiome consist of the ouput from an analysis conducted on a normalized dataset (treatment) divided by the same analysis conducted on the reference community. For example, if we are interested in the relationship between a taxon an the environment, we could construct a linear model where abundance of taxon x depends on environment A. The R-squared of this model would represent the amount of information captured by the model. If we applied this model to both the reference community, and the normalized community, then we have a measure of the "actual" relationship and the inferred relationship after our normalization, respectively. The ratio of these values gives us a comparable value where 1 represents a perfect match; greater than 1 indicates the normalization method leads to overestimating the explanatory power of the environmental factors on the abundance of the taxon; and a value of less than one indicates that the normalization underestimates the explanatory value of the environmental parameter. All of the indices are based on this interpretation principle. 
 
+Here is a brief description of each index:
 
 Loss of information index (LII) is based on a linear model approach, but instead of regressing the taxa against the environment and comparing the outputs, it regresses the treatment (normalized data) against the reference (pre-sampling). This provides a direct measure of information that is maintained about the abundance of the taxon across the dataset. The LII output has several components;
 
-$Index : index value which is the sum of (1 - the r-squared values) across all taxa. This is a single value for the whole run. Lower scores equate to less overall information lost.
+$Index : index value which is the sum from all taxa of (1 - the linear regression r-squared values) divided by the total number of taxa. This is a single value for the whole run. Lower scores equate to less overall information lost.
 
 $R : a list of the R squared values, one per taxon in the run.
 
 $diff : a list of (1 - the r-squared values) for the Index value, one for each taxon. This is useful to identify which taxa are deviating substantially, and help with troubleshooting the normalization method.
 
-All of these can be accessed from the normalization object (see output object map). 
-
-
+All of these can be accessed from the output object (see output object map). 
 
 The second set of metrics consist of linear regressions of the taxa against environmental and experimental design predictors. This test allows us to diagnose the effect that our normalization protocol has on our ability to infer relationships between the taxa and the environment / experimental condition. Once again, the primary outputs of this process are then taken as a ratio to the reference for interpretation.
 
@@ -226,17 +248,114 @@ $lmRatiotab : list of taxa and their R-squared values between taxon and the envi
 
 $lmRatiotab.model : list of taxa and their R-squared values between taxon and the experimental design, normalized by the reference
 
-These datasets are useful
 
 Object Map:
 ```{r}
 knitr::include_graphics("~/Desktop/PhD/RarefactionProject/Output_Map.pdf")
 ```
 
-Here are a few plots of reference vs. normalized abundance for a few randomly selected taxa:
+The speciesMeta object also stores a few other taxon specific metrics that help us interpret the outcomes;
+
+$prevalence is a taxon-wise measure of how many sites the taxon actually occures in.
+
+$mean_abundance is a taxon-wise measure of the mean abundance of each taxon across all sites
+
+$sd_abundance is a taxon-wise measure of the standard deviation in abundance of each taxon across all sites.
+
+$M.Eval is the mean of the relative abundance of the taxon at each site divided by the sampling depth of that site. This is meant to represent an unweigthed estimation of the likelihood that a taxon will be sampled at any site, given that they exist in that site. Lower values mean the taxon is generally less abundant.
+
+In addition to these other things, it has the taxon specific R-ratio that is the foundation of the LII for each normalization run. This allows us to understand better what is driving changes in the LII. These are each listed under the name of the method. For example, we have $QSeq, which represents the R-squared of the regression of the treatment abundance against the reference abundance for each taxon in the QSeq treatment. Let's look at some example plots that demonstrate the utility of these metadata:
+
+First, let's examine the relationship between the expected likelihood of sampling a taxon and the amount of information that is lost:
+```{r}
+
+ggplot(model$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(QSeq0.5), col=prevalence))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+
+```
+The color represents the prevalence, we can see that in this case, there are many taxa that lose no information (LII is highest when there is the most information lost; negative slope indicates that less information is lost as the likelihood of sampling the taxon goes up). Most of these are taxa that only occur in one sample. Let's color the samples differently:
 
 ```{r}
 
+ggplot(model$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(QSeq0.5), col=log(mean_abundance)))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+
+```
+We can see that the taxa, though they exist only in one site, have a range of abundances.We can look at how this patterns shifts as a function of our normalization technique:
+
+```{r}
+
+ggplot(model$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(QSeq0.5), col=log(mean_abundance)))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+
+ggplot(model$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(QSeq1), col=log(mean_abundance)))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+
+ggplot(model$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(QSeq10), col=log(mean_abundance)))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+
+ggplot(model$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(QSeq100), col=log(mean_abundance)))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+```
+We can see that in particular there is a shift in the amount of information that is lost in the middle M.Eval ranges; at high E.Val, there is relatively less information lost and so the values are more stable. At the low end, the lost information effects are dominated by whether or not the taxa happen to be detected; in the middle, taxa are regularly detected but their abundance is very dependent on sampling depth of the sample. Thus this is the area where we regain the most information.
+
+```{r}
+ggplot(model$model$SpeciesMeta, aes(x=prevalence,y=QSeq0.5, col=log(mean_abundance)))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+
+ggplot(model$model$SpeciesMeta, aes(x=prevalence,y=QSeq1, col=log(mean_abundance)))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+ggplot(model$model$SpeciesMeta, aes(x=prevalence,y=QSeq10, col=log(mean_abundance)))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+ggplot(model$model$SpeciesMeta, aes(x=prevalence,y=QSeq100, col=log(mean_abundance)))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+
+ggplot(model$model$SpeciesMeta, aes(x=log(mean_abundance),y=QSeq0.5, col=log(prevalence)))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+
+```
+```{r}
+
+
+ggplot(model$model$SpeciesMeta, aes(x=log(mean_abundance),y=QSeq100, col=log(prevalence)))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+
+ggplot(model$model$SpeciesMeta, aes(x=log(mean_abundance),y=QSeq100, col=log(prevalence)))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+```
+
+```{r}
+reference<-as.matrix(as.data.frame(t(as.matrix(otu_table(Delta.sppcount(ps1.R, ps1.R, method=0))))))
+  reference<-reference[order(rownames(reference)),]
+  
+treatment<-as.matrix(as.data.frame(t(as.matrix(otu_table(Delta.sppcount(ps2.T, ps1.R, method=0))))))
+treatment<-treatment[order(rownames(treatment)),]
 ```
 
 
