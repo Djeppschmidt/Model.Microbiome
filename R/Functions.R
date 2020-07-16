@@ -216,6 +216,13 @@ run.analysis2<-function(commonN, groupN, singleN, D, V, method){
         output[[method[i]]]$PERMANOVA$F4Rratio<-output[[method[i]]]$PERMANOVA$F4$aov.tab$R2/output$model$PERMANOVA$F4$aov.tab$R2
         output[[method[i]]]$PERMANOVA$F5Rratio<-output[[method[i]]]$PERMANOVA$F5$aov.tab$R2/output$model$PERMANOVA$F5$aov.tab$R2
 
+        names(output[[method[i]]]$PERMANOVA$CategoryRratio)<-c("R ratio", "Residual ratio", "total")
+        names(output[[method[i]]]$PERMANOVA$F1Rratio)<-c("R ratio", "Residual ratio", "total")
+        names(output[[method[i]]]$PERMANOVA$F2Rratio)<-c("R ratio", "Residual ratio", "total")
+        names(output[[method[i]]]$PERMANOVA$F3Rratio)<-c("R ratio", "Residual ratio", "total")
+        names(output[[method[i]]]$PERMANOVA$F4Rratio)<-c("R ratio", "Residual ratio", "total")
+        names(output[[method[i]]]$PERMANOVA$F5Rratio)<-c("R ratio", "Residual ratio", "total")
+
         output[[method[i]]]$LII<-LII(output$model$comm, output[[method[i]]]$comm)
         output[[method[i]]]$networkStat<-ConnStat(output[[method[i]]]$comm, num=250)
 

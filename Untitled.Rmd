@@ -308,6 +308,7 @@ ggplot(model$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(QSeq100), col=log(mean
   geom_point()+ 
   scale_color_viridis_c(option="C")+
   theme_classic()
+
 ```
 We can see that in particular there is a shift in the amount of information that is lost in the middle M.Eval ranges; at high E.Val, there is relatively less information lost and so the values are more stable. At the low end, the lost information effects are dominated by whether or not the taxa happen to be detected; in the middle, taxa are regularly detected but their abundance is very dependent on sampling depth of the sample. Thus this is the area where we regain the most information.
 
@@ -336,121 +337,102 @@ ggplot(model$model$SpeciesMeta, aes(x=log(mean_abundance),y=QSeq0.5, col=log(pre
   theme_classic()
 
 ```
-```{r}
 
-
-ggplot(model$model$SpeciesMeta, aes(x=log(mean_abundance),y=QSeq100, col=log(prevalence)))+
-  geom_point()+ 
-  scale_color_viridis_c(option="C")+
-  theme_classic()
-
-ggplot(model$model$SpeciesMeta, aes(x=log(mean_abundance),y=QSeq100, col=log(prevalence)))+
-  geom_point()+ 
-  scale_color_viridis_c(option="C")+
-  theme_classic()
-```
+We can explore to see how well species abundance and prevalence explain the LII:
 
 ```{r}
-reference<-as.matrix(as.data.frame(t(as.matrix(otu_table(Delta.sppcount(ps1.R, ps1.R, method=0))))))
-  reference<-reference[order(rownames(reference)),]
-  
-treatment<-as.matrix(as.data.frame(t(as.matrix(otu_table(Delta.sppcount(ps2.T, ps1.R, method=0))))))
-treatment<-treatment[order(rownames(treatment)),]
+summary(lm(model$model$SpeciesMeta$QSeq0.5~model$model$SpeciesMeta$prevalence*log(model$model$SpeciesMeta$mean_abundance)))
+
+# look at prediction of prevalence
+summary(lm(model$model$SpeciesMeta$QSeq0.5~model$model$SpeciesMeta$prevalence*log(model$model$SpeciesMeta$mean_abundance)))
+
+summary(lm(model$model$SpeciesMeta$QSeq100~model$model$SpeciesMeta$prevalence*log(model$model$SpeciesMeta$mean_abundance)))
+
+
 ```
 
+Pay close attention to the R-squared values of the model. We can see that the prevalence and mean abundance explain the highest amount of variance in the LII model. This doesn't necessarily mean that this model performs better; imagine if the relative patterns ofall taxa are perfectly preserved, then there would be no relationship between the mean abundance, prevalence and information that is lost through sampling. Conversely, if we have a really high predictive power between the abundance, prevalence, and lost information, it doesn't necessarily mean that the normalization is creating more bias in the dataset as there are likely real effects of relative abundance on the likelihood of detection in subsampling. This is to say that the statistics and the plots should be examined within the context of how the normalization procedure is known to operate in order to determine if it is creating bias. In this instance, QSeq0.5 decreases the R-squared of the model because some taxa are rounded down to 0, creating an anomaly that is removed at QSeq10 and QSeq100.
 
-We might look for information that could explain why certain taxa lose more information than others. For example, we can look at the relationship between sparcity and lost information in our normalization function: 
 
+In nearly all our comparisons of a normalization technique, we are comparing the results of a statistical test given the normalization to the reference. we do this because it is possible that our normalization technique might overfit the data to an expected trend, thus information may be lost also by overfitting. We have looked at an explicit evaluation of lost information intrinsic to each taxon; we can also look at how this lost information degrades our abilty to detect true relationships between the taxa and the environmental gradients. To do this, we employ linear modeling. We have two linear model outputs for each taxon. In the first case, we regress the abundance of the taxon against all the environmental variables, excluding categorical experimental design from the test structure. In the second case, we include only the categorical variables and exclude the environmental variables. This allows us to resolve whether there has been overfitting of taxon abundance to our experimental design; and the effect this has had on our ability to detect the relationship to environmental gradients. Of course, our final interest is not on the outputs of the model per se, but the ratio of model outputs from normalized datasets to the reference. This gives ratio tells us clearly which taxa are accurately modeled. In aggregate, the variance of this ratio around 1 tells us which method is more consistently and accurately modeling the relationship of each taxon to the environmental gradient driving it's abundance. 
 (R squared = 1 is ideal!)
 ```{r}
-plot(model$model$SpeciesMeta$prevalence,model$QSeq0.5$LII$R, col=gray(model$model$SpeciesMeta$M.Eval), 
-  main="QSeq0.5; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+plot(log(model$model$SpeciesMeta$mean_abundance),model$QSeq0.5$lmRatiotab, col=gray(model$model$SpeciesMeta$M.Eval), 
+  main="QSeq0.5; linear model Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
 
-plot(model$model$SpeciesMeta$prevalence,model$QSeq1$LII$R, col=gray(model$model$SpeciesMeta$M.Eval), 
-  main="QSeq1; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+plot(log(model$model$SpeciesMeta$mean_abundance),model$QSeq100$lmRatiotab, col=gray(model$model$SpeciesMeta$M.Eval), 
+  main="QSeq100; linear model Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
 
-plot(model$model$SpeciesMeta$prevalence,model$QSeq2$LII$R, col=gray(model$model$SpeciesMeta$M.Eval), 
-  main="QSeq2; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
-
-plot(model$model$SpeciesMeta$prevalence,model$QSeq3$LII$R, col=gray(model$model$SpeciesMeta$M.Eval), 
-  main="QSeq3; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
 ```
-
-It's interesting that the prevalence of the taxon does not seem to determine how well information about it's abundance is retained! But, looks can be decieving; we can do a statistical test:
 
 ```{r}
+plot(log(model$model$SpeciesMeta$mean_abundance),model$QSeq0.5$lmRatiotab.model, col=gray(model$model$SpeciesMeta$M.Eval), 
+  main="QSeq0.5; linear model Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared")
+
+plot(log(model$model$SpeciesMeta$mean_abundance),model$QSeq100$lmRatiotab.model, col=gray(model$model$SpeciesMeta$M.Eval), 
+  main="QSeq100; linear model Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared")
 
 ```
 
+We can clearly see from both linear model R-Ratio plots that there are a number of taxa for which we lost completely any relationship. These were likely taxa that were rounded out of the community in QSeq0.5 but not QSeq100. We can also see that overall the general pattern of relationships is maintained across the rest of the taxa. The rate of overestimation of the relationship between taxa and explanitory variables also remains the same
 
 You may notice that certain taxa have an R squared of 0; some of them improve as we increase the overall scaling factor. This happens when taxa are very low abundance in a particular sample. If their count abundance is less than 0.5, they get rounded down to 0. So ideally we want to pick a scaling value that lets us keep all the information from sampling (i.e. such that in all samples, the minimum taxon has a count of at least 1). This is an important observation if we want to use this method on a real dataset because it gives us a criteria for choosing what our scaling factor will be.
 
-In nearly all our comparisons of a normalization technique, we are comparing the results of a statistical test given the normalization to the reference. we do this because it is possible that our normalization technique might overfit the data to an expected trend, thus information may be lost also by overfitting. We have looked at an explicit evaluation of lost information intrinic to each taxon; we can also look at how this lost information degrades our abilty to detect true relationships between the taxa and the environmental gradients. To do this, we employ linear modeling. We have two linear model outputs for each taxon. In the first case, we regress the abundance of the taxon against all the environmental variables, excluding categorical experimental design from the test structure. In the second case, we include only the categorical variables and exclude the environmental variables. This allows us to resolve whether there has been overfitting of taxon abundance to our experimental design; and the effect this has had on our ability to detect the relationship to environmental gradients. Of course, our final interest is not on the outputs of the model per se, but the ratio of model outputs from normalized datasets to the reference. This gives ratio tells us clearly which taxa are accurately modeled. In aggregate, the variance of this ratio around 1 tells us which method is more consistently and accurately modeling the relationship of each taxon to the environmental gradient driving it's abundance. 
 
-Let's look at a couple examples. This linear model ratio is calculated automatically in each run:
-```{r}
-plot(model$model$SpeciesMeta$prevalence,model$raw$lmRatiotab, col=gray(model$model$SpeciesMeta$M.Eval), 
-  main="Raw; ratio-Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
-
-plot(model$model$SpeciesMeta$prevalence,model$QSeq3$lmRatiotab, col=gray(model$model$SpeciesMeta$M.Eval), 
-  main="QSeq3; ratio-Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
-```
-It's intruiging that actually highly prevalent taxa seem to lose the relationships to the environmental gradients the most consistently; and that low prevalence taxa seem most likely to have overestimated variance explained by the environment. We can see qualitatively that our QSeq methods increase the accuracy of our taxon-specific models by a small margin. We can evaluate this statistically:
+We can see qualitatively that our higher QSeq methods increase the accuracy of our taxon-specific models by a small margin. We can evaluate this statistically:
 
 ```{r}
-levenetest<-data.frame("ratio"=c(model$raw$lmRatiotab, model$QSeq3$lmRatiotab), "method"=c(rep("raw", length(model$raw$lmRatiotab)), rep("QSeq", length(model$QSeq3$lmRatiotab))))
+levenetest<-data.frame("ratio"=c(model$QSeq0.5$lmRatiotab, model$QSeq100$lmRatiotab), "method"=c(rep("raw", length(model$raw$lmRatiotab)), rep("QSeq", length(model$QSeq3$lmRatiotab))))
 
 car::leveneTest(ratio ~ method, data = levenetest)
 ```
 In this case it's not a huge improvement, but the method provides a solid evidence-based approach for optimizing normalization methods. 
 
-So far we've looked at how normalization might affect the ability to accurately detect environmental gradient effects on taxon abundance. Now let's use the same approach to see how the normalization affects our ability to detect experimental conditions. Model.Microbiome also calculates the variance explained by the experimental condition on each taxon:
+It might be instructional at this point to look at the samle distribution without any normalization, to see how well the normalization improves our inference about the relationship of taxa to their environment:
 
 ```{r}
+plot(model$model$SpeciesMeta$prevalence,model$raw$lmRatiotab, col=gray(model$model$SpeciesMeta$M.Eval), 
+  main="Not normalized; ratio-Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+
+plot(model$model$SpeciesMeta$prevalence,model$QSeq100$lmRatiotab, col=gray(model$model$SpeciesMeta$M.Eval), 
+  main="QSeq100; ratio-Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+
 plot(model$model$SpeciesMeta$prevalence,model$raw$lmRatiotab.model, col=gray(model$model$SpeciesMeta$M.Eval), 
-  main="Raw; ratio-Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+  main="Not normalized; ratio-Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared")
 
-plot(model$model$SpeciesMeta$prevalence,model$QSeq3$lmRatiotab.model, col=gray(model$model$SpeciesMeta$M.Eval), 
-  main="QSeq3; ratio-Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+plot(model$model$SpeciesMeta$prevalence,model$QSeq100$lmRatiotab.model, col=gray(model$model$SpeciesMeta$M.Eval), 
+  main="QSeq100; ratio-Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared")
 ```
+There is an important implication of the variance of the R-Ratio; that higher variance indicates less accurate estimation of the relationship between taxa and the environment across the whole community. If there were perfect accuracy, the value would be 1 for all taxa, and the variance would be zero.
 
-```{r}
-levenetest2<-data.frame("ratio"=c(model$raw$lmRatiotab.model, model$QSeq3$lmRatiotab.model), "method"=c(rep("raw", length(model$raw$lmRatiotab.model)), rep("QSeq", length(model$QSeq3$lmRatiotab.model))))
-
-car::leveneTest(ratio ~ method, data = levenetest2)
-```
-We can see that in this case, there is a weaker effect of normalization on the dispersion of the ratio from 1. It is interesting to note though that non-normalized data again seems much more likely to over-estimate the significance of the experimental design on the taxa than the normalized data.
-
-
-Thus far we have looked at the effect of normalization on detecting important relationships between taxa and the modeled environment. Now let's look at how relationships among taxa are affected by normalization (or lack therof). We will be conducting a network analysis for this section.
+Now let's look at how relationships among taxa are affected by normalization (or lack therof). We can access the R-Ratio for a correlation among taxa:
 ```{r}
 
-```
-
-
-```{r}
+model$raw$taxCor.Ratio
 
 ```
+Negative values indicate a negative relationship between the relationship among taxa in the reference compared to the treatment. Ideally all relationships should be 1 if the information is perfectly preserved. We can subset the dataset by specific taxa, and use metadata about those taxa to better understand why the relationships change. If we look at taxon 153, we see that it exists in 22 sites. We can look at how the prevalence and abundance of other taxa relate to the predicted relationship between the taxa.
 
 ```{r}
+table(rownames(model$model$SpeciesMeta)==model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp153",1])
+# plot vs prevalence
+plot(model$model$SpeciesMeta$prevalence,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp153",3], xlab="Prevalence", ylab="taxcor.Ratio")
 
+plot(model$model$SpeciesMeta$mean_abundance,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp153",3], xlab="mean Abundance", ylab="taxcor.Ratio")
+
+plot(model$model$SpeciesMeta$sd_abundance,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp153",3], xlab="SD Abundance", ylab="taxcor.Ratio")
 ```
-
-We take a similar approach for PERMANOVA metrics: we use a ratio of the permanova F value, or R-squared (both give relevant information), of the normalized dataset to the reference. We interpret therefore a value greater than one meaning the data is over-fit; and a value of less than one to mean that information has been lost. Model.Mocrobiome has a function that extracts the relevant PERMANOVA data and displays in a table:
-
+We can see in general, the largest errors come from where the prevalence and mean abundance are both low. However, in this example the one difference is a highly prevalent, but low abundance taxon. We can examine how this pattern holds up on a low prevalence taxon.
 ```{r}
+# check taxa are in the right order
+table(rownames(model$model$SpeciesMeta)==model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp10",1])
+# plot vs prevalence
+plot(model$model$SpeciesMeta$prevalence,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp10",3], xlab="Prevalence", ylab="taxcor.Ratio")
 
-```
-We can see that ...
+plot(model$model$SpeciesMeta$mean_abundance,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp10",3], xlab="mean Abundance", ylab="taxcor.Ratio")
 
+plot(model$model$SpeciesMeta$sd_abundance,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp10",3], xlab="SD Abundance", ylab="taxcor.Ratio")
 
-
-```{r}
-
-```
-
-
-```{r}
 
 ```
 
@@ -458,29 +440,59 @@ We can see that ...
 
 ```
 
+Model.Microbiome includes several R-ratio metrics for whole community patterns. These are based on the PERMANOVA r-squared value. Model.Microbiome conducts a PERMANOVA of each environmental factor and the categorical factor against a Bray-Curtis transformation of the count table. These are done separately because order of addition of the factors in the model influences the model outcomes; it is easiest to get comparable results run each factor in isolation. For example:
+
 ```{r}
+model$raw$PERMANOVA$F1
 
 ```
 
+The R squared part of the table is taken as a ratio of the reference:
 ```{r}
+model$raw$PERMANOVA$F1Rratio
+```
 
+We can examine how well each of the environmental and categorical factors are maintained:
+```{r}
+model$raw$PERMANOVA$CategoryRratio
 ```
 
 ```{r}
-
+model$raw$PERMANOVA$F2Rratio
 ```
 
 ```{r}
-
+model$raw$PERMANOVA$F3Rratio
 ```
 
+```{r}
+model$raw$PERMANOVA$F4Rratio
+```
 
+```{r}
+model$raw$PERMANOVA$F5Rratio
+```
+And of course, we can plot an ordination:
 
+```{r}
+bray_NMDS = ordinate(model$QSeq10$comm, "NMDS", "bray")
+plot_ordination(model$QSeq10$comm, bray_pcoa, "samples", color="Factor")
+```
+We can compare the ordination
 
+```{r}
+bray_NMDS.ref = ordinate(model$model$comm, "NMDS", "bray")
+plot_ordination(model$model$comm, bray_NMDS.ref, "samples", color="Factor")
 
+bray_NMDS.raw = ordinate(model$raw$comm, "NMDS", "bray")
+plot_ordination(model$raw$comm, bray_NMDS.raw, "samples", color="Factor")
 
+bray_NMDS.Q = ordinate(model$QSeq10$comm, "NMDS", "bray")
+plot_ordination(model$QSeq10$comm, bray_NMDS.Q, "samples", color="Factor")
+```
 
-This software also has a wrapper that allows us to iterate the function and produce many copies of the simulation. This has all the same inputs as before, plus one aditional input to tell the function how many times to iterate. In this case we'll do 10
+# Conducting Experiments: Summarizing Outputs
+This software also has a wrapper that allows us to iterate the function and produce many copies of the simulation. This has all the same inputs as before, plus one aditional input to tell the function how many times to iterate. In this case we'll do 10.
 ```{r}
 model10<-suppressWarnings(BENCHMARK.MM(reps=10, commonN=30, groupN=20, singleN=5, D=500, V=250, method))
 ```
@@ -523,7 +535,37 @@ model10.PF5
 
 ```
 
-#Normalization vs community structure
+In general, there are many outputs that a researcher may want to generate and summarize that we have not anticipated. Here are some functions for extracting the R-ratio from the linear models to give a template on the extraction method that works well with the object. This should give a means for researchers to extract and summarize any metric in any way they want. We will use both of these functions later in the analysis.
+```{r}
+# get lmRatio ####
+Summarize.lmRatiotab.Median<-function(trt, method){
+  Ftab<-matrix(NA, nrow = length(trt), ncol = length(method)) # make matrix
+  for(i in 1:length(trt)){
+    for(j in 1:length(method)){
+      Ftab[i,j]<-median(trt[[i]][[method[j]]]$lmRatiotab, na.rm=T)
+    #print(sum(trt[[i]][j]$PERMANOVA$aov.tab$F.Model))
+  }
+}
+  rownames(Ftab)<-names(trt)
+  colnames(Ftab)<-method
+  Ftab
+}
+
+Summarize.lmRatiotab.Var<-function(trt, method){
+  Ftab<-matrix(NA, nrow = length(trt), ncol = length(method)) # make matrix
+  for(i in 1:length(trt)){
+    for(j in 1:length(method)){
+      Ftab[i,j]<-var(trt[[i]][[method[j]]]$lmRatiotab, na.rm=T)
+    #print(sum(trt[[i]][j]$PERMANOVA$aov.tab$F.Model))
+  }
+}
+  rownames(Ftab)<-names(trt)
+  colnames(Ftab)<-method
+  Ftab
+}
+
+```
+# Exp. 1: Normalization vs Structure
 Let's say that we want to understand how the effect size of geographic structure within a community interacts with the performance of our normalization technique (or in the case of experimental design, what are the direct assemply effects of the treatment). Model.Microbiome gives us the power to vary the geographic structure/direct effects of the treatment on the community by determining the proportion of each sample that explicitly is determined by the grouping function:
 ```{r}
 
@@ -597,33 +639,6 @@ Conclusion: we can see clearly that the degree of structure in the dataset inter
 In this case interpretation is a little more challenging, because we are less interested in the mean value, and more interested in the variance of the values. This is because our metric is a ratio of the R-squared (variance explained) of each taxon by the environment to the same measure of the taxon in the reference dataset. This tells us the relative accuracy with which the normalized dataset is predicting the relationship of each taxon to the environment. Ideally the mean value should be 1 (a perfect fit). But it is possible for the mean to be 1, but the deviation to be substantial if it is balanced in the positive and negative direction. In otherwords, if the error in the positive and negative direction are equal in size, then even if there is large error in those directions, the mean value will still be 1 (a perfect fit). Thus we might have a perfect fit of the mean, yet have no taxa that is accurately modeled. To account for this, we put larger emphasis on the variance using a levene's test of equality of variance; but because variances may not be equally balanced in the positive and negative direction we are also still interested in changes in the average value. The two are necessary for accurate interpretation. We find especially for this analysis that outliers unduely affect the mean, so we prefer median for understanding the most common effect
 
 ```{r}
-
-# get lmRatio ####
-Summarize.lmRatiotab.Median<-function(trt, method){
-  Ftab<-matrix(NA, nrow = length(trt), ncol = length(method)) # make matrix
-  for(i in 1:length(trt)){
-    for(j in 1:length(method)){
-      Ftab[i,j]<-median(trt[[i]][[method[j]]]$lmRatiotab, na.rm=T)
-    #print(sum(trt[[i]][j]$PERMANOVA$aov.tab$F.Model))
-  }
-}
-  rownames(Ftab)<-names(trt)
-  colnames(Ftab)<-method
-  Ftab
-}
-
-Summarize.lmRatiotab.Var<-function(trt, method){
-  Ftab<-matrix(NA, nrow = length(trt), ncol = length(method)) # make matrix
-  for(i in 1:length(trt)){
-    for(j in 1:length(method)){
-      Ftab[i,j]<-var(trt[[i]][[method[j]]]$lmRatiotab, na.rm=T)
-    #print(sum(trt[[i]][j]$PERMANOVA$aov.tab$F.Model))
-  }
-}
-  rownames(Ftab)<-names(trt)
-  colnames(Ftab)<-method
-  Ftab
-}
 
 Summarize.lmRatiotab.Var(model10.A, method2)
 
@@ -1154,6 +1169,7 @@ ggplot(permanova.model10Levels.env5P1, aes(x=Level, y=value, group = variable, c
   ylab("Permanova env5Ratio (Mean +/- sd)")+
   theme_classic()
 ```
+Statistics:
 ```{r}
 
 summary(aov(permanova.model10Levels.model$value~permanova.model10Levels.model$Level*permanova.model10Levels.model$variable))
@@ -1170,7 +1186,7 @@ leveneTest(permanova.model10Levels.env3$value~permanova.model10Levels.env3$varia
 leveneTest(permanova.model10Levels.env4$value~permanova.model10Levels.env4$variable)
 leveneTest(permanova.model10Levels.env5$value~permanova.model10Levels.env5$variable)
 ```
-# Normalization vs Sequencing Depth
+# Expt 2: Normalization vs Sequencing Depth
 Let's say we want to know the effect of undersampling interacts with our normalization protocol to affect our ability to detect relationships between taxa and the environment. We can vary the sequencing depth:
 ```{r}
 
@@ -1684,6 +1700,8 @@ ggplot(permanova.model10CLevels.env5P, aes(x=Level, y=value, group = variable, c
   ylab("Permanova env5Ratio (Median +/- min/max)")+
   theme_classic()
 ```
+
+Stats:
 ```{r}
 summary(aov(permanova.model10CLevels.model$value~permanova.model10CLevels.model$Level*permanova.model10CLevels.model$variable))
 
@@ -1754,7 +1772,7 @@ A quick note for interpretation- we are looking for the variance to be as low as
 
 
 
-# normalization vs sequencing variance
+# Expt 3: Normalization vs Sequencing Variance
 
 ```{r}
 # sequencing variance ####
