@@ -236,6 +236,12 @@ run.analysis2<-function(commonN, groupN, singleN, D, V, method){
       output$raw$PERMANOVA$F3Rratio<-output$raw$PERMANOVA$F3$aov.tab$R2/output$model$PERMANOVA$F3$aov.tab$R2
       output$raw$PERMANOVA$F4Rratio<-output$raw$PERMANOVA$F4$aov.tab$R2/output$model$PERMANOVA$F4$aov.tab$R2
       output$raw$PERMANOVA$F5Rratio<-output$raw$PERMANOVA$F5$aov.tab$R2/output$model$PERMANOVA$F5$aov.tab$R2
+      names(output$raw$PERMANOVA$CategoryRratio)<-c("R ratio", "Residual ratio", "total")
+      names(output$raw$PERMANOVA$F1Rratio)<-c("R ratio", "Residual ratio", "total")
+      names(output$raw$PERMANOVA$F2Rratio)<-c("R ratio", "Residual ratio", "total")
+      names(output$raw$PERMANOVA$F3Rratio)<-c("R ratio", "Residual ratio", "total")
+      names(output$raw$PERMANOVA$F4Rratio)<-c("R ratio", "Residual ratio", "total")
+      names(output$raw$PERMANOVA$F5Rratio)<-c("R ratio", "Residual ratio", "total")
       print("raw permanova complete")
       output$raw$LII<-LII(output$model$comm, output$raw$comm)
       print("raw LII complete")

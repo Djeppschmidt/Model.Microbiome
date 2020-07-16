@@ -414,13 +414,13 @@ model$raw$taxCor.Ratio
 Negative values indicate a negative relationship between the relationship among taxa in the reference compared to the treatment. Ideally all relationships should be 1 if the information is perfectly preserved. We can subset the dataset by specific taxa, and use metadata about those taxa to better understand why the relationships change. If we look at taxon 153, we see that it exists in 22 sites. We can look at how the prevalence and abundance of other taxa relate to the predicted relationship between the taxa.
 
 ```{r}
-table(rownames(model$model$SpeciesMeta)==model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp153",1])
+table(rownames(model$model$SpeciesMeta)==model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp103",1])
 # plot vs prevalence
-plot(model$model$SpeciesMeta$prevalence,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp153",3], xlab="Prevalence", ylab="taxcor.Ratio")
+plot(model$model$SpeciesMeta$prevalence,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp103",3], xlab="Prevalence", ylab="taxcor.Ratio")
 
-plot(model$model$SpeciesMeta$mean_abundance,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp153",3], xlab="mean Abundance", ylab="taxcor.Ratio")
+plot(model$model$SpeciesMeta$mean_abundance,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp103",3], xlab="mean Abundance", ylab="taxcor.Ratio")
 
-plot(model$model$SpeciesMeta$sd_abundance,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp153",3], xlab="SD Abundance", ylab="taxcor.Ratio")
+plot(model$model$SpeciesMeta$sd_abundance,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp103",3], xlab="SD Abundance", ylab="taxcor.Ratio")
 ```
 We can see in general, the largest errors come from where the prevalence and mean abundance are both low. However, in this example the one difference is a highly prevalent, but low abundance taxon. We can examine how this pattern holds up on a low prevalence taxon.
 ```{r}
@@ -470,13 +470,13 @@ model$raw$PERMANOVA$F4Rratio
 ```
 
 ```{r}
-model$raw$PERMANOVA$F5Rratio
+names(model$raw$PERMANOVA$F5Rratio)<-c("R ratio", "Residual ratio", "total")
 ```
 And of course, we can plot an ordination:
 
 ```{r}
 bray_NMDS = ordinate(model$QSeq10$comm, "NMDS", "bray")
-plot_ordination(model$QSeq10$comm, bray_pcoa, "samples", color="Factor")
+plot_ordination(model$QSeq10$comm, bray_NMDS, "samples", color="Factor")
 ```
 We can compare the ordination
 
