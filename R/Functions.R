@@ -456,6 +456,13 @@ Summarize.Ftable<-function(trt, method){
       Ftab
 }
 
+#' Summarize the LII
+#' @param trt output object from BENCHMARK.MM
+#' @param method list of function names used in BENCHMARK.MM for community normalization
+#' @keywords reference community model microbiome
+#' @export
+#' @examples depricated?
+#' Summarize.LII()
 Summarize.LII<-function(trt, method){
   Ftab<-matrix(NA, nrow = length(trt), ncol = length(method))
   for(i in 1:length(trt)){

@@ -5,23 +5,11 @@ date: "5/18/2020"
 output: html_document
 ---
 
-Table of contents:
-Building a model
-Emplementing a simulation
-Outputs: examining taxon relationships to environment
-i-PERMANOVA
-ii-LII
-iii-linear model
-iv-index ratios & variance
-v-statistical tests
-
-Outputs: examining taxon relationships to each other
-
-Introduction:
+# Introduction
 
 ModelMicrobiome is a novel platform for testing the performance and assumptions underlying ecological inference of microbiomes. Whereas previous benchmarking and modeling efforts have used case-control frameworks, and/or used randomized real data, none have tested the accuracy of ecological inference following a sequence count normalization procedure. This is to say previous efforts have focused on the ability to accurately detect a change in relative abudance (i.e. differential abundance analysis). But these tests do not reflect how well the ecological relationships are preserved through the normalization process (e.g. relationship between the taxa and their environment or among taxa). This software does not attempt to address bias that is introduced by the sequencing, DNA purification, or field sampling efforts. It only is meant as a tool to better understand the effect that any post-hoc sequence count normalization has on our ability to infer underlying ecological relationships. 
 
-To further clarify the limits of this software, it is not intended to be applied to metagenomics analyses that derive from shotgun sequence data. There are database and sequencing biases that are particular to whole genome sequencing that must be addressed separately and that may confound the inferences made from this software. THIS SOFTWARE IS NOT DESIGNED TO ADDRESS SHOTGUN SEQUENCING OR ION TORRENT ETC. SEQUENCING. This software is designed specifically for amplicon (i.e. metabarcoding) studies of a single gene locus used to infer population structure. 
+To further clarify the limits of this software, it is not intended to be applied to metagenomics analyses that derive from shotgun sequence data. There are database and sequencing biases that are particular to whole genome sequencing that must be addressed separately and that may confound the inferences made from this software. THIS SOFTWARE IS NOT DESIGNED TO ADDRESS SHOTGUN SEQUENCING OR ION TORRENT ETC. SEQUENCING. This software is designed specifically for amplicon (i.e. metabarcoding) studies of a single gene locus used to infer population structure. For more detailed information about how the indexes are constructed, refer to (DOI: ... )
 
 This software was written under R version 3.6.1. R version 4 has been published with major updates to some of the core mechanics. Model.MicrobiomeV2 will be updated for R 4.0.
 
