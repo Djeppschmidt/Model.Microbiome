@@ -88,9 +88,7 @@ NOTE: SEE SECTION DETAILS FOR CAVEATS ABOUT THIS SELECTION PROCESS!!
 5. Sequence Normalization
   a. uses a function to normalize the data any arbitrary number of different methods
 
-```{r}
-knitr::include_graphics("~/Desktop/PhD/RarefactionProject/Process_Map.pdf")
-```
+![Alt text]("~/Desktop/PhD/RarefactionProject/Process_Map.pdf")
 
 So let's look at the function. It has several inputs necessary:
 
@@ -250,9 +248,8 @@ $lmRatiotab.model : list of taxa and their R-squared values between taxon and th
 
 
 Object Map:
-```{r}
-knitr::include_graphics("~/Desktop/PhD/RarefactionProject/Output_Map.pdf")
-```
+
+![Alt text]("~/Desktop/PhD/RarefactionProject/Output_Map.pdf")
 
 The speciesMeta object also stores a few other taxon specific metrics that help us interpret the outcomes;
 
@@ -411,32 +408,36 @@ Now let's look at how relationships among taxa are affected by normalization (or
 model$raw$taxCor.Ratio
 
 ```
-Negative values indicate a negative relationship between the relationship among taxa in the reference compared to the treatment. Ideally all relationships should be 1 if the information is perfectly preserved. We can subset the dataset by specific taxa, and use metadata about those taxa to better understand why the relationships change. If we look at taxon 153, we see that it exists in 22 sites. We can look at how the prevalence and abundance of other taxa relate to the predicted relationship between the taxa.
+Negative values indicate a negative relationship between the relationship among taxa in the reference compared to the treatment. Ideally all relationships should be 1 if the information is perfectly preserved. We can subset the dataset by specific taxa, and use metadata about those taxa to better understand why the relationships change. If we look at taxon 153, we see that it exists in 22 sites. We can look at how the prevalence and abundance of other taxa relate to the predicted relationship between the taxa. First let's identify low prevalence and high prevalence taxa.
 
 ```{r}
-table(rownames(model$model$SpeciesMeta)==model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp103",1])
+#test the rownames are equal
+nm<-rownames(model$model$SpeciesMeta)
+nm.h<-nm[model$model$SpeciesMeta$prevalence>20]
+nm.l<-nm[model$model$SpeciesMeta$prevalence==1]
+```
+
+
+```{r}
+table(rownames(model$model$SpeciesMeta)==model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2==nm.l[[1]],1])
 # plot vs prevalence
-plot(model$model$SpeciesMeta$prevalence,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp103",3], xlab="Prevalence", ylab="taxcor.Ratio")
+plot(model$model$SpeciesMeta$prevalence,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2==nm.h[[1]],3], xlab="Prevalence", ylab="taxcor.Ratio")
 
-plot(model$model$SpeciesMeta$mean_abundance,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp103",3], xlab="mean Abundance", ylab="taxcor.Ratio")
+plot(model$model$SpeciesMeta$mean_abundance,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2==nm.h[[1]],3], xlab="mean Abundance", ylab="taxcor.Ratio")
 
-plot(model$model$SpeciesMeta$sd_abundance,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp103",3], xlab="SD Abundance", ylab="taxcor.Ratio")
+plot(model$model$SpeciesMeta$sd_abundance,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2==nm.h[[1]],3], xlab="SD Abundance", ylab="taxcor.Ratio")
 ```
 We can see in general, the largest errors come from where the prevalence and mean abundance are both low. However, in this example the one difference is a highly prevalent, but low abundance taxon. We can examine how this pattern holds up on a low prevalence taxon.
 ```{r}
 # check taxa are in the right order
-table(rownames(model$model$SpeciesMeta)==model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp10",1])
+table(rownames(model$model$SpeciesMeta)==model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2==nm.l[[1]],1])
 # plot vs prevalence
-plot(model$model$SpeciesMeta$prevalence,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp10",3], xlab="Prevalence", ylab="taxcor.Ratio")
+plot(model$model$SpeciesMeta$prevalence,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2==nm.l[[1]],3], xlab="Prevalence", ylab="taxcor.Ratio")
 
-plot(model$model$SpeciesMeta$mean_abundance,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp10",3], xlab="mean Abundance", ylab="taxcor.Ratio")
+plot(model$model$SpeciesMeta$mean_abundance,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2==nm.l[[1]],3], xlab="mean Abundance", ylab="taxcor.Ratio")
 
-plot(model$model$SpeciesMeta$sd_abundance,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2=="spp10",3], xlab="SD Abundance", ylab="taxcor.Ratio")
+plot(model$model$SpeciesMeta$sd_abundance,model$QSeq0.5$taxCor.Ratio[model$QSeq0.5$taxCor.Ratio$Var2==nm.l[[1]],3], xlab="SD Abundance", ylab="taxcor.Ratio")
 
-
-```
-
-```{r}
 
 ```
 
@@ -470,7 +471,7 @@ model$raw$PERMANOVA$F4Rratio
 ```
 
 ```{r}
-names(model$raw$PERMANOVA$F5Rratio)<-c("R ratio", "Residual ratio", "total")
+model$raw$PERMANOVA$F5Rratio
 ```
 And of course, we can plot an ordination:
 
@@ -491,11 +492,12 @@ bray_NMDS.Q = ordinate(model$QSeq10$comm, "NMDS", "bray")
 plot_ordination(model$QSeq10$comm, bray_NMDS.Q, "samples", color="Factor")
 ```
 
-# Conducting Experiments: Summarizing Outputs
-This software also has a wrapper that allows us to iterate the function and produce many copies of the simulation. This has all the same inputs as before, plus one aditional input to tell the function how many times to iterate. In this case we'll do 10.
+# Conducting Experiments: Summarizing Outputs 
+Model.Microbiome has a wrapper that allows the user to iteratively generate random communities with the same experimental conditions. TThe inputs are the same as before, plus one aditional input to tell the function how many times to iterate. In this case we'll do 10. We use suppressWarnings because the linear model often produces warnings when it has a perfect fit, and these can clutter the output.
 ```{r}
 model10<-suppressWarnings(BENCHMARK.MM(reps=10, commonN=30, groupN=20, singleN=5, D=500, V=250, method))
 ```
+
 model10 is now a list object with 10 items, each one as a replicated simulation. This is the basis for us to be able to extract performance metrics and do statistical analyses to compare different normalization methods. 
 
 So now that we have the basic data structures and functionalities, let's look at some analyses that are possible when we can automate community generation.
