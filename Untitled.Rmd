@@ -693,7 +693,7 @@ ggplot(SV.lmRatio.model10.p1, aes(x=Level, y=value, group = variable, color=vari
   theme_classic()
 
 
-ggplot(SM.lmRatio.model10.p, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(SM.lmRatio.model10.p2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
   scale_colour_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.3))+
@@ -702,7 +702,7 @@ ggplot(SM.lmRatio.model10.p, aes(x=Level, y=value, group = variable, color=varia
   ylab("Median lmRatio (Median +/- min/max)")+
   theme_classic()
 
-ggplot(SV.lmRatio.model10.p, aes(x=Level, y=log(value), group = variable, color=variable))+scale_colour_viridis_d(direction=-1)+
+ggplot(SV.lmRatio.model10.p2, aes(x=Level, y=log(value), group = variable, color=variable))+scale_colour_viridis_d(direction=-1)+
   geom_errorbar(aes(ymin=log(low), ymax=log(high)), width=.1, position=position_dodge(.3)) +
   geom_line(position=position_dodge(.3))+
   geom_point(position=position_dodge(.3))+
@@ -815,7 +815,7 @@ ggplot(SV.lmRatioM.model10.p1, aes(x=Level, y=value, group = variable, color=var
   ylab("Variance lmRatio.model (Mean +/- sd)")+
   
   theme_classic()
-ggplot(SM.lmRatioM.model10.p, aes(x=Level, y=value, group = variable, color=variable))+
+ggplot(SM.lmRatioM.model10.p2, aes(x=Level, y=value, group = variable, color=variable))+
   geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.3)) +
   scale_colour_viridis_d()+
   geom_line(position=position_dodge(.3))+
@@ -824,7 +824,7 @@ ggplot(SM.lmRatioM.model10.p, aes(x=Level, y=value, group = variable, color=vari
   ylab("Median lmRatio.model (Median +/- min/max)")+
   theme_classic()
 
-ggplot(SV.lmRatioM.model10.p, aes(x=Level, y=log(value), group = variable, color=variable))+
+ggplot(SV.lmRatioM.model10.p2, aes(x=Level, y=log(value), group = variable, color=variable))+
   geom_errorbar(aes(ymin=log(low), ymax=log(high)), width=.1, position=position_dodge(.3)) +
   scale_colour_viridis_d(direction=-1)+
   geom_line(position=position_dodge(.3))+
