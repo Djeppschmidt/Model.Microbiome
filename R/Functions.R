@@ -277,7 +277,8 @@ run.analysis2<-function(commonN, groupN, singleN, D, V, method){
 
       if(output$model$networkStat$taxcor$Var1==output[[method[i]]]$networkStat$taxcor$Var1 & output$model$networkStat$taxcor$Var2==output[[method[i]]]$networkStat$taxcor$Var2){
       tab<-output$model$networkStat$taxcor
-      tab$value<-output[[method[i]]]$networkStat$taxcor$value/output$model$networkStat$taxcor$value
+      tab$value[tab$value==0]<-min(tab$value[tab$value>0])/10 # 1 orders of magnitude lower than lowest; but not zero!!
+      tab$value<-output[[method[i]]]$networkStat$taxcor$value/tab$value
       output[[method[i]]]$taxCor.Ratio<-tab
 
     } #ratio of lm of env from normalized data to reference
