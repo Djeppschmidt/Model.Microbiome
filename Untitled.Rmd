@@ -11,10 +11,11 @@ ModelMicrobiome is a novel platform for testing the performance and assumptions 
 
 To further clarify the limits of this software, it is not intended to be applied to metagenomics analyses that derive from shotgun sequence data. There are database and sequencing biases that are particular to whole genome sequencing that must be addressed separately and that may confound the inferences made from this software. THIS SOFTWARE IS NOT DESIGNED TO ADDRESS SHOTGUN SEQUENCING OR ION TORRENT ETC. SEQUENCING. This software is designed specifically for amplicon (i.e. metabarcoding) studies of a single gene locus used to infer population structure. For more detailed information about how the indexes are constructed, refer to (DOI: ... )
 
-This software was written under R version 3.6.1. R version 4 has been published with major updates to some of the core mechanics. Model.MicrobiomeV2 will be updated for R 4.0.
+This software was written under R version 3.6.1. R version 4 has been published with major updates to some of the core mechanics. Model.MicrobiomeV2 will be updated for R 4.0 soon.
 
 With those disclaimers out of the way, let's dig in.
 
+# Install Model.Microbiome
 First, let's install Model.Microbiome:
 ```{r}
 # update anything from my local computer (for me as I work, not you...) ####
@@ -2216,67 +2217,67 @@ permanova.model10CVLevels.env3<-melt(permanova.model10CVLevels.env3, id.vars = "
 permanova.model10CVLevels.env4<-melt(permanova.model10CVLevels.env4, id.vars = "Level", measure.vars = method2)
 permanova.model10CVLevels.env5<-melt(permanova.model10CVLevels.env5, id.vars = "Level", measure.vars = method2)
 
-permanova.model10CVLevels.modelP<-data_summary2(permanova.model10CVLevels.model, varname="value", groupnames=c("Level", "variable"))
-permanova.model10CVLevels.env1P<-data_summary2(permanova.model10CVLevels.env1, varname="value", groupnames=c("Level", "variable"))
-permanova.model10CVLevels.env2P<-data_summary2(permanova.model10CVLevels.env2, varname="value", groupnames=c("Level", "variable"))
-permanova.model10CVLevels.env3P<-data_summary2(permanova.model10CVLevels.env3, varname="value", groupnames=c("Level", "variable"))
-permanova.model10CVLevels.env4P<-data_summary2(permanova.model10CVLevels.env4, varname="value", groupnames=c("Level", "variable"))
-permanova.model10CVLevels.env5P<-data_summary2(permanova.model10CVLevels.env5, varname="value", groupnames=c("Level", "variable"))
+permanova.model10CVLevels.modelP<-data_summary(permanova.model10CVLevels.model, varname="value", groupnames=c("Level", "variable"))
+permanova.model10CVLevels.env1P<-data_summary(permanova.model10CVLevels.env1, varname="value", groupnames=c("Level", "variable"))
+permanova.model10CVLevels.env2P<-data_summary(permanova.model10CVLevels.env2, varname="value", groupnames=c("Level", "variable"))
+permanova.model10CVLevels.env3P<-data_summary(permanova.model10CVLevels.env3, varname="value", groupnames=c("Level", "variable"))
+permanova.model10CVLevels.env4P<-data_summary(permanova.model10CVLevels.env4, varname="value", groupnames=c("Level", "variable"))
+permanova.model10CVLevels.env5P<-data_summary(permanova.model10CVLevels.env5, varname="value", groupnames=c("Level", "variable"))
 
 
 ggplot(permanova.model10CVLevels.modelP, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(.01)) +
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.01)) +
   scale_colour_viridis_d(direction=-1)+
   geom_line(position=position_dodge(0.01))+
   geom_point(position=position_dodge(0.01))+
-  xlab("Degree of Structure")+
-  ylab("Permanova modelRatio (Median +/- min/max)")+
+  xlab("Relative Variance (variance / mean)")+
+  ylab("Permanova modelRatio (Mean +/- sd)")+
   theme_classic()
 
 ggplot(permanova.model10CVLevels.env1P, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(0.1)) +
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(0.1)) +
   scale_colour_viridis_d(direction=-1)+
   geom_line(position=position_dodge(0.1))+
   geom_point(position=position_dodge(0.1))+
-  xlab("Degree of Structure")+
-  ylab("Permanova env1Ratio (Median +/- min/max)")+
+  xlab("Relative Variance (variance / mean)")+
+  ylab("Permanova env1Ratio (Mean +/- sd)")+
   theme_classic()
 
 
 ggplot(permanova.model10CVLevels.env2P, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(0.1)) +
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(0.1)) +
   scale_colour_viridis_d(direction=-1)+
   geom_line(position=position_dodge(0.1))+
   geom_point(position=position_dodge(0.1))+
-  xlab("Degree of Structure")+
-  ylab("Permanova env2Ratio (Median +/- min/max)")+
+  xlab("Relative Variance (variance / mean)")+
+  ylab("Permanova env2Ratio (Mean +/- sd)")+
   theme_classic()
 
 ggplot(permanova.model10CVLevels.env3P, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(0.1)) +
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(0.1)) +
   scale_colour_viridis_d(direction=-1)+
   geom_line(position=position_dodge(0.1))+
   geom_point(position=position_dodge(0.1))+
-  xlab("Degree of Structure")+
-  ylab("Permanova env3Ratio (Median +/- min/max)")+
+  xlab("Relative Variance (variance / mean)")+
+  ylab("Permanova env3Ratio (Mean +/- sd)")+
   theme_classic()
 
 ggplot(permanova.model10CVLevels.env4P, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(0.1)) +
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(0.1)) +
   scale_colour_viridis_d(direction=-1)+
   geom_line(position=position_dodge(0.1))+
   geom_point(position=position_dodge(0.1))+
-  xlab("Degree of Structure")+
-  ylab("Permanova env4Ratio (Median +/- min/max)")+
+  xlab("Relative Variance (variance / mean)")+
+  ylab("Permanova env4Ratio (Mean +/- sd)")+
   theme_classic()
 
 ggplot(permanova.model10CVLevels.env5P, aes(x=Level, y=value, group = variable, color=variable))+
-  geom_errorbar(aes(ymin=low, ymax=high), width=.1, position=position_dodge(0.1)) +
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(0.1)) +
   scale_colour_viridis_d(direction=-1)+
   geom_line(position=position_dodge(0.1))+
   geom_point(position=position_dodge(0.1))+
-  xlab("Degree of Structure")+
-  ylab("Permanova env5Ratio (Median +/- min/max)")+
+  xlab("Relative Variance (variance / mean)")+
+  ylab("Permanova env5Ratio (Mean +/- sd)")+
   theme_classic()
 
 ```
@@ -2318,671 +2319,248 @@ leveneTest(permanova.model10CVLevels.env5$value~permanova.model10CVLevels.env5$v
 ```
 
 
-````{r}
 
-TaxRatio.model10.B$V.tax
-TaxRatio.model10.B$Median.tax
-model10.B$rep6$model$SpeciesMeta
-
-model10.B$rep6$QSeq10$taxCor.Ratio[order(model10.B$rep6$QSeq10$taxCor.Ratio$value),]
-
-spp130, spp11, spp324
-
-
-model10.B$rep6$QSeq0.5$taxCor.Ratio[order(model10.B$rep6$QSeq10$taxCor.Ratio$value),]
-ggplot(model10.B$rep6$model$SpeciesMeta, aes(x=M.Eval,y=log(QSeq10),col=prevalence))+
-  geom_point()+
-  scale_color_viridis_c(option="C")+
-  theme_classic()
-
-ggplot(model10.B$rep6$model$SpeciesMeta, aes(x=prevalence, y=M.Eval,col=prevalence))+
-  geom_point()+
-  scale_color_viridis_c(option="C")+
-  theme_classic()
-
-ggplot(model10.B$rep1$model$SpeciesMeta, aes(x=prevalence, y=M.Eval,col=prevalence))+
-  geom_point()+
-  scale_color_viridis_c(option="C")+
-  theme_classic()
-
-ggplot(C.D500$rep1$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(deseqLII),col=deseqDMI))+geom_point()+ scale_color_viridis_c(option="C")
-
-```
-
+Model.Microbiome constructs networks and network plots using two heuristics for creating the network thresholds. It also includes some functions to simplify accessing the network statistics that have been calculated, and plots that are generated. These are illustrated in the example below. These networks are built using two alternative approaches. Whenever we build a network, we need to establish a threshold to determine what relationships we consider significant to include. Our two methods include one that is a static threshold value, set at a correlation coefficient of 0.8; the other is a dynamic threshold heuristic that identifies the maximum threshold value that results in a network with 250 edges. The reason we include the secon method is because the network statistics for two graphs with different number of edges are in principle not comparable. However, we have found that in ecological settings that while the metrics we use might change, the overall interpretation of each plot does not. We also find that similar to other measures of beta diversity (here interpreted as changing species associations across sites), that statistics derived from the network are sensitive to network construction method, but are robust to normalization methods of the community. Let's take a look an an example using the community structure example from earlier in the tutorial:
 
 ```{r}
-getNetStats<-function(x, method){
-  print(length(method))
-  D.module.table<-matrix(nrow=length(x), ncol=length(method))
-  D.Threshold.table<-matrix(nrow=length(x), ncol=length(method))
-  S.module.table<-matrix(nrow=length(x), ncol=length(method))
-  S.Threshold.table<-matrix(nrow=length(x), ncol=length(method))
-  for(i in 1:length(x)){
-    for(j in 1:length(method)){
-      print(x[[i]][[method[j]]]$networkStat$stats[1,3])
-      D.module.table[i,j]<-x[[i]][[method[j]]]$networkStat$stats[1,3]
-      D.Threshold.table[i,j]<-x[[i]][[method[j]]]$networkStat$stats[1,4]
-      S.module.table[i,j]<-x[[i]][[method[j]]]$networkStat$stats[2,3]
-      S.Threshold.table[i,j]<-x[[i]][[method[j]]]$networkStat$stats[2,4]
-      }
-  }
-  
-  rownames(D.module.table)<-paste("rep", 1:length(x))
-  rownames(D.Threshold.table)<-paste("rep", 1:length(x))
-  rownames(S.module.table)<-paste("rep", 1:length(x))
-  rownames(S.Threshold.table)<-paste("rep", 1:length(x))
-  colnames(D.module.table)<-method
-  colnames(D.Threshold.table)<-method
-  colnames(S.module.table)<-method
-  colnames(S.Threshold.table)<-method
-  out<-NULL
-  out$D.module.table<-D.module.table
-  out$D.Threshold.table<-D.Threshold.table
-  out$S.module.table<-S.module.table
-  out$S.Threshold.table<-S.Threshold.table
-  out
-}
 
 method3<-c("model", "raw", "QSeq0.5", "QSeq10")
 
-plotstats.A<-getNetStats(model10.A, method2)
+plotstats.A<-getNetStats(model10.A, method3) # get statistics
 
-plotstats$D.module.table
-plotstats$D.Threshold.table
-plotstats$S.module.table
-plotstats$S.Threshold.table
-
-plotstats.B<-getNetStats(model10.B, method2)
-
-plotstats.C<-getNetStats(model10.C, method2)
-
-plotstats.D<-getNetStats(model10.D, method2)
-
-plotstats.D$D.module.table
-plotstats.D$D.Threshold.table
-plotstats.D$S.module.table
-plotstats.D$S.Threshold.table
-
-
-test.dist<-phyloseq::distance(model10.A$rep1$model$comm, method="sor", type="taxa")
-
-test.dist2<-phyloseq::distance(model10.A$rep1$raw$comm, method="sor", type="taxa")
-test.dist3<-phyloseq::distance(model10.A$rep1$QSeq10$comm, method="sor", type="taxa")
-
-test.dist2/test.dist
-test.dist3/test.dist
-
-identical(test.dist2/test.dist, test.dist3/test.dist)
-View(as.matrix(test.dist))
-
-?cor
-cor.tst<-cor(t(as.data.frame(as.matrix(otu_table(model10.A$rep1$model$comm)))))
-cor.tst2<-cor(t(as.data.frame(as.matrix(otu_table(model10.A$rep1$raw$comm)))))
-
-var(cor.tst2/cor.tst)
-
-identical(rownames(cor.tst2), rownames(cor.tst))
-identical(colnames(cor.tst2), colnames(cor.tst))
-
-t.melt<-melt(cor.tst)
+plotstats.A$D.module.table # modularity value table for dynamic threshold
+plotstats.A$S.module.table # modularity value table for static threshold
 ```
-Here we can see clearly that the degree of structure in the dataset interacts with the normalization method to affect it's accuracy. In all cases the QSeq normaliation method out performs
-And some statistics:
+A close look at the module table suggests that the characteristics of the un-noralized dataset are driving the network statistics of the normalized set. For example, if we look at rep1, the values for QSeq0.5 and QSeq10 are both close or identical to the values for the raw dataset. This means that this normalization technique is not necessarily improving the accuracy of the network statistics. We can see this pattern does not depend on whether the network is constructed using a dynamic or static threshold. We can look at the threshold cutoff for the dynamic network construction to see if there are any patterns:
 
 ```{r}
-
+plotstats.A$D.Threshold.table # table of threshold values for dynamic threshold
 ```
-
-
-
-
-[FOR PAPER 2]/ development
+As before the QSeq methods do not provide an improvement over the raw dataset. We can use this method to look at differences in internal structure. The pattern is the same:
 ```{r}
-# new functions for more flexible use ####
-#raw<-function(ps){ps}
+plotstats.B<-getNetStats(model10.B, method3) # get statistics
 
-
-RA<-function(ps){
-  s<-transform_sample_counts(ps, function(x) x / sum(x))
-  s
-  }
-eRare<-function(ps, level=NULL){
-  if(is.null(level)){
-  out<-make.rarefy2(ps, min(sample_sums(ps)))}
-  else{
-    out<-make.rarefy2(ps, level)}
-  
-  out
-  }
-pRare<-function(ps, level=NULL){
-  if(is.null(level)){
-  out<-make.rarefy2(ps, min(sample_sums(ps))*sample_sums(ps)/mean(sample_sums(ps)))} else{out<-make.rarefy2(ps, level)}
-  
-  out
-}
-
-QSeq<-function(ps){
-  scale<-sample_data(ps)$DensityF
-  out<-make.scaled2(ps, val=2*mean(sample_sums(ps)), scale)
-  out
-  }
-deseqVST<-function(ps){
-  out<-make.deseqVST(ps, "Factor", l=1)
-  out
-}
-deseqVST.log<-function(ps){
-  out<-make.deseqVST(ps, "Factor", l=1)
-  out
-}
-limmaVST<-function(ps){
-  out<-make.limmaVST(ps, "Factor")
-  out
-}
-limmaVST.log<-function(ps){
-  out<-make.limmaVST(ps, "Factor")
-  out
-}
-lm.model<-function(ps){
-  anova.otu<-t(as.data.frame(as.matrix(otu_table(ps))))
-  anova.env<-data.frame(as.matrix(sample_data(ps)))
-  anova.env$F1<-as.numeric(as.character(anova.env$F1))
-  anova.env$F2<-as.numeric(as.character(anova.env$F2))
-  anova.env$F3<-as.numeric(as.character(anova.env$F3))
-  anova.env$F4<-as.numeric(as.character(anova.env$F4))
-  anova.env$F5<-as.numeric(as.character(anova.env$F5))
-
-  testlm<-adply(anova.otu, 2, function(x) {
-
-    l1=summary(lm(x~anova.env$F1+anova.env$F2+anova.env$F3+anova.env$F4+anova.env$F5))
-    return(l1$r.squared)
-    })
-  testlm[is.na(testlm)]<-0
-  testlm2<-testlm$V1
-  names(testlm2)<-testlm$X1
-  #row.names(testlm)<-testlm$X1
-  #testlm<-testlm[,-1]
-  #testlm<-testlm[order(row.names(testlm)),]
-  testlm2
-  }
-
-lm.model2<-function(ps){
-  anova.otu<-t(as.data.frame(as.matrix(otu_table(ps))))
-  anova.env<-data.frame(as.matrix(sample_data(ps)))
-  
-
-  testlm<-adply(anova.otu, 2, function(x) {
-
-    l1=summary(lm(x~anova.env$Factor2))
-    return(l1$r.squared)
-    })
-  testlm[is.na(testlm)]<-0
-  testlm2<-testlm$V1
-  names(testlm2)<-testlm$X1
-  #row.names(testlm)<-testlm$X1
-  #testlm<-testlm[,-1]
-  #testlm<-testlm[order(row.names(testlm)),]
-  testlm2
-  }
-  #' workhorse function for benchmark.MM version 2 with flexible inputs
-  #' @param commonN number of common species
-  #' @param groupN number of unique taxa to groups
-  #' @param singleN number of unique taxa to samples
-  #' @param D average sampling depth
-  #' @param V variation in sampling depth
-  #' @param method new normalization function to implement
-  #' @keywords benchmark
-  #' @export
-  #' @examples
-  #' run.analysis()
-
-  
-  
-  # test funcitons ####
-
-  method<-c("RA", "eRare", "pRare", "QSeq", "deseqVST", "limmaVST")
-  
- #test.analysis<-run.analysis2(commonN=30, groupN=20, singleN=5, D=500, V=250, method)
-test.analysisB<-suppressWarnings(run.analysis2(commonN=30, groupN=20, singleN=5, D=500, V=250, method))
- test.analysis2<-run.analysis(commonN=30, groupN=20, singleN=5, D=500, V=250)
+plotstats.B$D.module.table # modularity value table for dynamic threshold
+plotstats.B$D.Threshold.table # table of threshold values for dynamic threshold
+plotstats.B$S.module.table # modularity value table for static threshold
+plotstats.B$S.Threshold.table # table of threshold values for static threshold (0.8)
 ```
-
-
 
 ```{r}
+plotstats.C<-getNetStats(model10.C, method3) # get statistics
 
-
-
-
-run.analysis2<-function(commonN, groupN, singleN, D, V, method){
-      AllSpp<-c(paste0("spp", c(1:700), sep="")) # make a quick list of all species functions
-      AllSpp<-lapply(AllSpp, get) # connect function to name
-      AllSpp<-unlist(AllSpp)  # format to be read by downstream functions
-      names(AllSpp)<-c(paste0("spp", c(1:700)))
-
-      # Define list of 5 species w/ global distribution
-      global.spp<-names(sample(AllSpp, commonN, replace=F))
-
-  # define list of species w/ regional distribution
-      group.spp<-NULL
-      group.spp$group1<-names(sample(AllSpp, groupN, replace=F))
-      group.spp$group2<-names(sample(AllSpp, groupN, replace=F))
-      group.spp$group3<-names(sample(AllSpp, groupN, replace=F))
-      group.spp$group4<-names(sample(AllSpp, groupN, replace=F))
-      group.spp$group5<-names(sample(AllSpp, groupN, replace=F))
-      group.spp$group6<-names(sample(AllSpp, groupN, replace=F))
-
-  # define list of species found at each site
-      rando.spp<-NULL
-      rando.spp$Site1<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group1), global.spp))
-      rando.spp$Site2<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group1), global.spp))
-      rando.spp$Site3<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group1), global.spp))
-      rando.spp$Site4<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group1), global.spp))
-      rando.spp$Site5<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group1), global.spp))
-      rando.spp$Site6<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group2), global.spp))
-      rando.spp$Site7<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group2), global.spp))
-      rando.spp$Site8<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group2), global.spp))
-      rando.spp$Site9<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group2), global.spp))
-      rando.spp$Site10<-unique(c(names(sample(AllSpp,singleN, replace=F)), c(group.spp$group2), global.spp))
-      rando.spp$Site11<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group3), global.spp))
-      rando.spp$Site12<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group3), global.spp))
-      rando.spp$Site13<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group3), global.spp))
-      rando.spp$Site14<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group3), global.spp))
-      rando.spp$Site15<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group3), global.spp))
-      rando.spp$Site16<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group4), global.spp))
-      rando.spp$Site17<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group4), global.spp))
-      rando.spp$Site18<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group4), global.spp))
-      rando.spp$Site19<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group4), global.spp))
-      rando.spp$Site20<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group4), global.spp))
-      rando.spp$Site21<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group5), global.spp))
-      rando.spp$Site22<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group5), global.spp))
-      rando.spp$Site23<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group5), global.spp))
-      rando.spp$Site24<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group5), global.spp))
-      rando.spp$Site25<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group5), global.spp))
-      rando.spp$Site26<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group6), global.spp))
-      rando.spp$Site27<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group6), global.spp))
-      rando.spp$Site28<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group6), global.spp))
-      rando.spp$Site29<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group6), global.spp))
-      rando.spp$Site30<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group6), global.spp))
-
-  # make list of unique species arrays
-
-      library(reshape2)
-      f1c1<-c(5,5,5,5,5,5) # number of selections
-      f1c2<-c(1,3,10,30,60,15) # mean value of selections
-      f1c3<-c(0.5,1,4,10,20,5) # SD of selections
-      F1.frame<-mapply(rnorm, f1c1,f1c2,f1c3) # pick Factor 1 value for each site
-      F1<-reshape2::melt(F1.frame)
-
-  #F2
-      f2c1<-c(5,5,5,5,5,5) # number of selections
-      f2c2<-c(34,30,10,55,35,60) # mean value of selections
-      f2c3<-c(10,10,3,10,1,20) # SD of selections
-      F2.frame<-mapply(rnorm, f2c1,f2c2,f2c3) # pick Factor 2 value for each site
-      F2<-reshape2::melt(F2.frame)
-
-  #F3
-      f3c1<-c(5,5,5,5,5,5) # number of selections
-      f3c2<-c(1,3,10,15,3,15) # mean value of selections
-      f3c3<-c(0.5,1,3,3,1,5) # SD of selections
-      F3.frame<-mapply(rnorm, f3c1,f3c2,f3c3) # pick Factor 3 value for each site
-      F3<-reshape2::melt(F3.frame)
-
-  #F4
-      f4c1<-c(5,5,5,5,5,5) # number of selections
-      f4c2<-c(5,5,5,5,5,5) # mean value of selections
-      f4c3<-c(1,1,1,1,1,1) # SD of selections
-      F4.frame<-mapply(rnorm, f4c1,f4c2,f4c3) # pick Factor 4 value for each site
-      F4<-reshape2::melt(F4.frame)
-
-  #F5
-      f5c1<-c(5,5,5,5,5,5) # number of selections
-      f5c2<-c(50,50,50,50,50,50) # mean value of selections
-      f5c3<-c(20,20,20,20,20,20) # SD of selections
-      F5.frame<-mapply(rnorm, f5c1,f5c2,f5c3) # pick Factor 5 value for each site
-      F5<-reshape2::melt(F5.frame)
-      Factors<-data.frame(F1$value,F2$value,F3$value,F4$value,F5$value) # combine factors into data table
-      Sites<-c(paste0("Site", 1:30))
-      rownames(Factors)<-Sites
-      colnames(Factors)<-c("F1","F2","F3","F4","F5")
-
-      output<-list("model"=NULL, "spplist"=NULL, "raw"=NULL)
-
-      output$spplist<-rando.spp
-
-      output$model$comm<-make.refcomm(rando.spp, Factors) # output a phyloseq object... will make a list of phyloseq objects
-      output$model$comm<-filter_taxa(output$model$comm, function(x) sum(x)>0, TRUE)
-      output$model$EV<-transform_sample_counts(output$model$comm, function(x) x / sum(x) )
-      output$metrics<-NULL
-      output$metrics$stats<-NULL
-      output$metrics$Richness<-NULL
-      Rich<-estimate_richness(output$model$comm, measures="Observed")
-      output$metrics$Richness<-Rich
-      output$metrics$skewness<-median(apply(X = otu_table(output$model$comm), MARGIN=2,FUN = function(x){skewness(x)}))
-     
-      sample<-set.seqDepth(D,V)
-      output$raw$comm<-model.rarefy(output$model$comm, sample, D, V)
-
-      print("spp selection complete")
-      sample_data(output$model$comm)$Density<-sample_sums(output$model$comm)# add sample sums
-      sample_data(output$model$comm)$DensityF<-sample_sums(output$model$comm)/mean(sample_sums(output$model$comm))
-      sample_data(output$model$comm)$Factor<-as.factor(c(rep("one",5),rep("two",5),rep("three",5),rep("four",5),rep("five",5),rep("six",5)))
-      sample_data(output$model$comm)$Factor2<-as.factor(c(rep(1,5),rep(2,5),rep(3,5),rep(4,5),rep(5,5),rep(6,5)))
-
-
-      print("start subsampling")
-
-      print("subsampling finished")
-      # remove taxa that have zero abundance in "raw" sequencing run
-      tax.filt<-filter_taxa(output$raw$comm, function(x)sum(x)>0)
-      output$metrics$tax.lost<-tax.filt
-        output$raw$comm<-filter_taxa(output$raw$comm, function(x)sum(x)>0, TRUE)
-        # remove taxa that are not kept from sequencing so that they don't penalize downstream methods
-        output$model$comm<-prune_taxa(tax.filt, output$model$comm)
-        output$model$EV<-prune_taxa(tax.filt, output$model$EV)
-
-
-      # for each species: measure prevalence
-          prevalence=apply(X = otu_table(output$model$comm), MARGIN=1,FUN = function(x){sum(x > 0)})
-      # for each species: measure relative abundance (proportion of total counts?
-          p.abund<-transform_sample_counts(output$model$comm, function(x) x/sum(x) )
-
-          mean_abundance<-apply(X = otu_table(p.abund), MARGIN=1,FUN = function(x){mean(x)})
-
-          sd_abundance<-apply(X = otu_table(p.abund), MARGIN=1,FUN = function(x){sd(x)})
-      # create a tax table for whole dataset ...
-          tab<-data.frame(prevalence, mean_abundance, sd_abundance)
-          tab$names<-rownames(tab)
-          output$model$SpeciesMeta<-tab
-
-          output$model$R<-lm.test(output$model$comm)
-         
-
-      # make expected value
-          s<-sample_sums(output$raw$comm)
-          s2<-as.data.frame(as.matrix(otu_table(output$model$EV)))
-          s2<-for (i in 1:ncol(s2)) {s2[,i]<-s2[,i]*s[i]}
-          otu_table(output$model$EV)<-otu_table(output$model$EV, taxa_are_rows=TRUE)
-          M.Eval<-apply(X = otu_table(output$model$EV), MARGIN=1,FUN = function(x){mean(x[x>0])})
-
-
-      #output$model$SpeciesMeta$USI<-output$model$SpeciesMeta$
-      # create a tax table for whole dataset ...
-          tab<-data.frame(prevalence, mean_abundance, sd_abundance, M.Eval)
-          tab$names<-rownames(tab)
-          output$model$SpeciesMeta<-tab
-          output$model$R<-lm.test(output$model$comm)
-          sample_data(output$raw$comm)<-sample_data(output$model$comm)
-          output$model$PERMANOVA<-make.PERMANOVA(output$model$comm)
-          output$model$rarecurve<-ggrare(output$model$comm, 50, color="Factor")
-  print("metadata complete")
-  
-  # implement each normalization function
-      for (i in 1:length(method)){
-        a<-get(method[i])
-        #name(a)<-i
-        b<-output$raw$comm
-        c<-a(b)
-        output[[method[i]]]$comm<-c
-        output[[method[i]]]$PERMANOVA<-make.PERMANOVA(c)
-        output[[method[i]]]$PERMANOVA$Rratio<-output[[method[i]]]$PERMANOVA$aov.tab$R2/output$model$PERMANOVA$aov.tab$R2
-        output[[method[i]]]$LII<-LII(output$model$comm, output[[method[i]]]$comm)
-        #output[[method[i]]]$Dtab.plot<-plot(output$model$SpeciesMeta$prevalence,output[[method[i]]]$Dtab, col=output$model$SpeciesMeta$M.Eval, main="Ratio of Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
-        #output[[method[i]]]$Dtab.model.plot<-plot(output$model$SpeciesMeta$prevalence,output[[method[i]]]$Dtab.model, col=output$model$SpeciesMeta$M.Eval, main="Ratio of Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
-        
-        print(paste(method[i], " complete"))
-      }
-# prepare raw metadata for lm analysis and model for lm analysis
-      output$raw$PERMANOVA<-make.PERMANOVA(output$raw$comm)
-      print("raw permanova complete")
-      output$raw$LII<-LII(output$model$comm, output$raw$comm)
-      print("raw LII complete")
-      output$raw$lmtab<-lm.model(output$raw$comm)
-      output$raw$lmtab.model<-lm.model2(output$raw$comm)
-      print("lmtab raw complete")
-      output$model$lmtab<-lm.model(output$model$comm)
-      output$model$lmtab.model<-lm.model2(output$model$comm)# linear model of env. parameters as explanatory variables for abundance of each taxon
-      print("lmtab model complete")
-      output$raw$lmRatiotab<-output$raw$lmtab/output$model$lmtab #ratio of lm of env from normalized data to reference
-      output$raw$lmRatiotab.model<-output$raw$lmtab.model/output$model$lmtab.model #ratio of lm of env from normalized data to reference using only categorical model variables (no explicit env. model)
-      print("dtab complete")
-
-  # do 1- : calculates the information lost per taxon
-    for (i in 1:length(method)){
-    # make the species-wise LII value:
-      output$model$SpeciesMeta[[method[i]]]<-1-output[[method[i]]]$LII$R
-      # make the lm output for each normalization: (this is r-squared, could be r value ...)
-      output[[method[i]]]$lmtab<-lm.model(output[[method[i]]]$comm)# linear model of env. parameters as explanatory variables for abundance of each taxon
-      output[[method[i]]]$lmtab.model<-lm.model2(output[[method[i]]]$comm)
-      # conditional statement to make sure that the taxon names match, then:
-      # difference in rsquared values (or r values?) from reference:
-      if(names(output$model$lmtab)==names(output[[method[i]]]$lmtab)){
-      output[[method[i]]]$lmRatiotab<-output[[method[i]]]$lmtab/output$model$lmtab
-      output[[method[i]]]$lmRatiotab.model<-output[[method[i]]]$lmtab.model/output$model$lmtab.model} #ratio of lm of env from normalized data to reference
-      else{print("Error in Dtab: names do not match")}
-    }
-    
-    output
-  }
+plotstats.C$D.module.table # modularity value table for dynamic threshold
+plotstats.C$D.Threshold.table # table of threshold values for dynamic threshold
+plotstats.C$S.module.table # modularity value table for static threshold
+plotstats.C$S.Threshold.table # table of threshold values for static threshold (0.8)
 ```
 
-test space:
 ```{r}
-method<-c("RA", "QSeq")
-tget<-get(method[1])
+plotstats.D<-getNetStats(model10.D, method3) # get statistics
 
-trt$rep1<-suppressWarnings(run.analysis2(commonN=30, groupN=20, singleN=5, D=500, V=250, method))
-trt$rep2<-suppressWarnings(run.analysis2(commonN=30, groupN=20, singleN=5, D=500, V=250, method))
+plotstats.D$D.module.table # modularity value table for dynamic threshold
+plotstats.D$D.Threshold.table # table of threshold values for dynamic threshold
+plotstats.D$S.module.table # modularity value table for static threshold
+plotstats.D$S.Threshold.table # table of threshold values for static threshold (0.8)
+```
 
-Summarize.Ptable.Mean<-function(trt, method){
-  model<-matrix(NA, nrow = length(trt), ncol = length(method))
-  env1<-matrix(NA, nrow = length(trt), ncol = length(method))
-  env2<-matrix(NA, nrow = length(trt), ncol = length(method))
-  env3<-matrix(NA, nrow = length(trt), ncol = length(method))
-  env4<-matrix(NA, nrow = length(trt), ncol = length(method))
-  env5<-matrix(NA, nrow = length(trt), ncol = length(method))
-  resids<-matrix(NA, nrow = length(trt), ncol = length(method))
-  for(i in 1:length(trt)){
-    for(j in 1:length(method)){
-      model[i,j]<-trt[[i]][[method[j]]]$PERMANOVA$aov.tab$R2[1]/trt[[i]]$model$PERMANOVA$aov.tab$R2[1]
-      env1[i,j]<-trt[[i]][[method[j]]]$PERMANOVA$aov.tab$R2[2]/trt[[i]]$model$PERMANOVA$aov.tab$R2[2]
-      env2[i,j]<-trt[[i]][[method[j]]]$PERMANOVA$aov.tab$R2[3]/trt[[i]]$model$PERMANOVA$aov.tab$R2[3]
-      env3[i,j]<-trt[[i]][[method[j]]]$PERMANOVA$aov.tab$R2[4]/trt[[i]]$model$PERMANOVA$aov.tab$R2[4]
-      env4[i,j]<-trt[[i]][[method[j]]]$PERMANOVA$aov.tab$R2[5]/trt[[i]]$model$PERMANOVA$aov.tab$R2[5]
-      env5[i,j]<-trt[[i]][[method[j]]]$PERMANOVA$aov.tab$R2[6]/trt[[i]]$model$PERMANOVA$aov.tab$R2[6]
-      resids[i,j]<-trt[[i]][[method[j]]]$PERMANOVA$aov.tab$R2[7]/trt[[i]]$model$PERMANOVA$aov.tab$R2[7]
-    #print(sum(trt[[i]][j]$PERMANOVA$aov.tab$F.Model))
-  }
-}
-  rownames(model)<-names(trt)
-  colnames(model)<-method
-  rownames(env1)<-names(trt)
-  colnames(env1)<-method
-  rownames(env2)<-names(trt)
-  colnames(env2)<-method
-  rownames(env3)<-names(trt)
-  colnames(env3)<-method
-  rownames(env4)<-names(trt)
-  colnames(env4)<-method
-  rownames(env5)<-names(trt)
-  colnames(env5)<-method
-  rownames(resids)<-names(trt)
-  colnames(resids)<-method
-  Ftab<-NULL
-  Ftab$model<-model
-  Ftab$env1<-env1
-  Ftab$env2<-env2
-  Ftab$env3<-env3
-  Ftab$env4<-env4
-  Ftab$env5<-env5
-  Ftab$resids<-resids
-  Ftab
-}
+What this tells us is that this normalization technique does not have a large influence on the overall modularity statistic for the network; it does not improve our ability to identify clusters of associating or dissociating taxa. These metrics may still be useful in the case that methods are identified that do significantly improve the accuracy of replicating the network structure from before sampling; or in identifying cases where a normalization technique significantly decreases the accuracy of replicating the network structure from before sampling.
 
-Summarize.PERMANOVA.Rratio<-function(trt, method){
-  Ftab<-matrix(NA, nrow = length(trt), ncol = length(method))
-  print("reference")
-  for(i in 1:length(trt)){
-    for(j in 1:length(method)){
+We can also visualize the plots:
 
-     print(trt[[i]][[method[j]]]$PERMANOVA$Rratio)
-    #print(sum(trt[[i]][j]$PERMANOVA$aov.tab$F.Model))
-  }
-}
-}
+```{r}
+getNetPlot(model10.A[1],method3)
+```
 
+Some figures from the data for the paper:
 
-
-Summarize.LII<-function(trt, method){
-  Ftab<-matrix(NA, nrow = length(trt), ncol = length(method))
-  for(i in 1:length(trt)){
-    for(j in 1:length(method)){
-      Ftab[i,j]<-sum(trt[[i]][[method[j]]]$LII$Index, na.rm=T)
-    #print(sum(trt[[i]][j]$PERMANOVA$aov.tab$F.Model))
-  }
-}
-  rownames(Ftab)<-names(trt)
-  colnames(Ftab)<-method
-  Ftab
-}
-
-Plot.dtab<-function(trt, method){
-  for(i in 1:length(trt)){
-    for(j in 1:length(method)){plot(trt[[i]]$model$SpeciesMeta$prevalence,trt[[i]][[method[j]]]$Dtab, col=trt[[i]]$model$SpeciesMeta$M.Eval, main="Ratio of Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
-  }
-}}
-
-Summarize.PERMANOVA.Rratio(trt, method)
-
-plot(trt$rep1$model$SpeciesMeta$prevalence,trt$rep1$QSeq$Dtab, col=gray(2*trt$rep1$model$SpeciesMeta$M.Eval), 
-  main="QSeq; Ratio of Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
-
-plot(trt$rep1$model$SpeciesMeta$prevalence,trt$rep1$QSeq$Dtab.model, col=gray(2*trt$rep1$model$SpeciesMeta$M.Eval), 
-  main="QSeq; Ratio of Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
-
-
-plot(trt$rep1$model$SpeciesMeta$prevalence,trt$rep1$deseqVST$Dtab, col=gray(2*trt$rep1$model$SpeciesMeta$M.Eval), 
-  main="deseq; Ratio of Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
-
-plot(trt$rep1$model$SpeciesMeta$prevalence,trt$rep1$deseqVST$Dtab.model, col=gray(2*trt$rep1$model$SpeciesMeta$M.Eval), 
-  main="deseq; Ratio of Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
-
-plot(trt$rep1$model$SpeciesMeta$prevalence,trt$rep1$QSeq$lmtab, col=gray(2*trt$rep1$model$SpeciesMeta$M.Eval), 
-  main="QSeq; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
-plot(trt$rep1$model$SpeciesMeta$prevalence,trt$rep1$QSeq$lmtab.model, col=gray(2*trt$rep1$model$SpeciesMeta$M.Eval), 
-  main="QSeq; Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared")
-
-plot(trt$rep1$model$SpeciesMeta$prevalence,trt$rep1$deseqVST$lmtab, col=gray(2*trt$rep1$model$SpeciesMeta$M.Eval), 
-  main="deseq; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
-plot(trt$rep1$model$SpeciesMeta$prevalence,trt$rep1$deseqVST$lmtab.model, col=gray(2*trt$rep1$model$SpeciesMeta$M.Eval), 
-  main="deseq; Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared")
-
-#collect variance data for stats!!
-var(trt$rep1$QSeq$Dtab)
-median(trt$rep1$QSeq$Dtab)
-var(trt$rep1$QSeq$Dtab.model)
-median(trt$rep1$QSeq$Dtab.model)
-var(trt$rep1$deseqVST$Dtab)
-median(trt$rep1$deseqVST$Dtab)
-var(trt$rep1$deseqVST$Dtab.model)
-median(trt$rep1$deseqVST$Dtab.model)
-# make output with difference with env. and without env. variables in lm for lm.model()
-# 
+# Figure 3
+In each experiment, LII
+```{r}
+ggplot(model10Levels.summary1[model10Levels.summary1$variable == "raw"|
+                                model10Levels.summary1$variable == "QSeq0.5"|
+                                model10Levels.summary1$variable == "QSeq2"|
+                                model10Levels.summary1$variable == "QSeq100",], aes(x=Level, y=value, group = variable, color=variable, size=1))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.2, position=position_dodge(.3), size=1) +
+  #scale_colour_viridis_d(direction=-1)+
+  scale_colour_grey()+
+  geom_line(position=position_dodge(.3), size=1, aes(linetype=variable))+
+  geom_point(position=position_dodge(.3), size=1)+
+  xlab("Degree of Structure")+
+  ylab("LII Value (Mean +/- standard dev)")+
+  theme_classic()
 ```
 ```{r}
-plot(trt$rep2$model$SpeciesMeta$prevalence,trt$rep2$QSeq$Dtab, col=gray(trt$rep2$model$SpeciesMeta$M.Eval), 
-  main="QSeq; Ratio of Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
+#model10.SeqLevels.summary2
+ggplot(model10.SeqLevels.summary[model10.SeqLevels.summary$variable == "raw"|model10.SeqLevels.summary$variable == "QSeq0.5"|model10.SeqLevels.summary$variable == "QSeq2"|model10.SeqLevels.summary$variable == "QSeq100",], aes(x=Level, y=value, group = variable, color=variable, size=1))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=100, position=position_dodge(70), size=1) +
+  #scale_colour_viridis_d(direction=-1)+
+  scale_colour_grey()+
+  geom_line(position=position_dodge(70), size=1, aes(linetype=variable))+
+  geom_point(position=position_dodge(70), size=1)+
+  xlab("Degree of Structure")+
+  ylab("LII Value (Mean +/- standard dev)")+
+  theme_classic()
+```
 
-plot(trt$rep2$model$SpeciesMeta$prevalence,trt$rep2$QSeq$Dtab.model, col=gray(trt$rep2$model$SpeciesMeta$M.Eval), 
-  main="QSeq; Ratio of Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
-
-
-plot(trt$rep2$model$SpeciesMeta$prevalence,trt$rep2$deseqVST$Dtab, col=gray(trt$rep2$model$SpeciesMeta$M.Eval), 
-  main="deseq; Ratio of Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
-
-plot(trt$rep2$model$SpeciesMeta$prevalence,trt$rep2$deseqVST$Dtab.model, col=gray(trt$rep2$model$SpeciesMeta$M.Eval), 
-  main="deseq; Ratio of Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared ratio")
-
-plot(trt$rep2$model$SpeciesMeta$prevalence,trt$rep2$QSeq$lmtab, col=gray(2*trt$rep2$model$SpeciesMeta$M.Eval), 
-  main="QSeq; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
-plot(trt$rep2$model$SpeciesMeta$prevalence,trt$rep2$QSeq$lmtab.model, col=gray(2*trt$rep2$model$SpeciesMeta$M.Eval), 
-  main="QSeq; Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared")
-
-plot(trt$rep2$model$SpeciesMeta$prevalence,trt$rep2$deseqVST$lmtab, col=gray(2*trt$rep2$model$SpeciesMeta$M.Eval), 
-  main="deseq; Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
-plot(trt$rep2$model$SpeciesMeta$prevalence,trt$rep2$deseqVST$lmtab.model, col=gray(2*trt$rep2$model$SpeciesMeta$M.Eval), 
-  main="deseq; Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared")
-
-#collect variance data for stats!!
-var(trt$rep2$QSeq$Dtab)
-median(trt$rep2$QSeq$Dtab)
-var(trt$rep2$QSeq$Dtab.model)
-median(trt$rep2$QSeq$Dtab.model)
-var(trt$rep1$deseqVST$Dtab)
-median(trt$rep2$deseqVST$Dtab)
-var(trt$rep2$deseqVST$Dtab.model)
-median(trt$rep2$deseqVST$Dtab.model)
-
-ConnStat<-function(ps, num=200){
-  require(phyloseq)
-  require(igraph)
-  o<-otu_table(ps)
-  c<-cor(o)
-  i=1
-  c[c<1]<-0
-  n<-graph_from_incidence_matrix(c)
-  while(ecount(n)<num){
-    t<-otu_table(ps)
-    t<-cor(t)
-    t[t<i]<-0
-    t[t>i]<-1
-    n<-graph_from_incidence_matrix(t)
-    i=i-0.001
-  }
-   cfg<-cluster_fast_greedy(as.undirected(n))
-  plot(cfg, as.undirected(n), layout=layout_nicely(n), vertex.label=NA, main="Dynamic", vertex.size=10)
-  table<-matrix(nrow=2,ncol=4)
-  colnames(table)<-c("Mean_Closeness", "Mean_Degree", "Modularity", "Threshold")
-  rownames(table)<-c("Dynamic", "Static")
-  table[1,1]<-mean(closeness(n))
-  table[1,2]<-mean(degree(n))
-  table[1,3]<-modularity(n, membership(cfg))
-  table[1,4]<-i
-
-  t<-otu_table(ps)
-  t<-cor(t)
-  t[t<0.8]<-0
-  t[t>0.8]<-1
-  n<-graph_from_incidence_matrix(t)
-  cfg<-cluster_fast_greedy(as.undirected(n))
-  table[2,1]<-mean(closeness(n))
-  table[2,2]<-mean(degree(n))
-  table[2,3]<-modularity(n, membership(cfg))
-  table[2,4]<-0.8
-  plot(cfg, as.undirected(n), layout=layout_nicely(n), vertex.label=NA, main="Static", vertex.size=10)
-  table
-}
-
-
-ConnStat(trt$rep1$model$comm, num=50)
-ConnStat(trt$rep1$model$comm, num=100)
-ConnStat(trt$rep1$model$comm, num=150)
-ConnStat(trt$rep1$model$comm, num=200)
-ConnStat(trt$rep1$model$comm, num=250)
-ConnStat(trt$rep1$model$comm, num=350)
-ConnStat(trt$rep1$model$comm, num=450)
-
-
-Mean<-c(1,3,10,30,60,15,34,30,10,55,35,60,1,3,10,15,3,15,5,5,5,5,5,5,50,50,50,50,50,50)
-Var<-c(0.5,1,4,10,20,5,10,10,3,10,1,20,0.5,1,3,3,1,5,1,1,1,1,1,1,20,20,20,20,20,20)
-ymin<-Mean-Var
-ymax<-Mean+Var
-Factor.Label<-c(rep("Factor 1", 6), rep("Factor 2", 6), rep("Factor 3", 6), rep("Factor 4", 6), rep("Factor 5", 6))
-Group.label<-c(rep(c("Group 1", "Group 2", "Group 3", "Group 4", "Group 5", "Group 6"), 5))
-
-df.envplot<-data.frame(Group.label, Factor.Label, Mean, Var, ymin, ymax)
-
-ggplot(df.envplot, aes(x=Group.label, y=Mean,group=Factor.Label, colour=Factor.Label))+ geom_point() + geom_line()+geom_errorbar(aes(ymin=ymin, ymax=ymax), linetype=2, alpha=0.9, position=position_dodge(0.1))+theme_classic()
-
-
+```{r}
+ggplot(model10.SeqVarLevels.summary[model10.SeqVarLevels.summary$variable == "raw"|
+                                       model10.SeqVarLevels.summary$variable == "QSeq0.5"|
+                                       model10.SeqVarLevels.summary$variable == "QSeq2"|
+                                       model10.SeqVarLevels.summary$variable == "QSeq100",], aes(x=Level, y=value, group = variable, color=variable, size=1))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.08), size=1) +
+  #scale_colour_viridis_d(direction=-1)+
+  scale_colour_grey()+
+  geom_line(position=position_dodge(.08), size=1, aes(linetype=variable))+
+  geom_point(position=position_dodge(.08), size=1)+
+  xlab("Relative Variance (variance / mean)")+
+  ylab("LII Value (Mean +/- standard dev)")+
+  theme_classic()
+```
+# figure 4
+```{r}
+#permanova.model10CVLevels.modelP
+ggplot(permanova.model10CVLevels.modelP[permanova.model10CVLevels.modelP$variable=="raw" |
+                                        permanova.model10CVLevels.modelP$variable=="QSeq0.5" |
+                                        permanova.model10CVLevels.modelP$variable=="QSeq2" |
+                                        permanova.model10CVLevels.modelP$variable=="QSeq100",], aes(x=Level, y=value, group = variable, color=variable, size=1))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.08), size=1) +
+  #scale_colour_viridis_d(direction=-1)+
+  scale_colour_grey()+
+  geom_line(position=position_dodge(.08), size=1, aes(linetype=variable))+
+  geom_point(position=position_dodge(.08), size=1)+
+  xlab("Relative Variance (variance / mean)")+
+  ylab("PERMANOVA R-Squared Value (Mean +/- standard dev)")+
+  ggtitle("Experimental Model")+
+  theme_classic()
+```
+```{r}
+#permanova.model10CVLevels.modelP
+ggplot(permanova.model10CVLevels.env1P[permanova.model10CVLevels.env1P$variable=="raw" |
+                                        permanova.model10CVLevels.env1P$variable=="QSeq0.5" |
+                                        permanova.model10CVLevels.env1P$variable=="QSeq2" |
+                                        permanova.model10CVLevels.env1P$variable=="QSeq100",], aes(x=Level, y=value, group = variable, color=variable, size=1))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.08), size=1) +
+  #scale_colour_viridis_d(direction=-1)+
+  scale_colour_grey()+
+  geom_line(position=position_dodge(.08), size=1, aes(linetype=variable))+
+  geom_point(position=position_dodge(.08), size=1)+
+  xlab("Relative Variance (variance / mean)")+
+  ylab("PERMANOVA R-Squared Value (Mean +/- standard dev)")+
+  ggtitle("Environmental Factor 1")+
+  theme_classic()
+```
+```{r}
+#permanova.model10CVLevels.modelP
+ggplot(permanova.model10CVLevels.env2P[permanova.model10CVLevels.env2P$variable=="raw" |
+                                        permanova.model10CVLevels.env2P$variable=="QSeq0.5" |
+                                        permanova.model10CVLevels.env2P$variable=="QSeq2" |
+                                        permanova.model10CVLevels.env2P$variable=="QSeq100",], aes(x=Level, y=value, group = variable, color=variable, size=1))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.08), size=1) +
+  #scale_colour_viridis_d(direction=-1)+
+  scale_colour_grey()+
+  geom_line(position=position_dodge(.08), size=1, aes(linetype=variable))+
+  geom_point(position=position_dodge(.08), size=1)+
+  xlab("Relative Variance (variance / mean)")+
+  ylab("PERMANOVA R-Squared Value (Mean +/- standard dev)")+
+  ggtitle("Environmental Factor 2")+
+  theme_classic()
+```
+```{r}
+#permanova.model10CVLevels.modelP
+ggplot(permanova.model10CVLevels.env3P[permanova.model10CVLevels.env3P$variable=="raw" |
+                                        permanova.model10CVLevels.env3P$variable=="QSeq0.5" |
+                                        permanova.model10CVLevels.env3P$variable=="QSeq2" |
+                                        permanova.model10CVLevels.env3P$variable=="QSeq100",], aes(x=Level, y=value, group = variable, color=variable, size=1))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.08), size=1) +
+  #scale_colour_viridis_d(direction=-1)+
+  scale_colour_grey()+
+  geom_line(position=position_dodge(.08), size=1, aes(linetype=variable))+
+  geom_point(position=position_dodge(.08), size=1)+
+  xlab("Relative Variance (variance / mean)")+
+  ylab("PERMANOVA R-Squared Value (Mean +/- standard dev)")+
+  ggtitle("Environmental Factor 2")+
+  theme_classic()
+```
+```{r}
+#permanova.model10CVLevels.modelP
+ggplot(permanova.model10CVLevels.env4P[permanova.model10CVLevels.env4P$variable=="raw" |
+                                        permanova.model10CVLevels.env4P$variable=="QSeq0.5" |
+                                        permanova.model10CVLevels.env4P$variable=="QSeq2" |
+                                        permanova.model10CVLevels.env4P$variable=="QSeq100",], aes(x=Level, y=value, group = variable, color=variable, size=1))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.08), size=1) +
+  #scale_colour_viridis_d(direction=-1)+
+  scale_colour_grey()+
+  geom_line(position=position_dodge(.08), size=1, aes(linetype=variable))+
+  geom_point(position=position_dodge(.08), size=1)+
+  xlab("Relative Variance (variance / mean)")+
+  ylab("PERMANOVA R-Squared Value (Mean +/- standard dev)")+
+  ggtitle("Environmental Factor 2")+
+  theme_classic()
+```
+```{r}
+#permanova.model10CVLevels.modelP
+ggplot(permanova.model10CVLevels.env5P[permanova.model10CVLevels.env5P$variable=="raw" |
+                                        permanova.model10CVLevels.env5P$variable=="QSeq0.5" |
+                                        permanova.model10CVLevels.env5P$variable=="QSeq2" |
+                                        permanova.model10CVLevels.env5P$variable=="QSeq100",], aes(x=Level, y=value, group = variable, color=variable, size=1))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.08), size=1) +
+  #scale_colour_viridis_d(direction=-1)+
+  scale_colour_grey()+
+  geom_line(position=position_dodge(.08), size=1, aes(linetype=variable))+
+  geom_point(position=position_dodge(.08), size=1)+
+  xlab("Relative Variance (variance / mean)")+
+  ylab("PERMANOVA R-Squared Value (Mean +/- standard dev)")+
+  ggtitle("Environmental Factor 2")+
+  theme_classic()
+```
+# Figure 5
+```{r}
+#SV.lmRatio.model10CV.p
+ggplot(SV.lmRatio.model10CV.p[SV.lmRatio.model10CV.p$variable=="raw" |
+                                        SV.lmRatio.model10CV.p$variable=="QSeq0.5" |
+                                        SV.lmRatio.model10CV.p$variable=="QSeq2" |
+                                        SV.lmRatio.model10CV.p$variable=="QSeq100",], aes(x=Level, y=value, group = variable, color=variable, size=1))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.08), size=1) +
+  #scale_colour_viridis_d(direction=-1)+
+  scale_colour_grey()+
+  geom_line(position=position_dodge(.08), size=1, aes(linetype=variable))+
+  geom_point(position=position_dodge(.08), size=1)+
+  xlab("Relative Sampling Variance (variance / mean)")+
+  ylab("Linear Model R-Ratio Variance (Mean +/- standard dev)")+
+  ggtitle("Variance of Linear Model R-Ratio")+
+  theme_classic()
 
 ```
+SV.lmRatio.model10MCV.p
+```{r}
+#SV.lmRatio.model10MCV.p
+ggplot(SV.lmRatio.model10MCV.p[SV.lmRatio.model10MCV.p$variable=="raw" |
+                                        SV.lmRatio.model10MCV.p$variable=="QSeq0.5" |
+                                        SV.lmRatio.model10MCV.p$variable=="QSeq2" |
+                                        SV.lmRatio.model10MCV.p$variable=="QSeq100",], aes(x=Level, y=value, group = variable, color=variable, size=1))+
+  geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.08), size=1) +
+  #scale_colour_viridis_d(direction=-1)+
+  scale_colour_grey()+
+  geom_line(position=position_dodge(.08), size=1, aes(linetype=variable))+
+  geom_point(position=position_dodge(.08), size=1)+
+  xlab("Relative Sampling Variance (variance / mean)")+
+  ylab("Linear Model R-Ratio Variance (Mean +/- standard dev)")+
+  ggtitle("Variance of Linear Model R-Ratio")+
+  theme_classic()
+
+```
+
+
+
+We have found that sometimes in the reference there are substantive differences in the network between static and dynamic network construction; but that in subsampled data these differences are reduced. There is considerable variation in outcomes; and it raises a question of what characteristics of reference datasets lead to different outcomes when we apply the two network building methods. This is not a question we will try to answer here.
+
+A couple post-script comments about interpreting metabarcoding output data:
+
+It's important to be aware of what metrics are robust to changes in methodology, and which are not. In general betadiversity is robust because the relationships of the dominant taxa have higher weight in most betadiversity metrics, and so their relationships tend to be easily captured and replicated in all analyses. However, alpha diversity is not like this. We have chosen not to address it in this software because in practice alpha diversity counts are heavily dependent on the type of sequence QC that is employed. We do not model sequence quality and do not try to address sequence QC. In general, we treat analyses that hinge on alpha diversity in microbiome studies as highly suspect because endogenous factors, like the presence of disease, will skew the taxon abundance distribution and affect the accuracy and comparability of an alpha diversity estimate. Alpha diversity estimates often rely on an assumption that either the sampling effort was the same; or that the taxon abundance distribution of one sample can be infered from other samples. So far, both of these assumptions are essentially never met. I'll explain:
+
+Sampling effort is not the same as sequencing depth. The principle of sampling effort is rooted in physical effort because it acts to standardize the counts by area or distance covered. This provides results that accurately represent changes in density of sampled species across sites. It is well understood that sequence data does not do this. However, there is a widely held misconception that taking the same number of sequences from a sample across the dataset (i.e. even rarefaction) does represent a standardization of sampling effort. It does not. It is the equivalent of doing a sampling of the rainforest and the temperate deciduous forest by identifying the first 100 trees we encounter. This approach would tell us nothing of the density of the respective trees; only give us information about the relative position of each tree within the species abundance distribution of each forest. To standardize sampling effort, we need an index of species abundance that actually embodies information about the abundance of the species. For example, if in this survey, we record how far we travel to encounter 100 trees, and finish our count calculation by dividing tree counts by the total distance we had to survey, then then we would have an output value that accurately tells us something about the abundance of specific species independent of the abundance of others. This is the key purpose of normalizing for sampling effort. Since we do not end up with a spatially explicit estimate of taxon abundance by using even rarefaction, it is not in principle a normalization of sampling effort. Approaches that do not infer a taxon density are difficult to reliably use for estimating alpha diveristy.
+
+The taxon abundance distribution is often infered across samples. There are instances where this may be appropriate, however in most environmental microbiome studies it is not. Endogenous factors like the presence of a pathogen can result in a large change in the species abundance distribution at a single site. It may be possible, given ecological knowledge of specific members, to make such an assumption based on the known behavior and interactions of members of the community. But no software currently accounts for the ecological role of microbes in attempting to infer the species abundance curve of undersampled experimental units. Therefore, the current approaches to infering species abundance curves are inherently unreliable, and blind to the role that species interactions have on structuring the species abundance curve.
+
+This is all to say: alpha diversity metrics in microbiome metabarcoding studies should be taken with a hefty grain of salt, and the analysis of these studies should probably not hinge on the alpha diversity estimates.
