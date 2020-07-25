@@ -2417,6 +2417,10 @@ ggplot(model10.SeqVarLevels.summary[model10.SeqVarLevels.summary$variable == "ra
   ylab("LII Value (Mean +/- standard dev)")+
   theme_classic()
 ```
+# rank abundance curve
+```{r}
+model10.A$com
+```
 # figure 4
 ```{r}
 #permanova.model10CVLevels.modelP
