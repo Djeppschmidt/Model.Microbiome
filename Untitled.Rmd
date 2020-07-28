@@ -7,13 +7,14 @@ output: html_document
 
 # Introduction
 
-ModelMicrobiome is a novel platform for testing the performance and assumptions underlying ecological inference of microbiomes. Whereas previous benchmarking and modeling efforts have used case-control frameworks, and/or used randomized real data, none have tested the accuracy of ecological inference following a sequence count normalization procedure. This is to say previous efforts have focused on the ability to accurately detect a change in relative abudance (i.e. differential abundance analysis). But these tests do not reflect how well the ecological relationships are preserved through the normalization process (e.g. relationship between the taxa and their environment or among taxa). This software does not attempt to address bias that is introduced by the sequencing, DNA purification, or field sampling efforts. It only is meant as a tool to better understand the effect that any post-hoc sequence count normalization has on our ability to infer underlying ecological relationships. 
+ModelMicrobiome is a novel platform for testing the performance and assumptions underlying ecological inference of microbiomes. Whereas previous benchmarking and modeling efforts have used case-control frameworks, and/or used randomized real data, none have tested the accuracy of ecological inference following a sequence count normalization procedure. Previous efforts have focused on the ability to accurately detect a change in relative abudance (i.e. differential abundance analysis). But these tests do not reflect how well the ecological relationships are preserved through the normalization process (e.g. relationship between the taxa and their environment or among taxa). This software does not attempt to address bias that is introduced by the sequencing, DNA purification, or field sampling efforts. It only is meant as a tool to better understand the effect that any post-hoc sequence count normalization has on our ability to infer underlying ecological relationships. 
 
 To further clarify the limits of this software, it is not intended to be applied to metagenomics analyses that derive from shotgun sequence data. There are database and sequencing biases that are particular to whole genome sequencing that must be addressed separately and that may confound the inferences made from this software. THIS SOFTWARE IS NOT DESIGNED TO ADDRESS SHOTGUN SEQUENCING OR ION TORRENT ETC. SEQUENCING. This software is designed specifically for amplicon (i.e. metabarcoding) studies of a single gene locus used to infer population structure. For more detailed information about how the indexes are constructed, refer to (DOI: ... )
 
 This software was written under R version 3.6.1. R version 4 has been published with major updates to some of the core mechanics. Model.MicrobiomeV2 will be updated for R 4.0 soon.
 
-With those disclaimers out of the way, let's dig in.
+
+This tutorial will address the primary functionalities of Model.Microbiome, and provide an example of how it can be used in the course of an experimental workflow.
 
 # Install Model.Microbiome
 First, let's install Model.Microbiome:
@@ -50,20 +51,19 @@ library(DESeq2)
 ```
 
 
-The core functionality of Model.Microbiome is to create a model microbial community, then simulate sequencing by subsampling from it, then normalizing the raw sequence data. This is handled by the run.analysis2() function. I recommend running this function with SuppressWarnings() because many of the models throw warnings about too-perfect of a fit. Since the point of this software is to detect these functions, we don't care. We have ways of measuring these effects.
+The core functionality of Model.Microbiome is to create a model microbial community, then simulate sequencing by subsampling from it. This simulated count data can then be normalized using any normalization method. This is handled by the run.analysis2() function. I recommend running this function with SuppressWarnings(). It is normal for the linear model functions that Model.Microbiome references to give warnings whenever the fit is perfect; these warnings stack up across the simulation and become overwhelming.
 
 Building the model community works sequenially by:
-1. creating an environment, with 5 environmental parameters
-  a. environmetnal paramters 1-3 change in mean and variance according to the experimental design
-  b. environmental parameters 4-5 are unrelated to the experimental design, but do affect taxon abundance
-  c. the sampling environment consists of 30 samples, divided into 6 experimental treatments (or 5 reps per treatment)
-  d. the environmental parameters have the same mean and variance for each group every time the software is run; however, the values of any given run are randomly drawn from this distribution. Therefore no two runs will have exactly the same environment, but they will represent exactly the same experiment.
+1. creating an environment made out of 5 environmental parameters, 30 sites, and 6 statistically distinctive "experimental" conditions.
+  a. environmetnal paramters 1-3 change in mean and variance according to the experimental condition.
+  b. environmental parameters 4 and 5 are unrelated to the experimental design, but do affect taxon abundance
+  c. the sampling environment consists of 30 samples, divided into 6 experimental conditions/treatment (or 5 reps per condition)
+  d. the environmental parameters have the same mean and variance within each condition/treatment every time the software is run; however, the values of any given run are randomly drawn from this distribution. Therefore no two runs will have exactly the same environment, but they will represent exactly the same experiment.
 
 2. Choosing which species exist in each sample.
   a. The user sets how many taxa will be chosen per sample
-  b. the user sets how many taxa will exist only within certain experimental treatments
-  c. the user sets how many taxa will exist only within certain samples
-  d. the user sets how many taxa will be chosen to be globally distributed
+  b. the user sets how many taxa will be chosen per experimental treatments
+  c. the user sets how many taxa will be chosen to be globally distributed
   
 NOTE: SEE SECTION DETAILS FOR CAVEATS ABOUT THIS SELECTION PROCESS!!
 
@@ -71,11 +71,13 @@ NOTE: SEE SECTION DETAILS FOR CAVEATS ABOUT THIS SELECTION PROCESS!!
   a. taxon abundances are calculated; each species has a specific relationship with the environmental variables.
   b. OTU table generated, and merged into a phyloseq object with metadata on the environment, etc.
 
+NOTE: While Model.Microbiome does construct networks and taxon associations in downstream analyses, it does not model those relationships explicitly; no species function refers explicitly to another species.
+
 4. Community is sampled
   a. this is a subsampling routine that creates the "sequence output" table
 
 5. Sequence Normalization
-  a. uses a function to normalize the data any arbitrary number of different methods
+  a. Model.Microbiome applies user-supplied normalization functions to the subsampled data table, and generates metrics to aid with interpretation. It can accommodate any number of arbitrary methods.
 
 ![Alt text]("~/Desktop/PhD/RarefactionProject/Process_Map.pdf")
 
@@ -85,7 +87,7 @@ commonN: Number of taxa that have a global distribution
 groupN: Number of taxa that are group-specific
 singleN: Number of taxa that are sample-specific
 
-CAVEAT: there are 700 species functions that the software selects from. For each of these values, it uses a random selection routine. It includes resampling among the groups. This means that:
+NOTE: there are 700 species functions that the software selects from. For each of these values, it uses a random selection routine. It includes resampling among the groups. This means that:
 
 THERE IS A CHANCE THAT A TAXON MAY END UP REPRESENTING SEVERAL GROUPS, OR SAMPLES.
 
@@ -94,16 +96,17 @@ V: variance of sampling depth.
 
 method: names of the functions to be used for count normalization (see below for details)
 
+Let's look at an example using a narmalization method included with Model.Microbiome.This implementation creates a single output object that contains the phyloseq objects created before, and a number of different statistics. In order to get it to work, we need at least one methods function: 
+
 ```{r}
 method<-c("QSeq")
 
 model<-suppressWarnings(run.analysis2(commonN=30, groupN=20, singleN=5, D=500, V=250, method))
 
 ```
-This creates a single output object that contains the phyloseq objects created before, and a number of different statistics. We'll get to the indices later.In order to get it to work, we need at least one methods function.
+Note that rarefaction curves are generated automatically for the reference condition in each simulation run. This helps us judge whether our subsampling level is under sampling in general. It also allows us to examine the diversity of each samople; we can see that there are distinctions in diversity among the experimental conditions.
 
-
-Example method function:
+The QSeq method is a native Model.Microbiome method, but let's look at how it was constructed to give a framework for how the user can create functions that work with Model.Microbiome:
 ```{r}
 
 # these functions are already provided as a part of Model.Microbiome
@@ -165,8 +168,9 @@ QSeq100<-function(ps){
     out
 }
 ```
+In this way we end up with a number of different functions that can be called independently, but that work on the same underlying mechanic. This is important if we have a method that we want to optimize in some way.
 
-If we want to use all of them in our simulation study, then we simply do:
+If we want to use all of our methods in our simulation study, then we simply do:
 ```{r}
 method<-c("QSeq0.5", "QSeq1", "QSeq2", "QSeq3", "QSeq10", "QSeq100")
 ```
@@ -191,7 +195,6 @@ model$QSeq10$comm
 Model.Microbiome also automatically calculates several metrics. For example, it calculates automatically an experiment-wide PERMANOVA for each method and each factor. So for example if we look at the reference, we have a seperate permanova for the experimental category:
 ```{r}
 model$model$PERMANOVA$Category
-
 ```
 And each of the environmental factors:
 ```{r}
@@ -213,46 +216,49 @@ model$QSeq3$PERMANOVA$F1 #...
 model$QSeq10$PERMANOVA$F1
 model$QSeq100$PERMANOVA$F1# highest mean value
 ```
-You'll notice that the QSeq PERMANOVA tables are very similar to the reference PERMANOVA table, and that the un-normalized table is a bit different. This is great! 
+You'll notice that the QSeq PERMANOVA tables are very similar to the reference PERMANOVA table, and that the un-normalized table is a bit different. This is great! It tells us that we are recapturing some lost information from the subsampling. 
 
 Model.Microbiome uses a few metrics to understand bias that is introduced through the normalization process. All the metrics in Model.Microbiome consist of the ouput from an analysis conducted on a normalized dataset (treatment) divided by the same analysis conducted on the reference community. For example, if we are interested in the relationship between a taxon an the environment, we could construct a linear model where abundance of taxon x depends on environment A. The R-squared of this model would represent the amount of information captured by the model. If we applied this model to both the reference community, and the normalized community, then we have a measure of the "actual" relationship and the inferred relationship after our normalization, respectively. The ratio of these values gives us a comparable value where 1 represents a perfect match; greater than 1 indicates the normalization method leads to overestimating the explanatory power of the environmental factors on the abundance of the taxon; and a value of less than one indicates that the normalization underestimates the explanatory value of the environmental parameter. All of the indices are based on this interpretation principle. 
 
 Here is a brief description of each index:
 
-Loss of information index (LII) is based on a linear model approach, but instead of regressing the taxa against the environment and comparing the outputs, it regresses the treatment (normalized data) against the reference (pre-sampling). This provides a direct measure of information that is maintained about the abundance of the taxon across the dataset. The LII output has several components;
+Loss of information index (LII) is based on a linear model approach, but instead of regressing the taxa against the environment and comparing the outputs, it regresses the treatment (normalized data) against the reference (pre-sampling). Thus the R-squared value of the model is a direct measure of how well reference abundance predicts the normalized abundance. The LII output has several components;
 
-$Index : index value which is the sum from all taxa of (1 - the linear regression r-squared values) divided by the total number of taxa. This is a single value for the whole run. Lower scores equate to less overall information lost.
+$Index : index value which is the sum from all taxa of (1 - the linear regression r-squared values) divided by the total number of taxa. This is a single value for the whole run. Lower scores equate to less overall information lost. The LII can be interrpeted as "mean information lost per taxon"
 
-$R : a list of the R squared values, one per taxon in the run.
+$R : a named list of the R squared values that are summed in the Index, one per taxon in the run.
 
-$diff : a list of (1 - the r-squared values) for the Index value, one for each taxon. This is useful to identify which taxa are deviating substantially, and help with troubleshooting the normalization method.
+$diff : a list of (1 - the r-squared values) for the Index value, one for each taxon. This is useful to identify which taxa are deviating substantially, and help with troubleshooting the normalization method, and identifying why any patterns might exist.
 
 All of these can be accessed from the output object (see output object map). 
 
-The second set of metrics consist of linear regressions of the taxa against environmental and experimental design predictors. This test allows us to diagnose the effect that our normalization protocol has on our ability to infer relationships between the taxa and the environment / experimental condition. Once again, the primary outputs of this process are then taken as a ratio to the reference for interpretation.
+The second set of metrics consist of linear regressions of the taxa (or whole community) against environmental and experimental design predictors. This test allows us to diagnose the effect that our normalization protocol has on our ability to infer relationships between the taxa and the environment / experimental condition. The primary outputs of this process are then taken as a ratio to the reference for interpretation.
 
 $lmRatiotab : list of taxa and their R-squared values between taxon and the environment, normalized by the reference
 
 $lmRatiotab.model : list of taxa and their R-squared values between taxon and the experimental design, normalized by the reference
 
+lmRatiotab or lmRatiotabl.model values that are close to 1 represent near perfect retention of the ecological relationship. Values that approach 0 or are above 1.5 represent substantial loss of accuracy. There should be no negative values.
 
-Object Map:
+There are also metrics that reflect beta diversity. The R-Squared value for a PERMANOVA analysis of the experimental conditions, and environmental parameters against a Bray-Curtis transformed count table are used to calculate a R-Ration between the reference community and the treatment communities. Also, modularity is calculated based on a correlation matrix using a number of different construction methods. These methods will be addressed in more detail later.
+
+#Object Map:
 
 ![Alt text]("~/Desktop/PhD/RarefactionProject/Output_Map.pdf")
 
-The speciesMeta object also stores a few other taxon specific metrics that help us interpret the outcomes;
+The speciesMeta object stores a few taxon-specific metrics that help us interpret the outcomes;
 
-$prevalence is a taxon-wise measure of how many sites the taxon actually occures in.
+$prevalence is a taxon-wise measure of how many sites the taxon actually occures in (in the reference community).
 
-$mean_abundance is a taxon-wise measure of the mean abundance of each taxon across all sites
+$mean_abundance is a taxon-wise measure of the mean abundance of each taxon across all sites (in the reference community)
 
-$sd_abundance is a taxon-wise measure of the standard deviation in abundance of each taxon across all sites.
+$sd_abundance is a taxon-wise measure of the standard deviation in abundance of each taxon across all sites (again, reference community).
 
-$M.Eval is the mean of the relative abundance of the taxon at each site divided by the sampling depth of that site. This is meant to represent an unweigthed estimation of the likelihood that a taxon will be sampled at any site, given that they exist in that site. Lower values mean the taxon is generally less abundant.
+$M.Eval is the mean of the relative abundance of the taxon at each site divided by the sampling depth of that site. This is meant to represent an unweigthed estimation of the likelihood that a taxon will be sampled at any site, given that they exist in that site. Lower values mean the taxon is generally less abundant, and less likely to be sampled in any of the sites.
 
-In addition to these other things, it has the taxon specific R-ratio that is the foundation of the LII for each normalization run. This allows us to understand better what is driving changes in the LII. These are each listed under the name of the method. For example, we have $QSeq, which represents the R-squared of the regression of the treatment abundance against the reference abundance for each taxon in the QSeq treatment. Let's look at some example plots that demonstrate the utility of these metadata:
+These taxon-specific data can be useful for exploring patterns when it's time to interpret an experimental run. Let's look at some example plots that demonstrate the utility of these metadata:
 
-First, let's examine the relationship between the expected likelihood of sampling a taxon and the amount of information that is lost:
+First, let's examine the relationship between the expected likelihood of sampling a taxon and the amount of information that is lost. In this plot, the method (QSeq0.5) axis represents 1-(r-squared of treatment vs reference) abundance values for each taxon in the community. Thus higher values equate to more information lost:
 ```{r}
 
 ggplot(model$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(QSeq0.5), col=prevalence))+
@@ -261,17 +267,23 @@ ggplot(model$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(QSeq0.5), col=prevalen
   theme_classic()
 
 ```
-The color represents the prevalence, we can see that in this case, there are many taxa that lose no information (LII is highest when there is the most information lost; negative slope indicates that less information is lost as the likelihood of sampling the taxon goes up). Most of these are taxa that only occur in one sample. Let's color the samples differently:
+The color represents the prevalence, we can see that in this case, there are many taxa that lose no information (along the bottom of the graph). Most of these are taxa that only occur in one sample. Let's color the samples differently:
 
 ```{r}
 
-ggplot(model$model$SpeciesMeta, aes(x=log10(M.Eval),y=log(QSeq0.5), col=log(mean_abundance)))+
+ggplot(model$model$SpeciesMeta, aes(x=M.Eval,y=QSeq0.5, col=log(mean_abundance)))+
+  geom_point()+ 
+  scale_color_viridis_c(option="C")+
+  theme_classic()
+
+
+ggplot(model$model$SpeciesMeta, aes(x=log(M.Eval),y=log(QSeq0.5), col=log(mean_abundance)))+
   geom_point()+ 
   scale_color_viridis_c(option="C")+
   theme_classic()
 
 ```
-We can see that the taxa, though they exist only in one site, have a range of abundances.We can look at how this patterns shifts as a function of our normalization technique:
+We can see that taxa with high mean values are much more likely to retain their information through the sampling.
 
 ```{r}
 
@@ -323,6 +335,7 @@ ggplot(model$model$SpeciesMeta, aes(x=log(mean_abundance),y=QSeq0.5, col=log(pre
   theme_classic()
 
 ```
+We can see that taxa that have higher prevalence also tend to retain more information; the one caveat is the taxa that exist in only one site. As long as they are detected, they retain perfect information. 
 
 We can explore to see how well species abundance and prevalence explain the LII:
 
@@ -337,26 +350,28 @@ summary(lm(model$model$SpeciesMeta$QSeq100~model$model$SpeciesMeta$prevalence*lo
 
 ```
 
-Pay close attention to the R-squared values of the model. We can see that the prevalence and mean abundance explain the highest amount of variance in the LII model. This doesn't necessarily mean that this model performs better; imagine if the relative patterns ofall taxa are perfectly preserved, then there would be no relationship between the mean abundance, prevalence and information that is lost through sampling. Conversely, if we have a really high predictive power between the abundance, prevalence, and lost information, it doesn't necessarily mean that the normalization is creating more bias in the dataset as there are likely real effects of relative abundance on the likelihood of detection in subsampling. This is to say that the statistics and the plots should be examined within the context of how the normalization procedure is known to operate in order to determine if it is creating bias. In this instance, QSeq0.5 decreases the R-squared of the model because some taxa are rounded down to 0, creating an anomaly that is removed at QSeq10 and QSeq100.
+Pay close attention to the R-squared values of the model. We can see that the prevalence and mean abundance explain the highest amount of variance in the LII model. This doesn't necessarily mean that this model performs better; imagine if the relative patterns of all taxa are perfectly preserved, then there would be no relationship between the mean abundance, prevalence and information that is lost through sampling. Conversely, if we have a really high predictive power between the abundance, prevalence, and lost information, it doesn't necessarily mean that the normalization is creating more bias in the dataset as there are likely real effects of relative abundance on the likelihood of detection in subsampling. This is to say that the statistics and the plots should be examined within the context of how the normalization procedure is known to operate in order to determine if it is creating bias. In this instance, QSeq0.5 decreases the R-squared of the model because some taxa are rounded down to 0, creating an anomaly that is removed at QSeq10 and QSeq100.
+
+A note about lmRatio and lmRatio.model:
+As a reminder, the lmRatio and lmRatio.model values are the ratio of r-squared values of a model using normalized versus reference count tables. lmRatio is a model that regresses taxa against the environmental variables; lmRatio.model is a model that regresses taxa against the categorical experimental condition. values of 1 are interpreted to be a perfect retention of relationship through sampling and normalization; values between 0 and 1 are underestimation of the strength of the relationship; values over 1 are overestimation. So, let's look at how mean abundance relates to accuracy of the linear model on a taxon-by-taxon basis:
 
 
-In nearly all our comparisons of a normalization technique, we are comparing the results of a statistical test given the normalization to the reference. we do this because it is possible that our normalization technique might overfit the data to an expected trend, thus information may be lost also by overfitting. We have looked at an explicit evaluation of lost information intrinsic to each taxon; we can also look at how this lost information degrades our abilty to detect true relationships between the taxa and the environmental gradients. To do this, we employ linear modeling. We have two linear model outputs for each taxon. In the first case, we regress the abundance of the taxon against all the environmental variables, excluding categorical experimental design from the test structure. In the second case, we include only the categorical variables and exclude the environmental variables. This allows us to resolve whether there has been overfitting of taxon abundance to our experimental design; and the effect this has had on our ability to detect the relationship to environmental gradients. Of course, our final interest is not on the outputs of the model per se, but the ratio of model outputs from normalized datasets to the reference. This gives ratio tells us clearly which taxa are accurately modeled. In aggregate, the variance of this ratio around 1 tells us which method is more consistently and accurately modeling the relationship of each taxon to the environmental gradient driving it's abundance. 
-(R squared = 1 is ideal!)
 ```{r}
 plot(log(model$model$SpeciesMeta$mean_abundance),model$QSeq0.5$lmRatiotab, col=gray(model$model$SpeciesMeta$M.Eval), 
-  main="QSeq0.5; linear model Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+  main="QSeq0.5 R-ratio of Taxa vs Environment", xlab="Taxon Prevalence", ylab="R-Ratio")
 
 plot(log(model$model$SpeciesMeta$mean_abundance),model$QSeq100$lmRatiotab, col=gray(model$model$SpeciesMeta$M.Eval), 
-  main="QSeq100; linear model Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+  main="QSeq100 R-ratio of Taxa vs Environment", xlab="Taxon Prevalence", ylab="R-Ratio")
 
 ```
+Notice that QSeq0.5 has many more taxa that have completely lost the relationship between taxa and the environment, and a few where the relationship is over estimated. QSeq100 has none that have lost their relationship completely. While QSeq has more taxa that have an over-estimated relationship with the environmental variable, the accuracy of the estimate is still high, with most of those taxa still being within 10% error. Here is the same plots but for the categorical variables:
 
 ```{r}
 plot(log(model$model$SpeciesMeta$mean_abundance),model$QSeq0.5$lmRatiotab.model, col=gray(model$model$SpeciesMeta$M.Eval), 
-  main="QSeq0.5; linear model Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared")
+   main="QSeq0.5 R-ratio of Taxa vs Category", xlab="Taxon Prevalence", ylab="R-Ratio")
 
 plot(log(model$model$SpeciesMeta$mean_abundance),model$QSeq100$lmRatiotab.model, col=gray(model$model$SpeciesMeta$M.Eval), 
-  main="QSeq100; linear model Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared")
+   main="QSeq100 R-ratio of Taxa vs Category", xlab="Taxon Prevalence", ylab="R-Ratio")
 
 ```
 
@@ -371,27 +386,39 @@ We can see qualitatively that our higher QSeq methods increase the accuracy of o
 levenetest<-data.frame("ratio"=c(model$QSeq0.5$lmRatiotab, model$QSeq100$lmRatiotab), "method"=c(rep("raw", length(model$raw$lmRatiotab)), rep("QSeq", length(model$QSeq3$lmRatiotab))))
 
 car::leveneTest(ratio ~ method, data = levenetest)
-```
-In this case it's not a huge improvement, but the method provides a solid evidence-based approach for optimizing normalization methods. 
 
-It might be instructional at this point to look at the samle distribution without any normalization, to see how well the normalization improves our inference about the relationship of taxa to their environment:
+var(model$QSeq0.5$lmRatiotab)
+var(model$QSeq100$lmRatiotab)
+```
+This indicates that there is greater variation in the lmRatio values in the QSeq0.5 versus the QSeq100. Remember, that the deviation in value from 1 represents lost accuracy in the information being retained; we can therefore interpret higher variance as being lower accuracy in the relationships being modeled after the transformation. This method provides a solid evidence-based approach for optimizing normalization methods.
+
+It might be instructional at this point to look at the same distribution without any normalization, to see how well the normalization improves our inference about the relationship of taxa to their environment:
 
 ```{r}
 plot(model$model$SpeciesMeta$prevalence,model$raw$lmRatiotab, col=gray(model$model$SpeciesMeta$M.Eval), 
-  main="Not normalized; ratio-Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+  main="Not normalized vs Environment", xlab="Taxon Prevalence", ylab="Rsquared-Ratio")
 
 plot(model$model$SpeciesMeta$prevalence,model$QSeq100$lmRatiotab, col=gray(model$model$SpeciesMeta$M.Eval), 
-  main="QSeq100; ratio-Rsquared for each taxon; using only environmental variables", xlab="Taxon Prevalence", ylab="Rsquared")
+  main="QSeq100 vs Environment", xlab="Taxon Prevalence", ylab="Rsquared-Ratio")
 
 plot(model$model$SpeciesMeta$prevalence,model$raw$lmRatiotab.model, col=gray(model$model$SpeciesMeta$M.Eval), 
-  main="Not normalized; ratio-Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared")
+  main="Not normalized vs Category", xlab="Taxon Prevalence", ylab="Rsquared-Ratio")
 
 plot(model$model$SpeciesMeta$prevalence,model$QSeq100$lmRatiotab.model, col=gray(model$model$SpeciesMeta$M.Eval), 
-  main="QSeq100; ratio-Rsquared for each taxon; using only categorical variables", xlab="Taxon Prevalence", ylab="Rsquared")
+  main="QSeq100 vs Category", xlab="Taxon Prevalence", ylab="Rsquared-Ratio")
 ```
-There is an important implication of the variance of the R-Ratio; that higher variance indicates less accurate estimation of the relationship between taxa and the environment across the whole community. If there were perfect accuracy, the value would be 1 for all taxa, and the variance would be zero.
+We can see that sometimes the differences are subtle, but other times normalization can remove large artifacts.
 
-Now let's look at how relationships among taxa are affected by normalization (or lack therof). We can access the R-Ratio for a correlation among taxa:
+Now let's look at how relationships among taxa are affected by normalization (or lack therof). We can access the R-Ratio for a correlation among taxa. Typically the first thing that we do for a network analysis is to correlate taxa to one another. Model.Microbiome does this automatically, using a pearson correlation. All we need to do is access this information using the getTaxCor.Tab function. This function outputs an object that contains a table of variances and median correlation ratios. These are calculated in a similar fashion as the correlation ratios of taxa to the environment;
+
+let a be the correlation coefficient between two taxa in the reference.
+let b be the correlation coefficient between two taxa after normalization treatment.
+
+The correlation ratio is defined as b/a
+
+NOTE: because occasionally a = 0, resulting in an undefined result we have chosen to convert all a = 0 -> a = min(a/10) in order to remove infinite values, retain the information that these instances result in mis-estimation of the relationship between taxa, and without punishing the misestimation too harshly (an infinite value pushes the mean to infinite, even if only one infinite value exists in the dataset)
+
+Thus we are extracting the variance of all ratios for each normalization method; and the median ratio of all normalization methods
 ```{r}
 
 model$raw$taxCor.Ratio
@@ -400,7 +427,7 @@ model$raw$taxCor.Ratio
 Negative values indicate a negative relationship between the relationship among taxa in the reference compared to the treatment. Ideally all relationships should be 1 if the information is perfectly preserved. We can subset the dataset by specific taxa, and use metadata about those taxa to better understand why the relationships change. If we look at taxon 153, we see that it exists in 22 sites. We can look at how the prevalence and abundance of other taxa relate to the predicted relationship between the taxa. First let's identify low prevalence and high prevalence taxa.
 
 ```{r}
-#test the rownames are equal
+# create values for subsetting
 nm<-rownames(model$model$SpeciesMeta)
 nm.h<-nm[model$model$SpeciesMeta$prevalence>20]
 nm.l<-nm[model$model$SpeciesMeta$prevalence==1]
@@ -429,6 +456,7 @@ plot(model$model$SpeciesMeta$sd_abundance,model$QSeq0.5$taxCor.Ratio[model$QSeq0
 
 
 ```
+It is important to note that there are some negative values. The Taxcor is a pearson correlation. The other metrics use a R-sqaured value, which precludes negatives. In this case there is an interpretation: the relationship between taxa is opposite in the reference than in the normalized data. This would be interpreted as potentially a false positive relationship if the relationship is strong enough after normalization.
 
 Model.Microbiome includes several R-ratio metrics for whole community patterns. These are based on the PERMANOVA r-squared value. Model.Microbiome conducts a PERMANOVA of each environmental factor and the categorical factor against a Bray-Curtis transformation of the count table. These are done separately because order of addition of the factors in the model influences the model outcomes; it is easiest to get comparable results run each factor in isolation. For example:
 
@@ -480,16 +508,28 @@ plot_ordination(model$raw$comm, bray_NMDS.raw, "samples", color="Factor")
 bray_NMDS.Q = ordinate(model$QSeq10$comm, "NMDS", "bray")
 plot_ordination(model$QSeq10$comm, bray_NMDS.Q, "samples", color="Factor")
 ```
+While it looks qualitatively like the QSeq ordination might be more accurate to the reference, it's hard to tell. We can look at the R-Squared Ratio values to figure out which is more accurate. Here's a spot test:
+```{r}
+# raw
+model$raw$PERMANOVA$F4Rratio
+# QSeq
+model$QSeq10$PERMANOVA$F4Rratio
+```
+```{r}
+# raw
+model$raw$PERMANOVA$CategoryRratio
+# QSeq
+model$QSeq10$PERMANOVA$CategoryRratio
+```
+The category variables look nearly identical, whereas the environmental variables are much better modeled by the QSeq approach. In the next section, we'll look at how to run multiple simulations to aggregate and statistically evaluate the differences of these approaches within the modeling environment.
 
 # Conducting Experiments: Summarizing Outputs 
-Model.Microbiome has a wrapper that allows the user to iteratively generate random communities with the same experimental conditions. TThe inputs are the same as before, plus one aditional input to tell the function how many times to iterate. In this case we'll do 10. We use suppressWarnings because the linear model often produces warnings when it has a perfect fit, and these can clutter the output.
+Model.Microbiome has a wrapper that allows the user to iteratively generate random communities with the same experimental conditions. The inputs are the same as before, plus one aditional input to tell the function how many times to iterate. In this case we'll do 10. We use suppressWarnings because the linear model often produces warnings when it has a perfect fit, and these can clutter the output.
 ```{r}
 model10<-suppressWarnings(BENCHMARK.MM(reps=10, commonN=30, groupN=20, singleN=5, D=500, V=250, method))
 ```
 
-model10 is now a list object with 10 items, each one as a replicated simulation. This is the basis for us to be able to extract performance metrics and do statistical analyses to compare different normalization methods. 
-
-So now that we have the basic data structures and functionalities, let's look at some analyses that are possible when we can automate community generation.
+model10 is now a list object with 10 items, each one as a replicated simulation. This is the basis for us to be able to extract performance metrics and do statistical analyses to compare different normalization methods. Let's look at some analyses that are possible when we can automate community generation.
 
 
 We first extract the LII indicator with the function Summarize.LII(), then we melt the dataframe and do a statistical test on it:
@@ -502,10 +542,9 @@ TukeyHSD(aov(Value~Var2, data=model10.LIIsummary)) # ignoring the blocks bc Tuke
 plot(TukeyHSD(aov(Value~Var2, data=model10.LIIsummary))) # visual of confidence intervals
 
 ```
-Clearly, the worst performing method is QSeq0.5. This is likely because it effectively leads to undersampling by rounding low count values to zero. Ideally we should choose a threshold value for this method that is sufficiently high enough that all sequences that pass QC in our pipeline are included in the sampling, and not rounded to 0 in any sample.
+Clearly, the worst performing method is QSeq0.5. This is likely because it effectively leads to undersampling because the detection threshold is so high. Ideally we should choose a threshold value for this method that is sufficiently high enough that all sequences that pass QC in our pipeline are included in the sampling, and not rounded to 0 in any sample.
 
 Let's look at how all these functionalities can be tied together into a comprehensive test of the strengths (or weaknesses) of a normalization procedure.
-
 
 We can look at the difference in PERMANOVA outputs:
 ```{r}
@@ -526,7 +565,7 @@ model10.PF5
 
 ```
 
-In general, there are many outputs that a researcher may want to generate and summarize that we have not anticipated. Here are some functions for extracting the R-ratio from the linear models to give a template on the extraction method that works well with the object. This should give a means for researchers to extract and summarize any metric in any way they want. We will use both of these functions later in the analysis.
+NOTE: In general, there are many outputs that a researcher may want to generate and summarize that we have not anticipated. Here are some functions for extracting the R-ratio from the linear models to give a template on the extraction method that works well with the object. This should give a means for researchers to extract and summarize any metric in any way they want. We will use both of these functions later in the analysis.
 ```{r}
 # get lmRatio ####
 Summarize.lmRatiotab.Median<-function(trt, method){
@@ -556,6 +595,9 @@ Summarize.lmRatiotab.Var<-function(trt, method){
 }
 
 ```
+
+The following examples are an actual experiment run to identify biases associated with QSeq protocol, and to optimize QSeq for a number of different interpretive lenses.
+
 # Exp. 1: Normalization vs Structure
 Let's say that we want to understand how the effect size of geographic structure within a community interacts with the performance of our normalization technique (or in the case of experimental design, what are the direct assemply effects of the treatment). Model.Microbiome gives us the power to vary the geographic structure/direct effects of the treatment on the community by determining the proportion of each sample that explicitly is determined by the grouping function:
 ```{r}
@@ -617,17 +659,15 @@ ggplot(model10Levels.summary1, aes(x=Level, y=value, group = variable, color=var
   ylab("LII Value (Mean +/- standard dev)")+
   theme_classic()
 ```
-Here we can see clearly that the degree of structure in the dataset interacts with the normalization method to affect it's accuracy. In all cases the QSeq normaliation method out performs
-And some statistics:
-
+Here we can see clearly that the degree of structure in the dataset interacts with the normalization method to affect it's accuracy. In general, less information is lost in QSeq methods, with the clear distinction being that QSeq0.5 performs worse than non normalizing under certain conditions. We can confirm this with a statistical test:
 ```{r}
 summary(aov(model10Levels$value~model10Levels$Level*model10Levels$variable))
 
 TukeyHSD(aov(model10Levels$value~model10Levels$Level*model10Levels$variable))
 ```
-Conclusion: we can see clearly that the degree of structure in the dataset interacts with the normalization method to affect it's accuracy. In all cases the QSeq normaliation method out performs un-normalized data at low structure, but at high levels of structure only QSeq2 and QSeq3 parameters continue to consistently outperform the raw variables. Remeber that LII reports the degradation of R squared and so is a direct measure of lost information. Let's now look at how this results in a loss of environmental signal.
+Conclusion: we can see clearly that the degree of structure in the dataset interacts with the normalization method to affect how much information is retained on a taxon-by-taxon basis. In all cases the QSeq normalization method out performs un-normalized data at low structure, but at high levels of structure only QSeq2 and QSeq3 parameters continue to consistently outperform the raw variables. Remember that LII reports the degradation of R squared and so is a direct measure of lost information. But it doesn't provide direct information about how well we can detect environmental drivers for the abundance of taxa.
 
-In this case interpretation is a little more challenging, because we are less interested in the mean value, and more interested in the variance of the values. This is because our metric is a ratio of the R-squared (variance explained) of each taxon by the environment to the same measure of the taxon in the reference dataset. This tells us the relative accuracy with which the normalized dataset is predicting the relationship of each taxon to the environment. Ideally the mean value should be 1 (a perfect fit). But it is possible for the mean to be 1, but the deviation to be substantial if it is balanced in the positive and negative direction. In otherwords, if the error in the positive and negative direction are equal in size, then even if there is large error in those directions, the mean value will still be 1 (a perfect fit). Thus we might have a perfect fit of the mean, yet have no taxa that is accurately modeled. To account for this, we put larger emphasis on the variance using a levene's test of equality of variance; but because variances may not be equally balanced in the positive and negative direction we are also still interested in changes in the average value. The two are necessary for accurate interpretation. We find especially for this analysis that outliers unduely affect the mean, so we prefer median for understanding the most common effect
+In this case interpretation is a little more challenging, because we are less interested in the mean value, and more interested in the variance of the values. This is because our metric is a ratio of the R-squared (variance explained) of each taxon by the environment to the same measure of the taxon in the reference dataset. This tells us the relative accuracy with which the normalized dataset is predicting the relationship of each taxon to the environment. Ideally the mean value should be 1 (a perfect fit). But it is possible for the mean to be 1, but the deviation to be substantial if it is balanced in the positive and negative direction. In other words, if the error in the positive and negative direction are equal in size, then even if there is large error in those directions, the mean value will still be 1 (a perfect fit). Thus we might have a perfect fit of the mean, yet have no taxa that is accurately modeled. To account for this, we put larger emphasis on the variance using a levene's test of equality of variance; but because variances may not be equally balanced in the positive and negative direction we are also still interested in changes in the average value. The two are necessary for accurate interpretation. We find especially for this analysis that outliers unduely affect the mean, so we prefer median for understanding the most common effect
 
 ```{r}
 
@@ -725,7 +765,7 @@ TukeyHSD(aov(SV.lmRatio.model10Levels$value~SV.lmRatio.model10Levels$Level*SV.lm
 
 
 ```
-Conclusion: there is an interaction between the normalization method and the internal structure of the community on our ability to accurately describe the relationship between taxa and the environmental gradients. According to this analysis we should prefer either QSeq2 or QSeq3 [check this later!!! (add in QSeq10)]
+Conclusion: there is an interaction between the normalization method and the internal structure of the community on our ability to accurately describe the relationship between taxa and the environmental gradients. According to this analysis we should prefer QSeq3,10 and 100.
 
 What about our ability to detect the experimental design? Following the same methodology:
 
@@ -849,7 +889,7 @@ summary(aov(SV.lmRatioM.model10Levels$value~SV.lmRatioM.model10Levels$Level*SV.l
 TukeyHSD(aov(SV.lmRatioM.model10Levels$value~SV.lmRatioM.model10Levels$Level*SV.lmRatioM.model10Levels$variable))
 
 ```
-An emerging pattern that we see here is that raw data without any processing performs much worst when there is less structure and environmental variables can act more as a filter. Also, in our normalization method QSeq, higher sampling variables that don't omit low abundance taxa perform better. Higher abundance will continue to perform even better.
+An emerging pattern that we see here is that raw data without any processing generally performs worst when there is less structure and environmental variables can act more as a filter. Also, in our normalization method QSeq, higher sampling variables that don't omit low abundance taxa perform better. Higher abundance will continue to perform even better.
 
 Let's check the accuracy of the model:
 ```{r}
@@ -938,7 +978,9 @@ ggplot(M.TaxRatio.model10.p2, aes(x=Level, y=value, group = Var2, color=Var2))+
   theme_classic()
 
 ```
-In terms of the median, it appears that at all levels of structure, QSeq10 methods are nominally the same.QSeq0.5 is generally not particularly great; and raw count data performs the worst at very unstructured data. In terms of the variance, it looks like all the QSeq outperform raw, but aren't very differentiated among themselves. But let's check the stats:
+Note: In general, the results of this portion of the simulation show that QSeq0.5 underperforms compared to all other QSeq methods; that QSeq methods generally are better at estimating the mean value than un-normalized (have less systemic under or over estimation), but that often at lower degrees of structure the un-normalized dataset has less variance around the mean. But, this portion of the simulation tends to be less stable, and occasionally fails to produce a significant result. Therefore I will give guidelines on how to interpret the outputs, but not discuss specific conclusions.
+
+Generally variance should approach zero, and the mean should approach 1. The greater the deviation of the variance from zero (and the greater the range in variance values), the less accuracy on a taxon-by-taxon basis in estimating relationships among taxa. The farther the mean deviates from 1, the greater the systemic bias (over or underestimation) of the strength of the relationship. Let's check the stats:
 
 ```{r}
 summary(aov(M.TaxRatio.model10Levels$value~M.TaxRatio.model10Levels$Level*M.TaxRatio.model10Levels$Var2))
@@ -951,9 +993,8 @@ TukeyHSD(aov(V.TaxRatio.model10Levels$value~V.TaxRatio.model10Levels$Level*V.Tax
 
 #leveneTest(value~as.factor(Level), data=V.TaxRatio.model10.p)
 ```
-The TukeyHSD confirms that differences in median value are primarily driven by QSeq0.5. There was no statistical difference between normalization methods in terms of the variance value.
 
-Now let's look at a common community level statistic.
+Now let's look at a common community level statistic. PERMANOVA outputs:
 ```{r}
 # get permanova geography ####
 
@@ -1160,6 +1201,8 @@ ggplot(permanova.model10Levels.env5P1, aes(x=Level, y=value, group = variable, c
   ylab("Permanova env5Ratio (Mean +/- sd)")+
   theme_classic()
 ```
+PERMANOVA results are very consistent: the statistical model is typically captured equally well across normalization methods. However, QSeq methods significantly increase the accuracy of relating specific environmental gradients to the community structure.
+
 Statistics:
 ```{r}
 
@@ -1195,7 +1238,7 @@ model10.C5<-BENCHMARK.MM(reps=10, commonN=20, groupN=20, singleN=15, D=2000, V=1
 
 
 ```
-
+LII output:
 ```{r}
 SummaryLII.model10.C1<-as.data.frame(Summarize.LII(model10.C1,method2))
 SummaryLII.model10.C2<-as.data.frame(Summarize.LII(model10.C2, method2)) 
@@ -1239,7 +1282,9 @@ ggplot(model10.SeqLevels.summary2, aes(x=Level, y=value, group = variable, color
   ylab("LII Value (Median +/- min/max)")+
   theme_classic()
 ```
-Just like in the example about sparsity, we can look at the effect on sequencing depth on infering the relationship of species abundance to environmental gradients:
+These results are consistent with our previous experiment, where QSeq2-100 lose the least information; QSeq0.5 generally performs the worst, and un-normalized data only loses more information than QSeq0.5 and under certain conditions QSeq1. All methods perform best at highest sequencing depth.
+
+Now let's look at how well the environmental gradients predicts taxon abundance:
 ```{r}
 
 # sequencing depth env. lm ratio ####
@@ -1295,7 +1340,7 @@ ggplot(SM.lmRatio.model10C.p, aes(x=Level, y=value, group = variable, color=vari
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(30))+
   geom_point(position=position_dodge(30))+
-  xlab("Degree of Structure")+
+  xlab("Sampling Depth")+
   ylab("Median lmRatio (Mean +/- sd)")+
   theme_classic()
 
@@ -1304,7 +1349,7 @@ ggplot(SV.lmRatio.model10C.p, aes(x=Level, y=value, group = variable, color=vari
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(30))+
   geom_point(position=position_dodge(30))+
-  xlab("Degree of Structure")+
+  xlab("Sampling Depth")+
   ylab("Variance lmRatio (Mean +/- sd)")+
   theme_classic()
 
@@ -1313,7 +1358,7 @@ ggplot(SM.lmRatio.model10C.p2, aes(x=Level, y=value, group = variable, color=var
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(30))+
   geom_point(position=position_dodge(30))+
-  xlab("Degree of Structure")+
+  xlab("Sampling Depth")+
   ylab("Median lmRatio (Median +/- min/max)")+
   theme_classic()
 
@@ -1322,11 +1367,11 @@ ggplot(SV.lmRatio.model10C.p2, aes(x=Level, y=value, group = variable, color=var
   scale_color_viridis_d(direction=-1)+
   geom_line(position=position_dodge(30))+
   geom_point(position=position_dodge(30))+
-  xlab("Degree of Structure")+
+  xlab("Sampling Depth")+
   ylab("Variance lmRatio (Median +/- min/max)")+
   theme_classic()
 ```
-... and run statistics to see the effect:
+Typcially QSeq0.5 performs poorly, while other methods are essentially comparable. Often at low sequencing depth, un-normalized data has a performance that is somewhere between the QSeq1 and QSeq0.5 data. In some runs of the simulation it is a significant effect, in others it is not.
 ```{r}
 summary(aov(SM.lmRatio.model10.CLevels$value~SM.lmRatio.model10.CLevels$Level*SM.lmRatio.model10.CLevels$variable))
 
@@ -1424,9 +1469,7 @@ ggplot(SV.lmRatioM.model10C.p2, aes(x=Level, y=log(value), group = variable, col
   theme_classic()
 
 ```
-
-And again we do the stats:
-
+It is typical for the categorical model to have greater agreement across the methods than the environmental gradients.
 ```{r}
 summary(aov(SM.lmRatioM.model10CLevels$value~SM.lmRatioM.model10CLevels$Level*SM.lmRatioM.model10CLevels$variable))
 
@@ -1438,7 +1481,7 @@ TukeyHSD(aov(SV.lmRatioM.model10CLevels$value~SV.lmRatioM.model10CLevels$Level*S
 
 ```
 
-Sequencing Depth:
+Let's look at the taxon relationships:
 ```{r}
 TaxRatio.model10.C1<-getTaxCor.Tab(model10.C1,method2)
 TaxRatio.model10.C2<-getTaxCor.Tab(model10.C2,method2)
@@ -1529,6 +1572,7 @@ ggplot(M.TaxRatio.model10.Seq.p2, aes(x=Level, y=value, group = Var2, color=Var2
   theme_classic()
 
 ```
+Remember that variance should approach zero and mean should approach 1 in a perfect world. Greater deviations from these values represent less accurate retention of taxon-taxon relationships.
 
 ```{r}
 summary(aov(M.TaxRatio.model10Levels$value~M.TaxRatio.model10Levels$Level*M.TaxRatio.model10Levels$Var2))
@@ -1691,8 +1735,7 @@ ggplot(permanova.model10CLevels.env5P, aes(x=Level, y=value, group = variable, c
   ylab("Permanova env5Ratio (Median +/- min/max)")+
   theme_classic()
 ```
-
-Stats:
+Again, results are similar to the sparcity example where the experimental design is equally strongly detected across normalization methods, but that un-normalized data significantly underperforms in capturing the relationship between community structure and the environmental gradients.
 ```{r}
 summary(aov(permanova.model10CLevels.model$value~permanova.model10CLevels.model$Level*permanova.model10CLevels.model$variable))
 
@@ -1733,38 +1776,10 @@ leveneTest(permanova.model10CLevels.env5$value~permanova.model10CLevels.env5$var
 
 ```
 
-Thus far we have looked at the effect of normalization on detecting important relationships between taxa and the modeled environment. Now let's look at how relationships among taxa are affected by normalization (or lack therof). We will be conducting a network analysis for this section. In the following section, each taxon is represented by a vertice, and relationships between taxa are represented as edges. To construct a network, we typically correlate taxa, then choose a threshold for netowrk construction. Taxa that have a high enough correlation coefficient are connected with an edge, and those falling below the threshold are not connected. We are generally interested in 3 network metrics:
-
-In this analysis, a network is constructed using two methods: one has a preset correlation coefficient that determines which taxa are included (is called "static"); the other includes a dynamic threshold to reach a certain present number of edges (called "dynamic"). A common statistic that is used in network theory, but that also is interpretable in ecology is modularity. This is a measure of internal structure of the community. We can use the modules to interpret functional groups, identify covarying taxa, and potentially hypothesize functional relationships among organisms. However, measures of modularity are very sensitive to the number of edges and the number of vertices in a network. In our experiment, all of the networks have the same number of vertices because they come from the same community. But normalization may affect the strength of the relatioships among taxa, so it might affect the number of edges. The dynamic method is designed to ensure that the number of edges is the same across all networks constructed. To do this, the threshold for inclusion is varied. So for interpretation, we need to look at both the modularity, and the threshold level. Even if the modularity is the same, if the threshold from one normalization is much lower than another, it means that this method reduces the strength of the relatioships. The static method includes all relationships that meet a certain threshold. This can give a clear indication also of how well relationships are preserved through the normalization process.
-
-Let's look at an example of this in practice. We'll take the same experiments we've just generated to understand how count normalization methods interact with various community features and affect our ability to accurately describe the relationship between taxa and their environment; we'll use the network analyses to understand how these same community and sampling features affect our ability to infer species-species interactions.
-
-Community structure:
-
-Typically the first thing that we do for a network analysis is to correlate taxa to one another. Model.Microbiome does this automatically, using a pearson correlation. All we need to do is access this information using the getTaxCor.Tab function. This function outputs an object that contains a table of variances and median correlation ratios. These are calculated in a similar fashion as the correlation ratios of taxa to the environment;
-
-let a be the correlation coefficient between two taxa in the reference.
-let b be the correlation coefficient between two taxa after normalization treatment.
-
-The correlation ratio is defined as b/a
-
-Thus we are extracting the variance of all ratios for each normalization method; and the median ratio of all normalization methods
-
-So with that, let's look at how community structure interacts with our normalization procedure to affect the accuracy of taxon-taxon correlation measures.
-
-
-```{r}
-method3<-c("raw", method) # make a list for outputs
-
-```
-
-A quick note for interpretation- we are looking for the variance to be as low as possible; but we are looking for the median value to be as close to 1 as possible. With that:
-
-
-
 
 # Expt 3: Normalization vs Sequencing Variance
 
+By now you shuld be able to interpret the results; so I won't explain everything (they are very consistent across experiments)
 ```{r}
 # sequencing variance ####
 model10.C1V1<-BENCHMARK.MM(reps=10, commonN=20, groupN=20, singleN=15, D=500, V=50, method)
@@ -1780,7 +1795,7 @@ model10.C1V5<-BENCHMARK.MM(reps=10, commonN=20, groupN=20, singleN=15, D=500, V=
 
 ```
 
-
+LII output:
 ```{r}
 # sequencing variants LII ####
 
@@ -1831,7 +1846,7 @@ summary(aov(SummaryLII.model10.C1V1$value~SummaryLII.model10.C1V1$Level*SummaryL
 TukeyHSD(aov(SummaryLII.model10.C1V1$value~SummaryLII.model10.C1V1$Level*SummaryLII.model10.C1V1$variable))
 
 ```
-
+linear model outputs:
 ```{r}
 # sequencing variants lm ####
 
@@ -2019,7 +2034,7 @@ TukeyHSD(aov(SV.lmRatio.model10.MC1V1$value~SV.lmRatio.model10.MC1V1$Level*SV.lm
 
 ```
 
-
+Taxon correlation outputs:
 ```{r}
 # sequencing variants taxcor ####
 
@@ -2126,7 +2141,7 @@ summary(aov(M.TaxRatio.model10VLevels$value~M.TaxRatio.model10VLevels$Level*M.Ta
 TukeyHSD(aov(M.TaxRatio.model10VLevels$value~M.TaxRatio.model10VLevels$Var2))
 
 ```
-
+PERMANOVA outputs:
 ```{r}
 # sequencing variants PERMANOVA ####
 
@@ -2308,8 +2323,8 @@ summary(aov(permanova.model10CVLevels.env5$value~permanova.model10CVLevels.env5$
 
 TukeyHSD(aov(permanova.model10CVLevels.env5$value~permanova.model10CVLevels.env5$Level*permanova.model10CVLevels.env5$variable))
 
-
-
+```
+```{r}
 leveneTest(permanova.model10CVLevels.model$value~permanova.model10CVLevels.model$variable)
 leveneTest(permanova.model10CVLevels.env1$value~permanova.model10CVLevels.env1$variable)
 leveneTest(permanova.model10CVLevels.env2$value~permanova.model10CVLevels.env2$variable)
@@ -2318,8 +2333,13 @@ leveneTest(permanova.model10CVLevels.env4$value~permanova.model10CVLevels.env4$v
 leveneTest(permanova.model10CVLevels.env5$value~permanova.model10CVLevels.env5$variable)
 ```
 
+Conclusions:
 
+1) Performance of all methods is highest at low sparcity, high sampling depth, and low sampling variance.
 
+2) Model.Microbiome provides an empirical framework for optimizing sequence count normalization methods prior to making ecological inferences; in our example the parameters for QSeq0.5 resulted in a consistent underperformance compared to other parameters.
+
+# Network Analysis
 Model.Microbiome constructs networks and network plots using two heuristics for creating the network thresholds. It also includes some functions to simplify accessing the network statistics that have been calculated, and plots that are generated. These are illustrated in the example below. These networks are built using two alternative approaches. Whenever we build a network, we need to establish a threshold to determine what relationships we consider significant to include. Our two methods include one that is a static threshold value, set at a correlation coefficient of 0.8; the other is a dynamic threshold heuristic that identifies the maximum threshold value that results in a network with 250 edges. The reason we include the secon method is because the network statistics for two graphs with different number of edges are in principle not comparable. However, we have found that in ecological settings that while the metrics we use might change, the overall interpretation of each plot does not. We also find that similar to other measures of beta diversity (here interpreted as changing species associations across sites), that statistics derived from the network are sensitive to network construction method, but are robust to normalization methods of the community. Let's take a look an an example using the community structure example from earlier in the tutorial:
 
 ```{r}
@@ -2374,7 +2394,7 @@ getNetPlot(model10.A[1],method3)
 
 Some figures from the data for the paper:
 
-# Figure 3
+# Figure 4
 In each experiment, LII
 ```{r}
 ggplot(model10Levels.summary1[model10Levels.summary1$variable == "raw"|
@@ -2417,11 +2437,19 @@ ggplot(model10.SeqVarLevels.summary[model10.SeqVarLevels.summary$variable == "ra
   ylab("LII Value (Mean +/- standard dev)")+
   theme_classic()
 ```
-# rank abundance curve
+# Figure 3: rank abundance curve
 ```{r}
-model10.A$com
+par(mfrow=c(2,2))
+barplot(sort(taxa_sums(model10.A$rep1$model$comm)/1000000, TRUE), 
+    las = 2, main ="Rank Abundance Lowest Sparcity", ylab="Million Counts")
+barplot(sort(taxa_sums(model10.B$rep1$model$comm)/1000000, TRUE), 
+    las = 2, main ="Rank Abundance Low Sparcity", ylab="Million Counts")
+barplot(sort(taxa_sums(model10.C$rep1$model$comm)/1000000, TRUE), 
+    las = 2, main ="Rank Abundance  High Sparcity", ylab="Million Counts")
+barplot(sort(taxa_sums(model10.D$rep1$model$comm)/1000000, TRUE), 
+    las = 2, main ="Rank Abundance Highest Sparcity", ylab="Million Counts")
 ```
-# figure 4
+# figure 5
 ```{r}
 #permanova.model10CVLevels.modelP
 ggplot(permanova.model10CVLevels.modelP[permanova.model10CVLevels.modelP$variable=="raw" |
