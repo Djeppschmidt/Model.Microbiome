@@ -1,8 +1,13 @@
 ---
 title: "M.M. Quick Tutorial"
 author: "Dietrich Epp Schmidt"
-date: "5/18/2020"
-output: html_document
+date: "8/1/2020"
+output:
+  html_document: 
+    default
+    toc: true
+    toc_depth: 2
+  pdf_document: default
 ---
 
 # Introduction
@@ -18,7 +23,7 @@ This tutorial will address the primary functionalities of Model.Microbiome, and 
 
 # Install Model.Microbiome
 First, let's install Model.Microbiome:
-```{r}
+```{r, results="hide", warning = FALSE}
 # update anything from my local computer (for me as I work, not you...) ####
 #setwd("/Users/maullabmacbookpro/Documents/GitHub/Model.Microbiome")
 #library(devtools)
@@ -29,7 +34,7 @@ First, let's install Model.Microbiome:
 devtools::install_github("djeppschmidt/Model.Microbiome")
 ```
 Now load all the other packages we need (or download and load if you haven't already):
-```{r}
+```{r, results="hide",warning = FALSE}
 # load required packages ####
 
 library(Model.Microbiome)
@@ -79,7 +84,9 @@ NOTE: While Model.Microbiome does construct networks and taxon associations in d
 5. Sequence Normalization
   a. Model.Microbiome applies user-supplied normalization functions to the subsampled data table, and generates metrics to aid with interpretation. It can accommodate any number of arbitrary methods.
 
-![Alt text]("~/Desktop/PhD/RarefactionProject/Process_Map.pdf")
+```{r process-map, echo = FALSE, message=FALSE}
+knitr::include_graphics("/Users/maullabmacbookpro/Documents/GitHub/Model.Microbiome/Model_Process.jpg")
+```
 
 So let's look at the function. It has several inputs necessary:
 
@@ -98,7 +105,7 @@ method: names of the functions to be used for count normalization (see below for
 
 Let's look at an example using a narmalization method included with Model.Microbiome.This implementation creates a single output object that contains the phyloseq objects created before, and a number of different statistics. In order to get it to work, we need at least one methods function: 
 
-```{r}
+```{r, message=FALSE,results='hide',fig.keep='all'}
 method<-c("QSeq")
 
 model<-suppressWarnings(run.analysis2(commonN=30, groupN=20, singleN=5, D=500, V=250, method))
@@ -106,12 +113,16 @@ model<-suppressWarnings(run.analysis2(commonN=30, groupN=20, singleN=5, D=500, V
 ```
 Note that rarefaction curves are generated automatically for the reference condition in each simulation run. This helps us judge whether our subsampling level is under sampling in general. It also allows us to examine the diversity of each samople; we can see that there are distinctions in diversity among the experimental conditions.
 
+# Designing a Normaliation Fuction
 The QSeq method is a native Model.Microbiome method, but let's look at how it was constructed to give a framework for how the user can create functions that work with Model.Microbiome:
-```{r}
+```{r, message=FALSE,results='hide',fig.keep='all'}
 
 # these functions are already provided as a part of Model.Microbiome
+# ps is a phyloseq object for input
+# val is the mean value around which all taxa will be scaled
+# scale is a vector of total counts of the reference samples used for normalization
 make.scaled2<-function(ps, val, scale){
-  scaled<-data.frame(mapply(`*`, data.frame(as.matrix(otu_table(transform_sample_counts(ps, function(x) x/sum(x))))), scale * val))# sample_data(ps)$val))
+  scaled<-data.frame(mapply(`*`, data.frame(as.matrix(otu_table(transform_sample_counts(ps, function(x) x/sum(x))))), scale * val))
   names<-rownames(data.frame(as.matrix(otu_table(ps))))
   rownames(scaled)<-names
   scaled<-round(scaled)
@@ -121,17 +132,17 @@ make.scaled2<-function(ps, val, scale){
   p2
 }
 
+# wrapper function to apply the normalization function in Model.Microbiome
 QSeq<-function(ps){
     scale<-sample_data(ps)$DensityF
     out<-make.scaled2(ps, val=2*mean(sample_sums(ps)), scale)
     out
 }
-
 ```
 
-Notice that this is actually one function nested within another. The wrapper helps the function to play nice. It's easy to replicate wrappers to provide the underlying function with different inputs if we want to test the different potential conditions. For example, our QSeq function is meant to replicate the normalization technique called quantitative sequencing. This technique combines quantitative data from QPCR with sequence count distributions to normalize the sequence counts in each sample by the relative total sequence counts of that sample compared to other samples. This should more closely approximate the behavior of the sampled community than relative abundance. To do this though, we need to decide what the mean value for the sample-wise abundance normalization. We could make several versions of the QSeq function to test what is the optimal mean sample-wise total abundance. To do this we change the value parameter as follows:
+Notice that this is actually one function nested within another. The wrapper helps the function to play nice with Model.Microbiome. It's easy to replicate wrappers to provide the underlying function with different inputs if we want to test the different potential conditions. The wrapper takes the un-normalized count table as input, extracts the information needed to implement the normalization function, then applies the normalization function. The normalization function should return a phyloseq object. For example, our QSeq function is meant to replicate the normalization technique called quantitative sequencing. This technique combines quantitative data from QPCR with sequence count distributions to normalize the sequence counts in each sample by the relative total sequence counts of that sample compared to other samples. To do this though, we need to decide what the mean value for the sample-wise abundance normalization. We could make several versions of the QSeq function to test what is the optimal mean sample-wise total abundance relative to the sampling depth. To do this we change the value parameter as follows:
 
-```{r}
+```{r, message=FALSE,results='hide',fig.keep='all'}
 QSeq0.5<-function(ps){
     scale<-sample_data(ps)$DensityF
     out<-make.scaled2(ps, val=0.5*mean(sample_sums(ps)), scale)
@@ -177,12 +188,12 @@ method<-c("QSeq0.5", "QSeq1", "QSeq2", "QSeq3", "QSeq10", "QSeq100")
 
 Then we implement it in the analysis pipeline:
 
-```{r}
+```{r, message=FALSE,results='hide',fig.keep='all'}
 model<-suppressWarnings(run.analysis2(commonN=30, groupN=20, singleN=5, D=500, V=250, method))
 ```
 
 We can call the phyloseq object from any one of the normalization (including the reference data and the raw sequence counts):
-```{r}
+```{r, message=FALSE,results='hide',fig.keep='all'}
 model$model$comm
 model$raw$comm
 model$QSeq0.5$comm
@@ -242,9 +253,9 @@ lmRatiotab or lmRatiotabl.model values that are close to 1 represent near perfec
 
 There are also metrics that reflect beta diversity. The R-Squared value for a PERMANOVA analysis of the experimental conditions, and environmental parameters against a Bray-Curtis transformed count table are used to calculate a R-Ration between the reference community and the treatment communities. Also, modularity is calculated based on a correlation matrix using a number of different construction methods. These methods will be addressed in more detail later.
 
-#Object Map:
-
-![Alt text]("~/Desktop/PhD/RarefactionProject/Output_Map.pdf")
+```{r Object-Map, echo = FALSE, message=FALSE}
+knitr::include_graphics("/Users/maullabmacbookpro/Documents/GitHub/Model.Microbiome/Output_Map.jpg")
+```
 
 The speciesMeta object stores a few taxon-specific metrics that help us interpret the outcomes;
 
@@ -421,7 +432,7 @@ NOTE: because occasionally a = 0, resulting in an undefined result we have chose
 Thus we are extracting the variance of all ratios for each normalization method; and the median ratio of all normalization methods
 ```{r}
 
-model$raw$taxCor.Ratio
+head(model$raw$taxCor.Ratio)
 
 ```
 Negative values indicate a negative relationship between the relationship among taxa in the reference compared to the treatment. Ideally all relationships should be 1 if the information is perfectly preserved. We can subset the dataset by specific taxa, and use metadata about those taxa to better understand why the relationships change. If we look at taxon 153, we see that it exists in 22 sites. We can look at how the prevalence and abundance of other taxa relate to the predicted relationship between the taxa. First let's identify low prevalence and high prevalence taxa.
@@ -600,7 +611,7 @@ The following examples are an actual experiment run to identify biases associate
 
 # Exp. 1: Normalization vs Structure
 Let's say that we want to understand how the effect size of geographic structure within a community interacts with the performance of our normalization technique (or in the case of experimental design, what are the direct assemply effects of the treatment). Model.Microbiome gives us the power to vary the geographic structure/direct effects of the treatment on the community by determining the proportion of each sample that explicitly is determined by the grouping function:
-```{r}
+```{r, message=FALSE,results='hide',fig.keep='all',warning = FALSE}
 
 # biogeography begin ####
 model10.A<-suppressWarnings(BENCHMARK.MM(reps=10, commonN=53, groupN=1, singleN=1, D=500, V=250, method)) # essentially no filtration by group
@@ -613,7 +624,7 @@ model10.D<-suppressWarnings(BENCHMARK.MM(reps=10, commonN=10, groupN=30, singleN
 ```
 
 First, let's look at how the structure of the data might interact with our normalization strategy to influence how well information is retained. For this we will extract the LII value. As a reminder, LII correlates each taxon in the normalized dataset against it's abundance in the reference dataset. The index itself is a sum of 1-R-squared; this means that low LII values mean that overall the R-squared of the taxa against their references were close to 1 (or little information was lost). Conversely, higher values indicate that a lot of information was lost.
-```{r}
+```{r, message=FALSE,results='hide',fig.keep='all'}
 
 # get LII Biogeography ####
 method2<- c("raw", method) # add raw data to the methods list to extract it too
@@ -660,7 +671,7 @@ ggplot(model10Levels.summary1, aes(x=Level, y=value, group = variable, color=var
   theme_classic()
 ```
 Here we can see clearly that the degree of structure in the dataset interacts with the normalization method to affect it's accuracy. In general, less information is lost in QSeq methods, with the clear distinction being that QSeq0.5 performs worse than non normalizing under certain conditions. We can confirm this with a statistical test:
-```{r}
+```{r, message=FALSE,results='hide',fig.keep='all'}
 summary(aov(model10Levels$value~model10Levels$Level*model10Levels$variable))
 
 TukeyHSD(aov(model10Levels$value~model10Levels$Level*model10Levels$variable))
@@ -669,7 +680,7 @@ Conclusion: we can see clearly that the degree of structure in the dataset inter
 
 In this case interpretation is a little more challenging, because we are less interested in the mean value, and more interested in the variance of the values. This is because our metric is a ratio of the R-squared (variance explained) of each taxon by the environment to the same measure of the taxon in the reference dataset. This tells us the relative accuracy with which the normalized dataset is predicting the relationship of each taxon to the environment. Ideally the mean value should be 1 (a perfect fit). But it is possible for the mean to be 1, but the deviation to be substantial if it is balanced in the positive and negative direction. In other words, if the error in the positive and negative direction are equal in size, then even if there is large error in those directions, the mean value will still be 1 (a perfect fit). Thus we might have a perfect fit of the mean, yet have no taxa that is accurately modeled. To account for this, we put larger emphasis on the variance using a levene's test of equality of variance; but because variances may not be equally balanced in the positive and negative direction we are also still interested in changes in the average value. The two are necessary for accurate interpretation. We find especially for this analysis that outliers unduely affect the mean, so we prefer median for understanding the most common effect
 
-```{r}
+```{r, message=FALSE,results='hide',fig.keep='all'}
 
 Summarize.lmRatiotab.Var(model10.A, method2)
 
@@ -1222,7 +1233,7 @@ leveneTest(permanova.model10Levels.env5$value~permanova.model10Levels.env5$varia
 ```
 # Expt 2: Normalization vs Sequencing Depth
 Let's say we want to know the effect of undersampling interacts with our normalization protocol to affect our ability to detect relationships between taxa and the environment. We can vary the sequencing depth:
-```{r}
+```{r, message=FALSE,results='hide',fig.keep='all',warning = FALSE}
 
 # make sequencing depth ####
 #method<-c("QSeq0.5", "QSeq1", "QSeq2", "QSeq3", "QSeq10")
@@ -1780,7 +1791,7 @@ leveneTest(permanova.model10CLevels.env5$value~permanova.model10CLevels.env5$var
 # Expt 3: Normalization vs Sequencing Variance
 
 By now you shuld be able to interpret the results; so I won't explain everything (they are very consistent across experiments)
-```{r}
+```{r, message=FALSE,results='hide',fig.keep='all',warning = FALSE}
 # sequencing variance ####
 model10.C1V1<-BENCHMARK.MM(reps=10, commonN=20, groupN=20, singleN=15, D=500, V=50, method)
 
@@ -2342,9 +2353,9 @@ Conclusions:
 # Network Analysis
 Model.Microbiome constructs networks and network plots using two heuristics for creating the network thresholds. It also includes some functions to simplify accessing the network statistics that have been calculated, and plots that are generated. These are illustrated in the example below. These networks are built using two alternative approaches. Whenever we build a network, we need to establish a threshold to determine what relationships we consider significant to include. Our two methods include one that is a static threshold value, set at a correlation coefficient of 0.8; the other is a dynamic threshold heuristic that identifies the maximum threshold value that results in a network with 250 edges. The reason we include the secon method is because the network statistics for two graphs with different number of edges are in principle not comparable. However, we have found that in ecological settings that while the metrics we use might change, the overall interpretation of each plot does not. We also find that similar to other measures of beta diversity (here interpreted as changing species associations across sites), that statistics derived from the network are sensitive to network construction method, but are robust to normalization methods of the community. Let's take a look an an example using the community structure example from earlier in the tutorial:
 
-```{r}
+```{r, message=FALSE,fig.keep='all'}
 
-method3<-c("model", "raw", "QSeq0.5", "QSeq10")
+method3<-c("model", "raw", "QSeq0.5", "QSeq10", "QSeq100")
 
 plotstats.A<-getNetStats(model10.A, method3) # get statistics
 
@@ -2357,7 +2368,7 @@ A close look at the module table suggests that the characteristics of the un-nor
 plotstats.A$D.Threshold.table # table of threshold values for dynamic threshold
 ```
 As before the QSeq methods do not provide an improvement over the raw dataset. We can use this method to look at differences in internal structure. The pattern is the same:
-```{r}
+```{r, message=FALSE,fig.keep='all'}
 plotstats.B<-getNetStats(model10.B, method3) # get statistics
 
 plotstats.B$D.module.table # modularity value table for dynamic threshold
@@ -2397,6 +2408,7 @@ Some figures from the data for the paper:
 # Figure 4
 In each experiment, LII
 ```{r}
+
 ggplot(model10Levels.summary1[model10Levels.summary1$variable == "raw"|
                                 model10Levels.summary1$variable == "QSeq0.5"|
                                 model10Levels.summary1$variable == "QSeq2"|
@@ -2409,8 +2421,7 @@ ggplot(model10Levels.summary1[model10Levels.summary1$variable == "raw"|
   xlab("Degree of Structure")+
   ylab("LII Value (Mean +/- standard dev)")+
   theme_classic()
-```
-```{r}
+
 #model10.SeqLevels.summary2
 ggplot(model10.SeqLevels.summary[model10.SeqLevels.summary$variable == "raw"|model10.SeqLevels.summary$variable == "QSeq0.5"|model10.SeqLevels.summary$variable == "QSeq2"|model10.SeqLevels.summary$variable == "QSeq100",], aes(x=Level, y=value, group = variable, color=variable, size=1))+
   geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=100, position=position_dodge(70), size=1) +
@@ -2418,12 +2429,9 @@ ggplot(model10.SeqLevels.summary[model10.SeqLevels.summary$variable == "raw"|mod
   scale_colour_grey()+
   geom_line(position=position_dodge(70), size=1, aes(linetype=variable))+
   geom_point(position=position_dodge(70), size=1)+
-  xlab("Degree of Structure")+
+  xlab("Sampling Depth")+
   ylab("LII Value (Mean +/- standard dev)")+
   theme_classic()
-```
-
-```{r}
 ggplot(model10.SeqVarLevels.summary[model10.SeqVarLevels.summary$variable == "raw"|
                                        model10.SeqVarLevels.summary$variable == "QSeq0.5"|
                                        model10.SeqVarLevels.summary$variable == "QSeq2"|
@@ -2436,6 +2444,7 @@ ggplot(model10.SeqVarLevels.summary[model10.SeqVarLevels.summary$variable == "ra
   xlab("Relative Variance (variance / mean)")+
   ylab("LII Value (Mean +/- standard dev)")+
   theme_classic()
+
 ```
 # Figure 3: rank abundance curve
 ```{r}
@@ -2511,7 +2520,7 @@ ggplot(permanova.model10CVLevels.env3P[permanova.model10CVLevels.env3P$variable=
   geom_point(position=position_dodge(.08), size=1)+
   xlab("Relative Variance (variance / mean)")+
   ylab("PERMANOVA R-Squared Value (Mean +/- standard dev)")+
-  ggtitle("Environmental Factor 2")+
+  ggtitle("Environmental Factor 3")+
   theme_classic()
 ```
 ```{r}
@@ -2527,7 +2536,7 @@ ggplot(permanova.model10CVLevels.env4P[permanova.model10CVLevels.env4P$variable=
   geom_point(position=position_dodge(.08), size=1)+
   xlab("Relative Variance (variance / mean)")+
   ylab("PERMANOVA R-Squared Value (Mean +/- standard dev)")+
-  ggtitle("Environmental Factor 2")+
+  ggtitle("Environmental Factor 4")+
   theme_classic()
 ```
 ```{r}
@@ -2543,7 +2552,7 @@ ggplot(permanova.model10CVLevels.env5P[permanova.model10CVLevels.env5P$variable=
   geom_point(position=position_dodge(.08), size=1)+
   xlab("Relative Variance (variance / mean)")+
   ylab("PERMANOVA R-Squared Value (Mean +/- standard dev)")+
-  ggtitle("Environmental Factor 2")+
+  ggtitle("Environmental Factor 5")+
   theme_classic()
 ```
 # Figure 5
@@ -2583,7 +2592,98 @@ ggplot(SV.lmRatio.model10MCV.p[SV.lmRatio.model10MCV.p$variable=="raw" |
 
 ```
 
+```{r}
+#devtools::install_github("ricardo-bion/ggradar", dependencies=TRUE)
+#library(ggradar)
 
+# table of output summary
+
+#PERMANOVA.Model
+#PERMANOVA.F1
+#PERMANOVA.F2
+#PERMANOVA.F3
+#PERMANOVA.F4
+#PERMANOVA.F5
+
+#lmRatio.model(mean)
+#lmRatio.model(var)
+#lmRatio.env(mean)
+#lmRatio.env(var)
+
+#taxRatio
+
+#LII.R
+#LII
+
+#getRadar<-function(x, method){
+#  Summarize.LII(x, method)
+#  
+#}
+#Summarize.LII(model10.A, method2)
+##Summarize.PERMANOVA.Rratio(model10.A, method2, "CategoryRratio")
+#Summarize.PERMANOVA.Rratio(model10.A, method2, "F1Rratio")
+#Summarize.PERMANOVA.Rratio(model10.A, method2, "F2Rratio")
+#Summarize.PERMANOVA.Rratio(model10.A, method2, "F3Rratio")
+#Summarize.PERMANOVA.Rratio(model10.A, method2, "F4Rratio")
+#Summarize.PERMANOVA.Rratio(model10.A, method2, "F5Rratio")
+
+#Summarize.lmRatiotabModel.Median(model10.A, method2)
+#Summarize.lmRatiotabModel.Var(model10.A, method2)
+#Summarize.lmRatiotab.Median(model10.A, method2)
+#Summarize.lmRatiotab.Var(model10.A, method2)
+
+#getTaxCor.Tab(model10.A, method2)
+
+#Summarize.LII(model10.A, method2)
+
+#dtest<-rbind(as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "CategoryRratio")), as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "F1Rratio")), as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "F2Rratio")), as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "F3Rratio")), as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "F4Rratio")), as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "F5Rratio")), as.data.frame(Summarize.lmRatiotabModel.Median(model10.A, method2)), as.data.frame(Summarize.lmRatiotabModel.Var(model10.A, method2)), as.data.frame(Summarize.lmRatiotab.Median(model10.A, method2)), as.data.frame(Summarize.lmRatiotab.Var(model10.A, method2)),
+#             1-as.data.frame(Summarize.LII(model10.A, method2))) #as.data.frame(getTaxCor.Tab(model10.A, method2)$V.tax), 
+#as.data.frame(getTaxCor.Tab(model10.A, method2)$Median.tax),
+
+#dtest<-data.frame("cat"=c(rep("PERMANOVA.Cat", 10),
+#                          rep("PERMANOVA.F1", 10),
+#                          rep("PERMANOVA.F2", 10),
+#                          rep("PERMANOVA.F3", 10),
+#                          rep("PERMANOVA.F4", 10),
+#                          rep("PERMANOVA.F5", 10), 
+ #                         rep("lm.model.median", 10), 
+ #                         rep("lm.model.var", 10), 
+ #                         rep("lm.median", 10), 
+#                          rep("lm.var", 10), 
+#                          #rep("Taxcor.Var", 10),
+#                          #rep("taxcor.median", 10), 
+#                          rep("LII", 10)),
+#                  dtest)
+#dsum<-ddply(dtest, "cat", summarise,
+ #     raw=mean(raw),
+ #     QSeq0.5=mean(QSeq0.5),
+ #     QSeq1=mean(QSeq1),
+  #    QSeq2=mean(QSeq2),
+ #     QSeq3=mean(QSeq3),
+  #    QSeq10=mean(QSeq10),
+ #     QSeq100=mean(QSeq100)
+ #     )
+
+#library(tibble)
+#dsum%>%mutate_at(vars(-cat),funs(scales::rescale))->test
+#test<-as.data.frame(test)
+#test<-
+#ggradar(test)
+
+#t(test)
+#ds2<-melt(dtest)
+#ds3<-melt(dsum)
+#rownames(dsum)<-dsum$cat
+#dsum<-dsum[,-1]
+#library(fmsb)
+#dsum<-as.data.frame(t(dsum))
+#radarchart(ds2, vlcex=0.5, pcol=c("gray8", "gray35","gray48","gray65","gray70","gray87","khaki4"))
+#plot(dsum)
+#library(ggiraphExtra)
+#ggRadar(ds3, aes(x=cat, y=value, group=cat))+facet_wrap(~variable)
+
+
+```
 
 We have found that sometimes in the reference there are substantive differences in the network between static and dynamic network construction; but that in subsampled data these differences are reduced. There is considerable variation in outcomes; and it raises a question of what characteristics of reference datasets lead to different outcomes when we apply the two network building methods. This is not a question we will try to answer here.
 
