@@ -4,7 +4,7 @@
 \alias{Delta.sppcount}
 \title{standardizes the taxon abundance by taking counts relative to mean abundance of that taxon}
 \usage{
-Delta.sppcount(ps, ref, method = 0)
+Delta.sppcount(ps, ref, method = 0e+00)
 }
 \arguments{
 \item{ps}{phyloseq object with community to be normalized}

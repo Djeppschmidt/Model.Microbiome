@@ -4,7 +4,7 @@
 \alias{ConnStat}
 \title{generate network analysis and network stats}
 \usage{
-ConnStat(ps, num = 250)
+ConnStat(ps, num = 2.5e+02)
 }
 \arguments{
 \item{ps}{phyloseq object}

@@ -1068,12 +1068,12 @@ getNetStats<-function(x, method){
 #' @keywords network statistics analysis plot
 #' @export
 #' @examples
-#' Summarize.lmRatiotabModel.Median()
-Summarize.lmRatiotabModel.Median<-function(x, method){
+#' Summarize.lmRatiotabModel.Mean()
+Summarize.lmRatiotabModel.Mean<-function(x, method){
   Ftab<-matrix(NA, nrow = length(x), ncol = length(method)) # make matrix
   for(i in 1:length(x)){
     for(j in 1:length(method)){
-      Ftab[i,j]<-median(x[[i]][[method[j]]]$lmRatiotab.model, na.rm=T)
+      Ftab[i,j]<-mean(x[[i]][[method[j]]]$lmRatiotab.model, na.rm=T)
     #print(sum(trt[[i]][j]$PERMANOVA$aov.tab$F.Model))
   }
 }
@@ -1108,12 +1108,12 @@ Summarize.lmRatiotabModel.Var<-function(x, method){
 #' @keywords network statistics analysis plot
 #' @export
 #' @examples
-#' Summarize.lmRatiotabModel.Median()
-Summarize.lmRatiotab.Median<-function(x, method){
+#' Summarize.lmRatiotabModel.Mean()
+Summarize.lmRatiotab.Mean<-function(x, method){
   Ftab<-matrix(NA, nrow = length(x), ncol = length(method)) # make matrix
   for(i in 1:length(x)){
     for(j in 1:length(method)){
-      Ftab[i,j]<-median(x[[i]][[method[j]]]$lmRatiotab, na.rm=T)
+      Ftab[i,j]<-mean(x[[i]][[method[j]]]$lmRatiotab, na.rm=T)
     #print(sum(trt[[i]][j]$PERMANOVA$aov.tab$F.Model))
   }
 }

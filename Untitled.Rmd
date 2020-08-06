@@ -3,8 +3,7 @@ title: "M.M. Quick Tutorial"
 author: "Dietrich Epp Schmidt"
 date: "8/1/2020"
 output:
-  html_document: 
-    default
+  html_document:
     toc: true
     toc_depth: 2
   pdf_document: default
@@ -34,7 +33,7 @@ First, let's install Model.Microbiome:
 devtools::install_github("djeppschmidt/Model.Microbiome")
 ```
 Now load all the other packages we need (or download and load if you haven't already):
-```{r, results="hide",warning = FALSE}
+```{r, results="hide",warning = FALSE, message=FALSE,results='hide'}
 # load required packages ####
 
 library(Model.Microbiome)
@@ -53,6 +52,7 @@ library(stats)
 library(igraph)
 library(car)
 library(DESeq2)
+library(kableExtra)
 ```
 
 
@@ -579,7 +579,7 @@ model10.PF5
 NOTE: In general, there are many outputs that a researcher may want to generate and summarize that we have not anticipated. Here are some functions for extracting the R-ratio from the linear models to give a template on the extraction method that works well with the object. This should give a means for researchers to extract and summarize any metric in any way they want. We will use both of these functions later in the analysis.
 ```{r}
 # get lmRatio ####
-Summarize.lmRatiotab.Median<-function(trt, method){
+Summarize.lmRatiotab.Mean<-function(trt, method){
   Ftab<-matrix(NA, nrow = length(trt), ncol = length(method)) # make matrix
   for(i in 1:length(trt)){
     for(j in 1:length(method)){
@@ -671,28 +671,28 @@ ggplot(model10Levels.summary1, aes(x=Level, y=value, group = variable, color=var
   theme_classic()
 ```
 Here we can see clearly that the degree of structure in the dataset interacts with the normalization method to affect it's accuracy. In general, less information is lost in QSeq methods, with the clear distinction being that QSeq0.5 performs worse than non normalizing under certain conditions. We can confirm this with a statistical test:
-```{r, message=FALSE,results='hide',fig.keep='all'}
-summary(aov(model10Levels$value~model10Levels$Level*model10Levels$variable))
-
+```{r, message=FALSE,fig.keep='all', warning=FALSE}
+Sparsity.LII<-summary(aov(model10Levels$value~model10Levels$Level*model10Levels$variable))
+Sparsity.LII
 TukeyHSD(aov(model10Levels$value~model10Levels$Level*model10Levels$variable))
 ```
 Conclusion: we can see clearly that the degree of structure in the dataset interacts with the normalization method to affect how much information is retained on a taxon-by-taxon basis. In all cases the QSeq normalization method out performs un-normalized data at low structure, but at high levels of structure only QSeq2 and QSeq3 parameters continue to consistently outperform the raw variables. Remember that LII reports the degradation of R squared and so is a direct measure of lost information. But it doesn't provide direct information about how well we can detect environmental drivers for the abundance of taxa.
 
 In this case interpretation is a little more challenging, because we are less interested in the mean value, and more interested in the variance of the values. This is because our metric is a ratio of the R-squared (variance explained) of each taxon by the environment to the same measure of the taxon in the reference dataset. This tells us the relative accuracy with which the normalized dataset is predicting the relationship of each taxon to the environment. Ideally the mean value should be 1 (a perfect fit). But it is possible for the mean to be 1, but the deviation to be substantial if it is balanced in the positive and negative direction. In other words, if the error in the positive and negative direction are equal in size, then even if there is large error in those directions, the mean value will still be 1 (a perfect fit). Thus we might have a perfect fit of the mean, yet have no taxa that is accurately modeled. To account for this, we put larger emphasis on the variance using a levene's test of equality of variance; but because variances may not be equally balanced in the positive and negative direction we are also still interested in changes in the average value. The two are necessary for accurate interpretation. We find especially for this analysis that outliers unduely affect the mean, so we prefer median for understanding the most common effect
 
-```{r, message=FALSE,results='hide',fig.keep='all'}
+```{r, message=FALSE,fig.keep='all'}
 
 Summarize.lmRatiotab.Var(model10.A, method2)
 
 
 
-SM.lmRatio.model10.A<-as.data.frame(Summarize.lmRatiotab.Median(model10.A,method2))
+SM.lmRatio.model10.A<-as.data.frame(Summarize.lmRatiotab.Mean(model10.A,method2))
 SV.lmRatio.model10.A<-as.data.frame(Summarize.lmRatiotab.Var(model10.A,method2))
-SM.lmRatio.model10.B<-as.data.frame(Summarize.lmRatiotab.Median(model10.B,method2))
+SM.lmRatio.model10.B<-as.data.frame(Summarize.lmRatiotab.Mean(model10.B,method2))
 SV.lmRatio.model10.B<-as.data.frame(Summarize.lmRatiotab.Var(model10.B,method2))
-SM.lmRatio.model10.C<-as.data.frame(Summarize.lmRatiotab.Median(model10.C,method2))
+SM.lmRatio.model10.C<-as.data.frame(Summarize.lmRatiotab.Mean(model10.C,method2))
 SV.lmRatio.model10.C<-as.data.frame(Summarize.lmRatiotab.Var(model10.C,method2))
-SM.lmRatio.model10.D<-as.data.frame(Summarize.lmRatiotab.Median(model10.D,method2))
+SM.lmRatio.model10.D<-as.data.frame(Summarize.lmRatiotab.Mean(model10.D,method2))
 SV.lmRatio.model10.D<-as.data.frame(Summarize.lmRatiotab.Var(model10.D,method2))
 
 # prepare data for merging datasets
@@ -765,12 +765,14 @@ ggplot(SV.lmRatio.model10.p2, aes(x=Level, y=log(value), group = variable, color
 
 ```
 ... and run statistics to see the effect:
-```{r}
-summary(aov(SM.lmRatio.model10Levels$value~SM.lmRatio.model10Levels$Level*SM.lmRatio.model10Levels$variable))
+```{r, warning=FALSE}
+Sparsity.lmEnvM<-summary(aov(SM.lmRatio.model10Levels$value~SM.lmRatio.model10Levels$Level*SM.lmRatio.model10Levels$variable))
+Sparsity.lmEnvM
 
 TukeyHSD(aov(SM.lmRatio.model10Levels$value~SM.lmRatio.model10Levels$Level*SM.lmRatio.model10Levels$variable))
 
-summary(aov(SV.lmRatio.model10Levels$value~SV.lmRatio.model10Levels$Level*SV.lmRatio.model10Levels$variable))
+Sparsity.lmEnvV<-summary(aov(SV.lmRatio.model10Levels$value~SV.lmRatio.model10Levels$Level*SV.lmRatio.model10Levels$variable))
+Sparsity.lmEnvV
 
 TukeyHSD(aov(SV.lmRatio.model10Levels$value~SV.lmRatio.model10Levels$Level*SV.lmRatio.model10Levels$variable))
 
@@ -781,7 +783,7 @@ Conclusion: there is an interaction between the normalization method and the int
 What about our ability to detect the experimental design? Following the same methodology:
 
 ```{r}  
-Summarize.lmRatiotabModel.Median<-function(trt, method){
+Summarize.lmRatiotabModel.Mean<-function(trt, method){
   Ftab<-matrix(NA, nrow = length(trt), ncol = length(method)) # make matrix
   for(i in 1:length(trt)){
     for(j in 1:length(method)){
@@ -808,13 +810,13 @@ Summarize.lmRatiotabModel.Var<-function(trt, method){
 }
 
 
-SM.lmRatioM.model10.A<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.A,method2))
+SM.lmRatioM.model10.A<-as.data.frame(Summarize.lmRatiotabModel.Mean(model10.A,method2))
 SV.lmRatioM.model10.A<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.A,method2))
-SM.lmRatioM.model10.B<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.B,method2))
+SM.lmRatioM.model10.B<-as.data.frame(Summarize.lmRatiotabModel.Mean(model10.B,method2))
 SV.lmRatioM.model10.B<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.B,method2))
-SM.lmRatioM.model10.C<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C,method2))
+SM.lmRatioM.model10.C<-as.data.frame(Summarize.lmRatiotabModel.Mean(model10.C,method2))
 SV.lmRatioM.model10.C<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C,method2))
-SM.lmRatioM.model10.D<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.D,method2))
+SM.lmRatioM.model10.D<-as.data.frame(Summarize.lmRatiotabModel.Mean(model10.D,method2))
 SV.lmRatioM.model10.D<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.D,method2))
 
 # prepare data for merging datasets
@@ -891,11 +893,13 @@ ggplot(SV.lmRatioM.model10.p2, aes(x=Level, y=log(value), group = variable, colo
 And again we do the stats:
 
 ```{r}
-summary(aov(SM.lmRatioM.model10Levels$value~SM.lmRatioM.model10Levels$Level*SM.lmRatioM.model10Levels$variable))
+Sparsity.lmModelM<-summary(aov(SM.lmRatioM.model10Levels$value~SM.lmRatioM.model10Levels$Level*SM.lmRatioM.model10Levels$variable))
+Sparsity.lmModelM
 
-TukeyHSD(aov(SM.lmRatioM.model10Levels$value~SM.lmRatioM.model10Levels$variable)) # something wrong here?
+TukeyHSD(aov(SM.lmRatioM.model10Levels$value~SM.lmRatioM.model10Levels$variable)) 
 
-summary(aov(SV.lmRatioM.model10Levels$value~SV.lmRatioM.model10Levels$Level*SV.lmRatioM.model10Levels$variable))
+Sparsity.lmModelV<-summary(aov(SV.lmRatioM.model10Levels$value~SV.lmRatioM.model10Levels$Level*SV.lmRatioM.model10Levels$variable))
+Sparsity.lmModelV
 
 TukeyHSD(aov(SV.lmRatioM.model10Levels$value~SV.lmRatioM.model10Levels$Level*SV.lmRatioM.model10Levels$variable))
 
@@ -994,11 +998,13 @@ Note: In general, the results of this portion of the simulation show that QSeq0.
 Generally variance should approach zero, and the mean should approach 1. The greater the deviation of the variance from zero (and the greater the range in variance values), the less accuracy on a taxon-by-taxon basis in estimating relationships among taxa. The farther the mean deviates from 1, the greater the systemic bias (over or underestimation) of the strength of the relationship. Let's check the stats:
 
 ```{r}
-summary(aov(M.TaxRatio.model10Levels$value~M.TaxRatio.model10Levels$Level*M.TaxRatio.model10Levels$Var2))
+Sparsity.TaxM<-summary(aov(M.TaxRatio.model10Levels$value~M.TaxRatio.model10Levels$Level*M.TaxRatio.model10Levels$Var2))
+Sparsity.TaxM
 
 TukeyHSD(aov(M.TaxRatio.model10Levels$value~M.TaxRatio.model10Levels$Var2))
 
-summary(aov(V.TaxRatio.model10Levels$value~V.TaxRatio.model10Levels$Level*V.TaxRatio.model10Levels$Var2))
+Sparsity.TaxV<-summary(aov(V.TaxRatio.model10Levels$value~V.TaxRatio.model10Levels$Level*V.TaxRatio.model10Levels$Var2))
+Sparsity.TaxV
 
 TukeyHSD(aov(V.TaxRatio.model10Levels$value~V.TaxRatio.model10Levels$Level*V.TaxRatio.model10Levels$Var2))
 
@@ -1217,12 +1223,19 @@ PERMANOVA results are very consistent: the statistical model is typically captur
 Statistics:
 ```{r}
 
-summary(aov(permanova.model10Levels.model$value~permanova.model10Levels.model$Level*permanova.model10Levels.model$variable))
-summary(aov(permanova.model10Levels.env1$value~permanova.model10Levels.env1$Level*permanova.model10Levels.env1$variable))
-summary(aov(permanova.model10Levels.env2$value~permanova.model10Levels.env2$Level*permanova.model10Levels.env2$variable))
-summary(aov(permanova.model10Levels.env3$value~permanova.model10Levels.env3$Level*permanova.model10Levels.env3$variable))
-summary(aov(permanova.model10Levels.env4$value~permanova.model10Levels.env4$Level*permanova.model10Levels.env4$variable))
-summary(aov(permanova.model10Levels.env5$value~permanova.model10Levels.env5$Level*permanova.model10Levels.env5$variable))
+Sparsity.PM<-summary(aov(permanova.model10Levels.model$value~permanova.model10Levels.model$Level*permanova.model10Levels.model$variable))
+Sparsity.PF1<-summary(aov(permanova.model10Levels.env1$value~permanova.model10Levels.env1$Level*permanova.model10Levels.env1$variable))
+Sparsity.PF2<-summary(aov(permanova.model10Levels.env2$value~permanova.model10Levels.env2$Level*permanova.model10Levels.env2$variable))
+Sparsity.PF3<-summary(aov(permanova.model10Levels.env3$value~permanova.model10Levels.env3$Level*permanova.model10Levels.env3$variable))
+Sparsity.PF4<-summary(aov(permanova.model10Levels.env4$value~permanova.model10Levels.env4$Level*permanova.model10Levels.env4$variable))
+Sparsity.PF5<-summary(aov(permanova.model10Levels.env5$value~permanova.model10Levels.env5$Level*permanova.model10Levels.env5$variable))
+
+Sparsity.PM
+Sparsity.PF1
+Sparsity.PF2
+Sparsity.PF3
+Sparsity.PF4
+Sparsity.PF5
 
 leveneTest(permanova.model10Levels.model$value~permanova.model10Levels.model$variable)
 leveneTest(permanova.model10Levels.env1$value~permanova.model10Levels.env1$variable)
@@ -1294,20 +1307,26 @@ ggplot(model10.SeqLevels.summary2, aes(x=Level, y=value, group = variable, color
   theme_classic()
 ```
 These results are consistent with our previous experiment, where QSeq2-100 lose the least information; QSeq0.5 generally performs the worst, and un-normalized data only loses more information than QSeq0.5 and under certain conditions QSeq1. All methods perform best at highest sequencing depth.
+```{r, message=FALSE,fig.keep='all', warning=FALSE}
+Depth.LII<-summary(aov(model10.SeqLevels$value~model10.SeqLevels$Level*model10.SeqLevels$variable))
+Depth.LII
+TukeyHSD(aov(model10.SeqLevels$value~model10.SeqLevels$Level*model10.SeqLevels$variable))
+```
+
 
 Now let's look at how well the environmental gradients predicts taxon abundance:
 ```{r}
 
 # sequencing depth env. lm ratio ####
-SM.lmRatio.model10.C1<-as.data.frame(Summarize.lmRatiotab.Median(model10.C1,method2))
+SM.lmRatio.model10.C1<-as.data.frame(Summarize.lmRatiotab.Mean(model10.C1,method2))
 SV.lmRatio.model10.C1<-as.data.frame(Summarize.lmRatiotab.Var(model10.C1,method2))
-SM.lmRatio.model10.C2<-as.data.frame(Summarize.lmRatiotab.Median(model10.C2,method2))
+SM.lmRatio.model10.C2<-as.data.frame(Summarize.lmRatiotab.Mean(model10.C2,method2))
 SV.lmRatio.model10.C2<-as.data.frame(Summarize.lmRatiotab.Var(model10.C2,method2))
-SM.lmRatio.model10.C3<-as.data.frame(Summarize.lmRatiotab.Median(model10.C3,method2))
+SM.lmRatio.model10.C3<-as.data.frame(Summarize.lmRatiotab.Mean(model10.C3,method2))
 SV.lmRatio.model10.C3<-as.data.frame(Summarize.lmRatiotab.Var(model10.C3,method2))
-SM.lmRatio.model10.C4<-as.data.frame(Summarize.lmRatiotab.Median(model10.C4,method2))
+SM.lmRatio.model10.C4<-as.data.frame(Summarize.lmRatiotab.Mean(model10.C4,method2))
 SV.lmRatio.model10.C4<-as.data.frame(Summarize.lmRatiotab.Var(model10.C4,method2))
-SM.lmRatio.model10.C5<-as.data.frame(Summarize.lmRatiotab.Median(model10.C5,method2))
+SM.lmRatio.model10.C5<-as.data.frame(Summarize.lmRatiotab.Mean(model10.C5,method2))
 SV.lmRatio.model10.C5<-as.data.frame(Summarize.lmRatiotab.Var(model10.C5,method2))
 # prepare data for merging datasets
 
@@ -1384,11 +1403,12 @@ ggplot(SV.lmRatio.model10C.p2, aes(x=Level, y=value, group = variable, color=var
 ```
 Typcially QSeq0.5 performs poorly, while other methods are essentially comparable. Often at low sequencing depth, un-normalized data has a performance that is somewhere between the QSeq1 and QSeq0.5 data. In some runs of the simulation it is a significant effect, in others it is not.
 ```{r}
-summary(aov(SM.lmRatio.model10.CLevels$value~SM.lmRatio.model10.CLevels$Level*SM.lmRatio.model10.CLevels$variable))
-
+Depth.lmEnvM<-summary(aov(SM.lmRatio.model10.CLevels$value~SM.lmRatio.model10.CLevels$Level*SM.lmRatio.model10.CLevels$variable))
+Depth.lmEnvM
 TukeyHSD(aov(SM.lmRatio.model10.CLevels$value~SM.lmRatio.model10.CLevels$Level*SM.lmRatio.model10.CLevels$variable))
 
-summary(aov(SV.lmRatio.model10.CLevels$value~SV.lmRatio.model10.CLevels$Level*SV.lmRatio.model10.CLevels$variable))
+Depth.lmEnvV<-summary(aov(SV.lmRatio.model10.CLevels$value~SV.lmRatio.model10.CLevels$Level*SV.lmRatio.model10.CLevels$variable))
+Depth.lmEnvV
 
 TukeyHSD(aov(SV.lmRatio.model10.CLevels$value~SV.lmRatio.model10.CLevels$Level*SV.lmRatio.model10.CLevels$variable))
 
@@ -1398,15 +1418,15 @@ leveneTest(value~as.factor(Level)*variable, data=SV.lmRatio.model10.CLevels)
 And same steps but for the categorical variables:
 ```{r}
 # lm ratio model sequencing depth ####
-SM.lmRatioM.model10.C1<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C1,method2))
+SM.lmRatioM.model10.C1<-as.data.frame(Summarize.lmRatiotabModel.Mean(model10.C1,method2))
 SV.lmRatioM.model10.C1<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C1,method2))
-SM.lmRatioM.model10.C2<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C2,method2))
+SM.lmRatioM.model10.C2<-as.data.frame(Summarize.lmRatiotabModel.Mean(model10.C2,method2))
 SV.lmRatioM.model10.C2<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C2,method2))
-SM.lmRatioM.model10.C3<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C3,method2))
+SM.lmRatioM.model10.C3<-as.data.frame(Summarize.lmRatiotabModel.Mean(model10.C3,method2))
 SV.lmRatioM.model10.C3<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C3,method2))
-SM.lmRatioM.model10.C4<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C4,method2))
+SM.lmRatioM.model10.C4<-as.data.frame(Summarize.lmRatiotabModel.Mean(model10.C4,method2))
 SV.lmRatioM.model10.C4<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C4,method2))
-SM.lmRatioM.model10.C5<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C5,method2))
+SM.lmRatioM.model10.C5<-as.data.frame(Summarize.lmRatiotabModel.Mean(model10.C5,method2))
 SV.lmRatioM.model10.C5<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C5,method2))
 # prepare data for merging datasets
 
@@ -1482,12 +1502,12 @@ ggplot(SV.lmRatioM.model10C.p2, aes(x=Level, y=log(value), group = variable, col
 ```
 It is typical for the categorical model to have greater agreement across the methods than the environmental gradients.
 ```{r}
-summary(aov(SM.lmRatioM.model10CLevels$value~SM.lmRatioM.model10CLevels$Level*SM.lmRatioM.model10CLevels$variable))
-
+Depth.lmModelM<-summary(aov(SM.lmRatioM.model10CLevels$value~SM.lmRatioM.model10CLevels$Level*SM.lmRatioM.model10CLevels$variable))
+Depth.lmModelM
 TukeyHSD(aov(SM.lmRatioM.model10CLevels$value~SM.lmRatioM.model10CLevels$Level*SM.lmRatioM.model10CLevels$variable))
 
-summary(aov(SV.lmRatioM.model10CLevels$value~SV.lmRatioM.model10CLevels$Level*SV.lmRatioM.model10CLevels$variable))
-
+Depth.lmModelV<-summary(aov(SV.lmRatioM.model10CLevels$value~SV.lmRatioM.model10CLevels$Level*SV.lmRatioM.model10CLevels$variable))
+Depth.lmModelV
 TukeyHSD(aov(SV.lmRatioM.model10CLevels$value~SV.lmRatioM.model10CLevels$Level*SV.lmRatioM.model10CLevels$variable))
 
 ```
@@ -1586,12 +1606,12 @@ ggplot(M.TaxRatio.model10.Seq.p2, aes(x=Level, y=value, group = Var2, color=Var2
 Remember that variance should approach zero and mean should approach 1 in a perfect world. Greater deviations from these values represent less accurate retention of taxon-taxon relationships.
 
 ```{r}
-summary(aov(M.TaxRatio.model10Levels$value~M.TaxRatio.model10Levels$Level*M.TaxRatio.model10Levels$Var2))
-
+Depth.TaxM<-summary(aov(M.TaxRatio.model10Levels$value~M.TaxRatio.model10Levels$Level*M.TaxRatio.model10Levels$Var2))
+Depth.TaxM
 TukeyHSD(aov(M.TaxRatio.model10.Seq.p$value~M.TaxRatio.model10.Seq.p$Level*M.TaxRatio.model10.Seq.p$Var2))
 
-summary(aov(V.TaxRatio.model10Levels$value~V.TaxRatio.model10Levels$Level*V.TaxRatio.model10Levels$Var2))
-
+Depth.TaxV<-summary(aov(V.TaxRatio.model10Levels$value~V.TaxRatio.model10Levels$Level*V.TaxRatio.model10Levels$Var2))
+Depth.TaxV
 TukeyHSD(aov(V.TaxRatio.model10Levels$value~V.TaxRatio.model10Levels$Level*V.TaxRatio.model10Levels$Var2))
 ```
 
@@ -1748,31 +1768,36 @@ ggplot(permanova.model10CLevels.env5P, aes(x=Level, y=value, group = variable, c
 ```
 Again, results are similar to the sparcity example where the experimental design is equally strongly detected across normalization methods, but that un-normalized data significantly underperforms in capturing the relationship between community structure and the environmental gradients.
 ```{r}
-summary(aov(permanova.model10CLevels.model$value~permanova.model10CLevels.model$Level*permanova.model10CLevels.model$variable))
+Depth.PM<-summary(aov(permanova.model10CLevels.model$value~permanova.model10CLevels.model$Level*permanova.model10CLevels.model$variable))
 
 TukeyHSD(aov(permanova.model10CLevels.model$value~permanova.model10CLevels.model$Level*permanova.model10CLevels.model$variable))
 
-summary(aov(permanova.model10CLevels.env1$value~permanova.model10CLevels.env1$Level*permanova.model10CLevels.env1$variable))
+Depth.PF1<-summary(aov(permanova.model10CLevels.env1$value~permanova.model10CLevels.env1$Level*permanova.model10CLevels.env1$variable))
 
 TukeyHSD(aov(permanova.model10CLevels.env1$value~permanova.model10CLevels.env1$Level*permanova.model10CLevels.env1$variable))
 
-summary(aov(permanova.model10CLevels.env2$value~permanova.model10CLevels.env2$Level*permanova.model10CLevels.env2$variable))
+Depth.PF2<-summary(aov(permanova.model10CLevels.env2$value~permanova.model10CLevels.env2$Level*permanova.model10CLevels.env2$variable))
 
 TukeyHSD(aov(permanova.model10CLevels.env2$value~permanova.model10CLevels.env2$Level*permanova.model10CLevels.env2$variable))
 
-summary(aov(permanova.model10CLevels.env3$value~permanova.model10CLevels.env3$Level*permanova.model10CLevels.env3$variable))
+Depth.PF3<-summary(aov(permanova.model10CLevels.env3$value~permanova.model10CLevels.env3$Level*permanova.model10CLevels.env3$variable))
 
 TukeyHSD(aov(permanova.model10CLevels.env3$value~permanova.model10CLevels.env3$Level*permanova.model10CLevels.env3$variable))
 
-summary(aov(permanova.model10CLevels.env4$value~permanova.model10CLevels.env4$Level*permanova.model10CLevels.env4$variable))
+Depth.PF4<-summary(aov(permanova.model10CLevels.env4$value~permanova.model10CLevels.env4$Level*permanova.model10CLevels.env4$variable))
 
 TukeyHSD(aov(permanova.model10CLevels.env4$value~permanova.model10CLevels.env4$Level*permanova.model10CLevels.env4$variable))
 
-summary(aov(permanova.model10CLevels.env5$value~permanova.model10CLevels.env5$Level*permanova.model10CLevels.env5$variable))
+Depth.PF5<-summary(aov(permanova.model10CLevels.env5$value~permanova.model10CLevels.env5$Level*permanova.model10CLevels.env5$variable))
 
 TukeyHSD(aov(permanova.model10CLevels.env5$value~permanova.model10CLevels.env5$Level*permanova.model10CLevels.env5$variable))
 
-
+Depth.PM
+Depth.PF1
+Depth.PF2
+Depth.PF3
+Depth.PF4
+Depth.PF5
 
 leveneTest(permanova.model10CLevels.model$value~permanova.model10CLevels.model$variable)
 leveneTest(permanova.model10CLevels.env1$value~permanova.model10CLevels.env1$variable)
@@ -1853,23 +1878,24 @@ ggplot(model10.SeqVarLevels.summary2, aes(x=Level, y=value, group = variable, co
 ```
 ```{r}
 
-summary(aov(SummaryLII.model10.C1V1$value~SummaryLII.model10.C1V1$Level*SummaryLII.model10.C1V1$variable))
-TukeyHSD(aov(SummaryLII.model10.C1V1$value~SummaryLII.model10.C1V1$Level*SummaryLII.model10.C1V1$variable))
+Variance.LII<-summary(aov(model10.SeqVarLevels$value~model10.SeqVarLevels$Level*model10.SeqVarLevels$variable))
+Variance.LII
+TukeyHSD(aov(model10.SeqVarLevels$value~model10.SeqVarLevels$Level*model10.SeqVarLevels$variable))
 
 ```
 linear model outputs:
 ```{r}
 # sequencing variants lm ####
 
-SM.lmRatio.model10.C1V1<-as.data.frame(Summarize.lmRatiotab.Median(model10.C1V1,method2))
+SM.lmRatio.model10.C1V1<-as.data.frame(Summarize.lmRatiotab.Mean(model10.C1V1,method2))
 SV.lmRatio.model10.C1V1<-as.data.frame(Summarize.lmRatiotab.Var(model10.C1V1,method2))
-SM.lmRatio.model10.C1V2<-as.data.frame(Summarize.lmRatiotab.Median(model10.C1V2,method2))
+SM.lmRatio.model10.C1V2<-as.data.frame(Summarize.lmRatiotab.Mean(model10.C1V2,method2))
 SV.lmRatio.model10.C1V2<-as.data.frame(Summarize.lmRatiotab.Var(model10.C1V2,method2))
-SM.lmRatio.model10.C1V3<-as.data.frame(Summarize.lmRatiotab.Median(model10.C1V3,method2))
+SM.lmRatio.model10.C1V3<-as.data.frame(Summarize.lmRatiotab.Mean(model10.C1V3,method2))
 SV.lmRatio.model10.C1V3<-as.data.frame(Summarize.lmRatiotab.Var(model10.C1V3,method2))
-SM.lmRatio.model10.C1V4<-as.data.frame(Summarize.lmRatiotab.Median(model10.C1V4,method2))
+SM.lmRatio.model10.C1V4<-as.data.frame(Summarize.lmRatiotab.Mean(model10.C1V4,method2))
 SV.lmRatio.model10.C1V4<-as.data.frame(Summarize.lmRatiotab.Var(model10.C1V4,method2))
-SM.lmRatio.model10.C1V5<-as.data.frame(Summarize.lmRatiotab.Median(model10.C1V5,method2))
+SM.lmRatio.model10.C1V5<-as.data.frame(Summarize.lmRatiotab.Mean(model10.C1V5,method2))
 SV.lmRatio.model10.C1V5<-as.data.frame(Summarize.lmRatiotab.Var(model10.C1V5,method2))
 # prepare data for merging datasets
 
@@ -1943,25 +1969,27 @@ ggplot(SV.lmRatio.model10CV.p2, aes(x=Level, y=value, group = variable, color=va
 ```
 ```{r}
 
-summary(aov(SM.lmRatio.model10.C1V1$value~SM.lmRatio.model10.C1V1$Level*SM.lmRatio.model10.C1V1$variable))
-TukeyHSD(aov(SM.lmRatio.model10.C1V1$value~SM.lmRatio.model10.C1V1$Level*SM.lmRatio.model10.C1V1$variable))
+Variance.lmEnvM<-summary(aov(SM.lmRatio.model10.CVLevels$value~SM.lmRatio.model10.CVLevels$Level*SM.lmRatio.model10.CVLevels$variable))
+Variance.lmEnvM
+TukeyHSD(aov(SM.lmRatio.model10.CVLevels$value~SM.lmRatio.model10.CVLevels$Level*SM.lmRatio.model10.CVLevels$variable))
 
-summary(aov(SV.lmRatio.model10.C1V1$value~SV.lmRatio.model10.C1V1$Level*SV.lmRatio.model10.C1V1$variable))
-TukeyHSD(aov(SV.lmRatio.model10.C1V1$value~SV.lmRatio.model10.C1V1$Level*SV.lmRatio.model10.C1V1$variable))
+Variance.lmEnvV<-summary(aov(SV.lmRatio.model10.CVLevels$value~SV.lmRatio.model10.CVLevels$Level*SV.lmRatio.model10.CVLevels$variable))
+Variance.lmEnvV
+TukeyHSD(aov(SV.lmRatio.model10.CVLevels$value~SV.lmRatio.model10.CVLevels$Level*SV.lmRatio.model10.CVLevels$variable))
 
 ```
 
 ```{r}
 #sequence variants lm model ####
-SM.lmRatio.model10.MC1V1<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C1V1,method2))
+SM.lmRatio.model10.MC1V1<-as.data.frame(Summarize.lmRatiotabModel.Mean(model10.C1V1,method2))
 SV.lmRatio.model10.MC1V1<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C1V1,method2))
-SM.lmRatio.model10.MC1V2<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C1V2,method2))
+SM.lmRatio.model10.MC1V2<-as.data.frame(Summarize.lmRatiotabModel.Mean(model10.C1V2,method2))
 SV.lmRatio.model10.MC1V2<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C1V2,method2))
-SM.lmRatio.model10.MC1V3<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C1V3,method2))
+SM.lmRatio.model10.MC1V3<-as.data.frame(Summarize.lmRatiotabModel.Mean(model10.C1V3,method2))
 SV.lmRatio.model10.MC1V3<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C1V3,method2))
-SM.lmRatio.model10.MC1V4<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C1V4,method2))
+SM.lmRatio.model10.MC1V4<-as.data.frame(Summarize.lmRatiotabModel.Mean(model10.C1V4,method2))
 SV.lmRatio.model10.MC1V4<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C1V4,method2))
-SM.lmRatio.model10.MC1V5<-as.data.frame(Summarize.lmRatiotabModel.Median(model10.C1V5,method2))
+SM.lmRatio.model10.MC1V5<-as.data.frame(Summarize.lmRatiotabModel.Mean(model10.C1V5,method2))
 SV.lmRatio.model10.MC1V5<-as.data.frame(Summarize.lmRatiotabModel.Var(model10.C1V5,method2))
 # prepare data for merging datasets
 
@@ -2037,11 +2065,13 @@ ggplot(SV.lmRatio.model10MCV.p2, aes(x=Level, y=value, group = variable, color=v
 ```
 ```{r}
 
-summary(aov(SM.lmRatio.model10.MC1V1$value~SM.lmRatio.model10.MC1V1$Level*SM.lmRatio.model10.MC1V1$variable))
-TukeyHSD(aov(SM.lmRatio.model10.MC1V1$value~SM.lmRatio.model10.C1V1$Level*SM.lmRatio.model10.MC1V1$variable))
+Variance.lmModelM<-summary(aov(SM.lmRatio.model10.MCVLevels$value~SM.lmRatio.model10.MCVLevels$Level*SM.lmRatio.model10.MCVLevels$variable))
+Variance.lmModelM
+TukeyHSD(aov(SM.lmRatio.model10.MCVLevels$value~SM.lmRatio.model10.MCVLevels$Level*SM.lmRatio.model10.MCVLevels$variable))
 
-summary(aov(SV.lmRatio.model10.MC1V1$value~SV.lmRatio.model10.MC1V1$Level*SV.lmRatio.model10.MC1V1$variable))
-TukeyHSD(aov(SV.lmRatio.model10.MC1V1$value~SV.lmRatio.model10.MC1V1$Level*SV.lmRatio.model10.MC1V1$variable))
+Variance.lmModelV<-summary(aov(SV.lmRatio.model10.MCVLevels$value~SV.lmRatio.model10.MCVLevels$Level*SV.lmRatio.model10.MCVLevels$variable))
+Variance.lmModelV
+TukeyHSD(aov(SV.lmRatio.model10.MCVLevels$value~SV.lmRatio.model10.MCVLevels$Level*SV.lmRatio.model10.MCVLevels$variable))
 
 ```
 
@@ -2145,10 +2175,12 @@ ggplot(M.TaxRatio.model10.SeqV.p2, aes(x=Level, y=value, group = Var2, color=Var
 
 ```{r}
 
-summary(aov(V.TaxRatio.model10VLevels$value~V.TaxRatio.model10VLevels$Level*V.TaxRatio.model10VLevels$Var2))
+Variance.TaxV<-summary(aov(V.TaxRatio.model10VLevels$value~V.TaxRatio.model10VLevels$Level*V.TaxRatio.model10VLevels$Var2))
+Variance.TaxV
 TukeyHSD(aov(V.TaxRatio.model10VLevels$value~V.TaxRatio.model10VLevels$Level*V.TaxRatio.model10VLevels$Var2))
 
-summary(aov(M.TaxRatio.model10VLevels$value~M.TaxRatio.model10VLevels$Level*M.TaxRatio.model10VLevels$Var2))
+Variance.TaxM<-summary(aov(M.TaxRatio.model10VLevels$value~M.TaxRatio.model10VLevels$Level*M.TaxRatio.model10VLevels$Var2))
+Variance.TaxM
 TukeyHSD(aov(M.TaxRatio.model10VLevels$value~M.TaxRatio.model10VLevels$Var2))
 
 ```
@@ -2310,28 +2342,28 @@ ggplot(permanova.model10CVLevels.env5P, aes(x=Level, y=value, group = variable, 
 
 
 ```{r}
-summary(aov(permanova.model10CVLevels.model$value~permanova.model10CVLevels.model$Level*permanova.model10CVLevels.model$variable))
-
+Variance.PM<-summary(aov(permanova.model10CVLevels.model$value~permanova.model10CVLevels.model$Level*permanova.model10CVLevels.model$variable))
+Variance.PM
 TukeyHSD(aov(permanova.model10CVLevels.model$value~permanova.model10CVLevels.model$Level*permanova.model10CVLevels.model$variable))
 
-summary(aov(permanova.model10CVLevels.env1$value~permanova.model10CVLevels.env1$Level*permanova.model10CVLevels.env1$variable))
-
+Variance.PF1<-summary(aov(permanova.model10CVLevels.env1$value~permanova.model10CVLevels.env1$Level*permanova.model10CVLevels.env1$variable))
+Variance.PF1
 TukeyHSD(aov(permanova.model10CVLevels.env1$value~permanova.model10CVLevels.env1$Level*permanova.model10CVLevels.env1$variable))
 
-summary(aov(permanova.model10CVLevels.env2$value~permanova.model10CVLevels.env2$Level*permanova.model10CVLevels.env2$variable))
-
+Variance.PF2<-summary(aov(permanova.model10CVLevels.env2$value~permanova.model10CVLevels.env2$Level*permanova.model10CVLevels.env2$variable))
+Variance.PF2
 TukeyHSD(aov(permanova.model10CVLevels.env2$value~permanova.model10CVLevels.env2$Level*permanova.model10CVLevels.env2$variable))
 
-summary(aov(permanova.model10CVLevels.env3$value~permanova.model10CVLevels.env3$Level*permanova.model10CVLevels.env3$variable))
-
+Variance.PF3<-summary(aov(permanova.model10CVLevels.env3$value~permanova.model10CVLevels.env3$Level*permanova.model10CVLevels.env3$variable))
+Variance.PF3
 TukeyHSD(aov(permanova.model10CVLevels.env3$value~permanova.model10CVLevels.env3$Level*permanova.model10CVLevels.env3$variable))
 
-summary(aov(permanova.model10CVLevels.env4$value~permanova.model10CVLevels.env4$Level*permanova.model10CVLevels.env4$variable))
-
+Variance.PF4<-summary(aov(permanova.model10CVLevels.env4$value~permanova.model10CVLevels.env4$Level*permanova.model10CVLevels.env4$variable))
+Variance.PF4
 TukeyHSD(aov(permanova.model10CVLevels.env4$value~permanova.model10CVLevels.env4$Level*permanova.model10CVLevels.env4$variable))
 
-summary(aov(permanova.model10CVLevels.env5$value~permanova.model10CVLevels.env5$Level*permanova.model10CVLevels.env5$variable))
-
+Variance.PF5<-summary(aov(permanova.model10CVLevels.env5$value~permanova.model10CVLevels.env5$Level*permanova.model10CVLevels.env5$variable))
+Variance.PF5
 TukeyHSD(aov(permanova.model10CVLevels.env5$value~permanova.model10CVLevels.env5$Level*permanova.model10CVLevels.env5$variable))
 
 ```
@@ -2475,6 +2507,7 @@ ggplot(permanova.model10CVLevels.modelP[permanova.model10CVLevels.modelP$variabl
   ggtitle("Experimental Model")+
   theme_classic()
 ```
+
 ```{r}
 #permanova.model10CVLevels.modelP
 ggplot(permanova.model10CVLevels.env1P[permanova.model10CVLevels.env1P$variable=="raw" |
@@ -2558,17 +2591,17 @@ ggplot(permanova.model10CVLevels.env5P[permanova.model10CVLevels.env5P$variable=
 # Figure 5
 ```{r}
 #SV.lmRatio.model10CV.p
-ggplot(SV.lmRatio.model10CV.p[SV.lmRatio.model10CV.p$variable=="raw" |
-                                        SV.lmRatio.model10CV.p$variable=="QSeq0.5" |
-                                        SV.lmRatio.model10CV.p$variable=="QSeq2" |
-                                        SV.lmRatio.model10CV.p$variable=="QSeq100",], aes(x=Level, y=value, group = variable, color=variable, size=1))+
+ggplot(SM.lmRatio.model10CV.p[SM.lmRatio.model10CV.p$variable=="raw" |
+                                        SM.lmRatio.model10CV.p$variable=="QSeq0.5" |
+                                        SM.lmRatio.model10CV.p$variable=="QSeq2" |
+                                        SM.lmRatio.model10CV.p$variable=="QSeq100",], aes(x=Level, y=value, group = variable, color=variable, size=1))+
   geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.1, position=position_dodge(.08), size=1) +
   #scale_colour_viridis_d(direction=-1)+
   scale_colour_grey()+
   geom_line(position=position_dodge(.08), size=1, aes(linetype=variable))+
   geom_point(position=position_dodge(.08), size=1)+
   xlab("Relative Sampling Variance (variance / mean)")+
-  ylab("Linear Model R-Ratio Variance (Mean +/- standard dev)")+
+  ylab("Linear Model Mean of Variance R-Ratio (Mean +/- standard dev)")+
   ggtitle("Variance of Linear Model R-Ratio")+
   theme_classic()
 
@@ -2586,13 +2619,63 @@ ggplot(SV.lmRatio.model10MCV.p[SV.lmRatio.model10MCV.p$variable=="raw" |
   geom_line(position=position_dodge(.08), size=1, aes(linetype=variable))+
   geom_point(position=position_dodge(.08), size=1)+
   xlab("Relative Sampling Variance (variance / mean)")+
-  ylab("Linear Model R-Ratio Variance (Mean +/- standard dev)")+
+  ylab("Linear Model Variance of Variance R-Ratio (Mean +/- standard dev)")+
   ggtitle("Variance of Linear Model R-Ratio")+
   theme_classic()
 
 ```
 
+# summary Table
 ```{r}
+
+sum.tab<-data.frame("LII"=c(Sparsity.LII[[1]]$`Pr(>F)`[2],Depth.LII[[1]]$`Pr(>F)`[2],Variance.LII[[1]]$`Pr(>F)`[2]), "P Model"=c(Sparsity.PM[[1]]$`Pr(>F)`[2], Depth.PM[[1]]$`Pr(>F)`[2], Variance.PM[[1]]$`Pr(>F)`[2]),"P Env 1"=c(Sparsity.PF1[[1]]$`Pr(>F)`[2], Depth.PF1[[1]]$`Pr(>F)`[2], Variance.PF1[[1]]$`Pr(>F)`[2]),"P Env 2"=c(Sparsity.PF2[[1]]$`Pr(>F)`[2],Depth.PF2[[1]]$`Pr(>F)`[2], Variance.PF2[[1]]$`Pr(>F)`[2]),"P Env 3"=c(Sparsity.PF3[[1]]$`Pr(>F)`[2], Depth.PF3[[1]]$`Pr(>F)`[2], Variance.PF3[[1]]$`Pr(>F)`[2]),"P Env 4"=c(Sparsity.PF4[[1]]$`Pr(>F)`[2], Depth.PF4[[1]]$`Pr(>F)`[2], Variance.PF4[[1]]$`Pr(>F)`[2]),"P Env 5"=c(Sparsity.PF5[[1]]$`Pr(>F)`[2], Depth.PF5[[1]]$`Pr(>F)`[2], Variance.PF5[[1]]$`Pr(>F)`[2]), "lm Model.M"=c(Sparsity.lmModelM[[1]]$`Pr(>F)`[2], Depth.lmModelM[[1]]$`Pr(>F)`[2], Variance.lmModelM[[1]]$`Pr(>F)`[2]), "lm Model.V"=c(Sparsity.lmModelV[[1]]$`Pr(>F)`[2], Depth.lmModelV[[1]]$`Pr(>F)`[2], Variance.lmModelV[[1]]$`Pr(>F)`[2]), "lm Env.M"=c(Sparsity.lmEnvM[[1]]$`Pr(>F)`[2], Depth.lmEnvM[[1]]$`Pr(>F)`[2], Variance.lmEnvM[[1]]$`Pr(>F)`[2]), "lm Env.V"=c(Sparsity.lmEnvV[[1]]$`Pr(>F)`[2], Depth.lmEnvV[[1]]$`Pr(>F)`[2], Variance.lmEnvV[[1]]$`Pr(>F)`[2]), "Tax.M"=c(Sparsity.TaxM[[1]]$`Pr(>F)`[2], Depth.TaxM[[1]]$`Pr(>F)`[2], Variance.TaxM[[1]]$`Pr(>F)`[2]), "Tax.V"=c(Sparsity.TaxV[[1]]$`Pr(>F)`[2], Depth.TaxV[[1]]$`Pr(>F)`[2], Variance.TaxV[[1]]$`Pr(>F)`[2]))
+
+rownames(sum.tab)<-c("Sparsity", "Depth", "Variance")
+sum.tab<-data.frame(t(round(sum.tab, digits=5)))
+sum.tab %>% 
+  mutate((.), 
+       Sparsity=cell_spec(Sparsity, "html", color = ifelse(Sparsity > 0.05, "black", "red")),
+       Depth=cell_spec(Depth, "html", color = ifelse(Depth > 0.05, "black", "red")),
+       Variance=cell_spec(Variance, "html", color = ifelse(Variance > 0.05, "black", "red")),
+       ) %>% kable(format = "html", escape = F, align = "c",caption = "Main effect of normalization method") %>%
+  kable_styling("hover", full_width = F) %>% pack_rows("Loss of Information Index", 1, 1) %>%
+  pack_rows("PERMANOVA", 2, 7) %>% pack_rows("Linear Model", 8, 11) %>% pack_rows("Taxa", 12, 13)
+
+```
+```{r}
+
+sum.tab<-data.frame("LII"=c(Sparsity.LII[[1]]$`Pr(>F)`[1],Depth.LII[[1]]$`Pr(>F)`[1],Variance.LII[[1]]$`Pr(>F)`[1]), "P Model"=c(Sparsity.PM[[1]]$`Pr(>F)`[1], Depth.PM[[1]]$`Pr(>F)`[1], Variance.PM[[1]]$`Pr(>F)`[1]),"P Env 1"=c(Sparsity.PF1[[1]]$`Pr(>F)`[1], Depth.PF1[[1]]$`Pr(>F)`[1], Variance.PF1[[1]]$`Pr(>F)`[1]),"P Env 2"=c(Sparsity.PF1[[1]]$`Pr(>F)`[1],Depth.PF1[[1]]$`Pr(>F)`[1], Variance.PF1[[1]]$`Pr(>F)`[1]),"P Env 3"=c(Sparsity.PF3[[1]]$`Pr(>F)`[1], Depth.PF3[[1]]$`Pr(>F)`[1], Variance.PF3[[1]]$`Pr(>F)`[1]),"P Env 4"=c(Sparsity.PF4[[1]]$`Pr(>F)`[1], Depth.PF4[[1]]$`Pr(>F)`[1], Variance.PF4[[1]]$`Pr(>F)`[1]),"P Env 5"=c(Sparsity.PF5[[1]]$`Pr(>F)`[1], Depth.PF5[[1]]$`Pr(>F)`[1], Variance.PF5[[1]]$`Pr(>F)`[1]), "lm Model.M"=c(Sparsity.lmModelM[[1]]$`Pr(>F)`[1], Depth.lmModelM[[1]]$`Pr(>F)`[1], Variance.lmModelM[[1]]$`Pr(>F)`[1]), "lm Model.V"=c(Sparsity.lmModelV[[1]]$`Pr(>F)`[1], Depth.lmModelV[[1]]$`Pr(>F)`[1], Variance.lmModelV[[1]]$`Pr(>F)`[1]), "lm Env.M"=c(Sparsity.lmEnvM[[1]]$`Pr(>F)`[1], Depth.lmEnvM[[1]]$`Pr(>F)`[1], Variance.lmEnvM[[1]]$`Pr(>F)`[1]), "lm Env.V"=c(Sparsity.lmEnvV[[1]]$`Pr(>F)`[1], Depth.lmEnvV[[1]]$`Pr(>F)`[1], Variance.lmEnvV[[1]]$`Pr(>F)`[1]), "Tax.M"=c(Sparsity.TaxM[[1]]$`Pr(>F)`[1], Depth.TaxM[[1]]$`Pr(>F)`[1], Variance.TaxM[[1]]$`Pr(>F)`[1]), "Tax.V"=c(Sparsity.TaxV[[1]]$`Pr(>F)`[1], Depth.TaxV[[1]]$`Pr(>F)`[1], Variance.TaxV[[1]]$`Pr(>F)`[1]))
+
+rownames(sum.tab)<-c("Sparsity", "Depth", "Variance")
+sum.tab<-data.frame(t(round(sum.tab, digits=5)))
+sum.tab %>% 
+  mutate((.), 
+       Sparsity=cell_spec(Sparsity, "html", color = ifelse(Sparsity > 0.05, "black", "red")),
+       Depth=cell_spec(Depth, "html", color = ifelse(Depth > 0.05, "black", "red")),
+       Variance=cell_spec(Variance, "html", color = ifelse(Variance > 0.05, "black", "red")),
+       ) %>% kable(format = "html", escape = F, align = "c",caption = "Main effect of experimental condition (gradient)") %>%
+  kable_styling("hover", full_width = F) %>% pack_rows("Loss of Information Index", 1, 1) %>%
+  pack_rows("PERMANOVA", 2, 7) %>% pack_rows("Linear Model", 8, 11) %>% pack_rows("Taxa", 12, 13)
+
+```
+```{r}
+
+sum.tab<-data.frame("LII"=c(Sparsity.LII[[1]]$`Pr(>F)`[3],Depth.LII[[1]]$`Pr(>F)`[3],Variance.LII[[1]]$`Pr(>F)`[3]), "P Model"=c(Sparsity.PM[[1]]$`Pr(>F)`[3], Depth.PM[[1]]$`Pr(>F)`[3], Variance.PM[[1]]$`Pr(>F)`[3]),"P Env 1"=c(Sparsity.PF1[[1]]$`Pr(>F)`[3], Depth.PF1[[1]]$`Pr(>F)`[3], Variance.PF1[[1]]$`Pr(>F)`[3]),"P Env 2"=c(Sparsity.PF3[[1]]$`Pr(>F)`[3],Depth.PF3[[1]]$`Pr(>F)`[3], Variance.PF3[[1]]$`Pr(>F)`[3]),"P Env 3"=c(Sparsity.PF3[[1]]$`Pr(>F)`[3], Depth.PF3[[1]]$`Pr(>F)`[3], Variance.PF3[[1]]$`Pr(>F)`[3]),"P Env 4"=c(Sparsity.PF4[[1]]$`Pr(>F)`[3], Depth.PF4[[1]]$`Pr(>F)`[3], Variance.PF4[[1]]$`Pr(>F)`[3]),"P Env 5"=c(Sparsity.PF5[[1]]$`Pr(>F)`[3], Depth.PF5[[1]]$`Pr(>F)`[3], Variance.PF5[[1]]$`Pr(>F)`[3]), "lm Model.M"=c(Sparsity.lmModelM[[1]]$`Pr(>F)`[3], Depth.lmModelM[[1]]$`Pr(>F)`[3], Variance.lmModelM[[1]]$`Pr(>F)`[3]), "lm Model.V"=c(Sparsity.lmModelV[[1]]$`Pr(>F)`[3], Depth.lmModelV[[1]]$`Pr(>F)`[3], Variance.lmModelV[[1]]$`Pr(>F)`[3]), "lm Env.M"=c(Sparsity.lmEnvM[[1]]$`Pr(>F)`[3], Depth.lmEnvM[[1]]$`Pr(>F)`[3], Variance.lmEnvM[[1]]$`Pr(>F)`[3]), "lm Env.V"=c(Sparsity.lmEnvV[[1]]$`Pr(>F)`[3], Depth.lmEnvV[[1]]$`Pr(>F)`[3], Variance.lmEnvV[[1]]$`Pr(>F)`[3]), "Tax.M"=c(Sparsity.TaxM[[1]]$`Pr(>F)`[3], Depth.TaxM[[1]]$`Pr(>F)`[3], Variance.TaxM[[1]]$`Pr(>F)`[3]), "Tax.V"=c(Sparsity.TaxV[[1]]$`Pr(>F)`[3], Depth.TaxV[[1]]$`Pr(>F)`[3], Variance.TaxV[[1]]$`Pr(>F)`[3]))
+
+rownames(sum.tab)<-c("Sparsity", "Depth", "Variance")
+sum.tab<-data.frame(t(round(sum.tab, digits=5)))
+sum.tab %>% 
+  mutate((.), 
+       Sparsity=cell_spec(Sparsity, "html", color = ifelse(Sparsity > 0.05, "black", "red")),
+       Depth=cell_spec(Depth, "html", color = ifelse(Depth > 0.05, "black", "red")),
+       Variance=cell_spec(Variance, "html", color = ifelse(Variance > 0.05, "black", "red")),
+       ) %>% kable(format = "html", escape = F, align = "c",caption = "Interaction between test condition and normalization method") %>%
+  kable_styling("hover", full_width = F) %>% pack_rows("Loss of Information Index", 1, 1) %>%
+  pack_rows("PERMANOVA", 2, 7) %>% pack_rows("Linear Model", 8, 11) %>% pack_rows("Taxa", 12, 13)
+
+```
+
+```{r, echo=FALSE}
 #devtools::install_github("ricardo-bion/ggradar", dependencies=TRUE)
 #library(ggradar)
 
@@ -2627,16 +2710,16 @@ ggplot(SV.lmRatio.model10MCV.p[SV.lmRatio.model10MCV.p$variable=="raw" |
 #Summarize.PERMANOVA.Rratio(model10.A, method2, "F4Rratio")
 #Summarize.PERMANOVA.Rratio(model10.A, method2, "F5Rratio")
 
-#Summarize.lmRatiotabModel.Median(model10.A, method2)
+#Summarize.lmRatiotabModel.Mean(model10.A, method2)
 #Summarize.lmRatiotabModel.Var(model10.A, method2)
-#Summarize.lmRatiotab.Median(model10.A, method2)
+#Summarize.lmRatiotab.Mean(model10.A, method2)
 #Summarize.lmRatiotab.Var(model10.A, method2)
 
 #getTaxCor.Tab(model10.A, method2)
 
 #Summarize.LII(model10.A, method2)
 
-#dtest<-rbind(as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "CategoryRratio")), as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "F1Rratio")), as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "F2Rratio")), as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "F3Rratio")), as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "F4Rratio")), as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "F5Rratio")), as.data.frame(Summarize.lmRatiotabModel.Median(model10.A, method2)), as.data.frame(Summarize.lmRatiotabModel.Var(model10.A, method2)), as.data.frame(Summarize.lmRatiotab.Median(model10.A, method2)), as.data.frame(Summarize.lmRatiotab.Var(model10.A, method2)),
+#dtest<-rbind(as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "CategoryRratio")), as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "F1Rratio")), as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "F2Rratio")), as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "F3Rratio")), as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "F4Rratio")), as.data.frame(Summarize.PERMANOVA.Rratio(model10.A, method2, "F5Rratio")), as.data.frame(Summarize.lmRatiotabModel.Mean(model10.A, method2)), as.data.frame(Summarize.lmRatiotabModel.Var(model10.A, method2)), as.data.frame(Summarize.lmRatiotab.Mean(model10.A, method2)), as.data.frame(Summarize.lmRatiotab.Var(model10.A, method2)),
 #             1-as.data.frame(Summarize.LII(model10.A, method2))) #as.data.frame(getTaxCor.Tab(model10.A, method2)$V.tax), 
 #as.data.frame(getTaxCor.Tab(model10.A, method2)$Median.tax),
 
@@ -2695,4 +2778,4 @@ Sampling effort is not the same as sequencing depth. The principle of sampling e
 
 The taxon abundance distribution is often infered across samples. There are instances where this may be appropriate, however in most environmental microbiome studies it is not. Endogenous factors like the presence of a pathogen can result in a large change in the species abundance distribution at a single site. It may be possible, given ecological knowledge of specific members, to make such an assumption based on the known behavior and interactions of members of the community. But no software currently accounts for the ecological role of microbes in attempting to infer the species abundance curve of undersampled experimental units. Therefore, the current approaches to infering species abundance curves are inherently unreliable, and blind to the role that species interactions have on structuring the species abundance curve.
 
-This is all to say: alpha diversity metrics in microbiome metabarcoding studies should be taken with a hefty grain of salt, and the analysis of these studies should probably not hinge on the alpha diversity estimates.
+This is all to say: alpha diversity metrics in microbiome metabarcoding studies should be taken with a hefty grain of salt, and the analysis of metabarcoding studies should probably not hinge on the alpha diversity estimates.
