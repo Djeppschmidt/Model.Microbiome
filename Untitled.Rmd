@@ -629,7 +629,7 @@ First, let's look at how the structure of the data might interact with our norma
 # get LII Biogeography ####
 method2<- c("raw", method) # add raw data to the methods list to extract it too
 
-# extract the LII from each level of sparcity ####
+# extract the LII from each level of sparsity ####
 SummaryLII.model10.A<-as.data.frame(Summarize.LII(model10.A,method2))
 SummaryLII.model10.B<-as.data.frame(Summarize.LII(model10.B, method2)) 
 SummaryLII.model10.C<-as.data.frame(Summarize.LII(model10.C, method2))
@@ -1766,7 +1766,7 @@ ggplot(permanova.model10CLevels.env5P, aes(x=Level, y=value, group = variable, c
   ylab("Permanova env5Ratio (Median +/- min/max)")+
   theme_classic()
 ```
-Again, results are similar to the sparcity example where the experimental design is equally strongly detected across normalization methods, but that un-normalized data significantly underperforms in capturing the relationship between community structure and the environmental gradients.
+Again, results are similar to the sparsity example where the experimental design is equally strongly detected across normalization methods, but that un-normalized data significantly underperforms in capturing the relationship between community structure and the environmental gradients.
 ```{r}
 Depth.PM<-summary(aov(permanova.model10CLevels.model$value~permanova.model10CLevels.model$Level*permanova.model10CLevels.model$variable))
 
@@ -2378,7 +2378,7 @@ leveneTest(permanova.model10CVLevels.env5$value~permanova.model10CVLevels.env5$v
 
 Conclusions:
 
-1) Performance of all methods is highest at low sparcity, high sampling depth, and low sampling variance.
+1) Performance of all methods is highest at low sparsity, high sampling depth, and low sampling variance.
 
 2) Model.Microbiome provides an empirical framework for optimizing sequence count normalization methods prior to making ecological inferences; in our example the parameters for QSeq0.5 resulted in a consistent underperformance compared to other parameters.
 
@@ -2482,13 +2482,13 @@ ggplot(model10.SeqVarLevels.summary[model10.SeqVarLevels.summary$variable == "ra
 ```{r}
 par(mfrow=c(2,2))
 barplot(sort(taxa_sums(model10.A$rep1$model$comm)/1000000, TRUE), 
-    las = 2, main ="Rank Abundance Lowest Sparcity", ylab="Million Counts")
+    las = 2, main ="Rank Abundance Lowest sparsity", ylab="Million Counts")
 barplot(sort(taxa_sums(model10.B$rep1$model$comm)/1000000, TRUE), 
-    las = 2, main ="Rank Abundance Low Sparcity", ylab="Million Counts")
+    las = 2, main ="Rank Abundance Low sparsity", ylab="Million Counts")
 barplot(sort(taxa_sums(model10.C$rep1$model$comm)/1000000, TRUE), 
-    las = 2, main ="Rank Abundance  High Sparcity", ylab="Million Counts")
+    las = 2, main ="Rank Abundance  High sparsity", ylab="Million Counts")
 barplot(sort(taxa_sums(model10.D$rep1$model$comm)/1000000, TRUE), 
-    las = 2, main ="Rank Abundance Highest Sparcity", ylab="Million Counts")
+    las = 2, main ="Rank Abundance Highest sparsity", ylab="Million Counts")
 ```
 # figure 5
 ```{r}
