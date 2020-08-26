@@ -4,7 +4,7 @@
 \alias{make.deseqVST}
 \title{normalize routine using deseq}
 \usage{
-make.deseqVST(ps, Factor, l = 1e+00)
+make.deseqVST(ps, Factor, l = 1)
 }
 \arguments{
 \item{ps}{phyloseq object with community to be normalized}
