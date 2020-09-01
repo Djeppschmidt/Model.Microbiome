@@ -288,6 +288,214 @@ run.analysis2<-function(commonN, groupN, singleN, D, V, method){
     output
 }
 
+#' shell script for benchmarking
+#' @param reps number of replicate communities
+#' @param commonN number of common species
+#' @param groupN number of unique taxa to groups
+#' @param singleN number of unique taxa to samples
+#' @param D average sampling depth
+#' @param V variation in sampling depth
+#' @param method list of function names to be used in analysis
+#' @keywords benchmark
+#' @export
+#' @examples test.script<-benchmark.MM(reps=3, commonN=20, groupN=10, singleN=10, D=2000, V=1000)
+#'benchmark.MM()
+simulate.MM<-function(reps, commonN, groupN, singleN, D, V, method){
+  require(phyloseq)
+  array<-c(rep(commonN, reps))
+  names(array)<-c(paste0("rep", 1:reps, sep=""))
+  array<-sapply(array, run.analysis3, simplify=F, USE.NAMES = T, groupN, singleN, D, V, method)
+  array
+}
+
+#' workhorse function for simulate.MM
+#' @param commonN number of common species
+#' @param groupN number of unique taxa to groups
+#' @param singleN number of unique taxa to samples
+#' @param D average sampling depth
+#' @param V variation in sampling depth
+#' @param method list of function names to be applied as normalization
+#' @keywords benchmark
+#' @export
+#' @examples
+#' run.analysis3()
+run.analysis3<-function(commonN, groupN, singleN, D, V, method){
+      AllSpp<-c(paste0("spp", c(1:700), sep="")) # make a quick list of all species functions
+      AllSpp<-lapply(AllSpp, get) # connect function to name
+      AllSpp<-unlist(AllSpp)  # format to be read by downstream functions
+      names(AllSpp)<-c(paste0("spp", c(1:700)))
+
+      # Define list of 5 species w/ global distribution
+      global.spp<-names(sample(AllSpp, commonN, replace=F))
+
+  # define list of species w/ regional distribution
+      group.spp<-NULL
+      group.spp$group1<-names(sample(AllSpp, groupN, replace=F))
+      group.spp$group2<-names(sample(AllSpp, groupN, replace=F))
+      group.spp$group3<-names(sample(AllSpp, groupN, replace=F))
+      group.spp$group4<-names(sample(AllSpp, groupN, replace=F))
+      group.spp$group5<-names(sample(AllSpp, groupN, replace=F))
+      group.spp$group6<-names(sample(AllSpp, groupN, replace=F))
+
+  # define list of species found at each site
+      rando.spp<-NULL
+      rando.spp$Site1<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group1), global.spp))
+      rando.spp$Site2<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group1), global.spp))
+      rando.spp$Site3<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group1), global.spp))
+      rando.spp$Site4<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group1), global.spp))
+      rando.spp$Site5<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group1), global.spp))
+      rando.spp$Site6<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group2), global.spp))
+      rando.spp$Site7<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group2), global.spp))
+      rando.spp$Site8<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group2), global.spp))
+      rando.spp$Site9<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group2), global.spp))
+      rando.spp$Site10<-unique(c(names(sample(AllSpp,singleN, replace=F)), c(group.spp$group2), global.spp))
+      rando.spp$Site11<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group3), global.spp))
+      rando.spp$Site12<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group3), global.spp))
+      rando.spp$Site13<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group3), global.spp))
+      rando.spp$Site14<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group3), global.spp))
+      rando.spp$Site15<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group3), global.spp))
+      rando.spp$Site16<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group4), global.spp))
+      rando.spp$Site17<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group4), global.spp))
+      rando.spp$Site18<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group4), global.spp))
+      rando.spp$Site19<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group4), global.spp))
+      rando.spp$Site20<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group4), global.spp))
+      rando.spp$Site21<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group5), global.spp))
+      rando.spp$Site22<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group5), global.spp))
+      rando.spp$Site23<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group5), global.spp))
+      rando.spp$Site24<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group5), global.spp))
+      rando.spp$Site25<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group5), global.spp))
+      rando.spp$Site26<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group6), global.spp))
+      rando.spp$Site27<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group6), global.spp))
+      rando.spp$Site28<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group6), global.spp))
+      rando.spp$Site29<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group6), global.spp))
+      rando.spp$Site30<-unique(c(names(sample(AllSpp, singleN, replace=F)), c(group.spp$group6), global.spp))
+
+  # make list of unique species arrays
+
+      library(reshape2)
+      f1c1<-c(5,5,5,5,5,5) # number of selections
+      f1c2<-c(1,3,10,30,60,15) # mean value of selections
+      f1c3<-c(0.5,1,4,10,20,5) # SD of selections
+      F1.frame<-mapply(rnorm, f1c1,f1c2,f1c3) # pick Factor 1 value for each site
+      F1<-reshape2::melt(F1.frame)
+
+  #F2
+      f2c1<-c(5,5,5,5,5,5) # number of selections
+      f2c2<-c(34,30,10,55,35,60) # mean value of selections
+      f2c3<-c(10,10,3,10,1,20) # SD of selections
+      F2.frame<-mapply(rnorm, f2c1,f2c2,f2c3) # pick Factor 2 value for each site
+      F2<-reshape2::melt(F2.frame)
+
+  #F3
+      f3c1<-c(5,5,5,5,5,5) # number of selections
+      f3c2<-c(1,3,10,15,3,15) # mean value of selections
+      f3c3<-c(0.5,1,3,3,1,5) # SD of selections
+      F3.frame<-mapply(rnorm, f3c1,f3c2,f3c3) # pick Factor 3 value for each site
+      F3<-reshape2::melt(F3.frame)
+
+  #F4
+      f4c1<-c(5,5,5,5,5,5) # number of selections
+      f4c2<-c(5,5,5,5,5,5) # mean value of selections
+      f4c3<-c(1,1,1,1,1,1) # SD of selections
+      F4.frame<-mapply(rnorm, f4c1,f4c2,f4c3) # pick Factor 4 value for each site
+      F4<-reshape2::melt(F4.frame)
+
+  #F5
+      f5c1<-c(5,5,5,5,5,5) # number of selections
+      f5c2<-c(50,50,50,50,50,50) # mean value of selections
+      f5c3<-c(20,20,20,20,20,20) # SD of selections
+      F5.frame<-mapply(rnorm, f5c1,f5c2,f5c3) # pick Factor 5 value for each site
+      F5<-reshape2::melt(F5.frame)
+      Factors<-data.frame(F1$value,F2$value,F3$value,F4$value,F5$value) # combine factors into data table
+      Sites<-c(paste0("Site", 1:30))
+      rownames(Factors)<-Sites
+      colnames(Factors)<-c("F1","F2","F3","F4","F5")
+
+      output<-list("model"=NULL, "spplist"=NULL, "raw"=NULL)
+
+      output$spplist<-rando.spp
+
+      output$model$comm<-make.refcomm(rando.spp, Factors) # output a phyloseq object... will make a list of phyloseq objects
+      output$model$comm<-filter_taxa(output$model$comm, function(x) sum(x)>0, TRUE)
+      output$model$EV<-transform_sample_counts(output$model$comm, function(x) x / sum(x) )
+      output$metrics<-NULL
+      output$metrics$stats<-NULL
+      output$metrics$Richness<-NULL
+      Rich<-estimate_richness(output$model$comm, measures="Observed")
+      output$metrics$Richness<-Rich
+      output$metrics$skewness<-median(apply(X = otu_table(output$model$comm), MARGIN=2,FUN = function(x){skewness(x)}))
+
+      sample<-set.seqDepth(D,V)
+      output$raw$comm<-model.rarefy(output$model$comm, sample, D, V)
+
+      print("spp selection complete")
+      sample_data(output$model$comm)$Density<-sample_sums(output$model$comm)# add sample sums
+      sample_data(output$model$comm)$DensityF<-sample_sums(output$model$comm)/mean(sample_sums(output$model$comm))
+      sample_data(output$model$comm)$Factor<-as.factor(c(rep("one",5),rep("two",5),rep("three",5),rep("four",5),rep("five",5),rep("six",5)))
+      sample_data(output$model$comm)$Factor2<-as.factor(c(rep(1,5),rep(2,5),rep(3,5),rep(4,5),rep(5,5),rep(6,5)))
+      # remove taxa that have zero abundance in "raw" sequencing run
+      tax.filt<-filter_taxa(output$raw$comm, function(x)sum(x)>0)
+      output$metrics$tax.lost<-tax.filt
+        output$raw$comm<-filter_taxa(output$raw$comm, function(x)sum(x)>0, TRUE)
+        # remove taxa that are not kept from sequencing so that they don't penalize downstream methods
+        output$model$comm<-prune_taxa(tax.filt, output$model$comm)
+        output$model$EV<-prune_taxa(tax.filt, output$model$EV)
+
+
+      # for each species: measure prevalence
+          prevalence=apply(X = otu_table(output$model$comm), MARGIN=1,FUN = function(x){sum(x > 0)})
+      # for each species: measure relative abundance (proportion of total counts?
+          p.abund<-transform_sample_counts(output$model$comm, function(x) x/sum(x) )
+
+          mean_abundance<-apply(X = otu_table(p.abund), MARGIN=1,FUN = function(x){mean(x)})
+
+          sd_abundance<-apply(X = otu_table(p.abund), MARGIN=1,FUN = function(x){sd(x)})
+      # create a tax table for whole dataset ...
+          tab<-data.frame(prevalence, mean_abundance, sd_abundance)
+          tab$names<-rownames(tab)
+          output$model$SpeciesMeta<-tab
+
+          #output$model$R<-lm.test(output$model$comm)
+          #output$model$networkStat<-ConnStat(output$model$comm, num=250)
+          #output$raw$networkStat<-ConnStat(output$raw$comm, num=250)
+          #if(output$model$networkStat$taxcor$Var1==output$raw$networkStat$taxcor$Var1 & output$model$networkStat$taxcor$Var2==output$raw$networkStat$taxcor$Var2){
+          #tab<-output$model$networkStat$taxcor
+          #tab$value[tab$value==0]<-min(tab$value[tab$value>0])/10 # 1 orders of magnitude lower than lowest; but not zero!!
+          #tab$value<-output$raw$networkStat$taxcor$value/tab$value
+          #tab$value[is.na(tab$value)]<-0 # not sure how to deal with this ... ?
+          #output$raw$taxCor.Ratio<-tab}
+      # make expected value
+          s<-sample_sums(output$raw$comm)
+          s2<-as.data.frame(as.matrix(otu_table(output$model$EV)))
+          s2<-for (i in 1:ncol(s2)) {s2[,i]<-s2[,i]*s[i]}
+          otu_table(output$model$EV)<-otu_table(output$model$EV, taxa_are_rows=TRUE)
+          M.Eval<-apply(X = otu_table(output$model$EV), MARGIN=1,FUN = function(x){mean(x[x>0])})
+
+
+      #output$model$SpeciesMeta$USI<-output$model$SpeciesMeta$
+      # create a tax table for whole dataset ...
+          tab<-data.frame(prevalence, mean_abundance, sd_abundance, M.Eval)
+          tab$names<-rownames(tab)
+          output$model$SpeciesMeta<-tab
+          output$model$R<-lm.test(output$model$comm)
+          sample_data(output$raw$comm)<-sample_data(output$model$comm)
+          #output$model$PERMANOVA<-make.PERMANOVA(output$model$comm)
+          #output$model$rarecurve<-ggrare(output$model$comm, 50, color="Factor")
+
+  print("metadata complete")
+
+  # implement each normalization function
+      for (i in 1:length(method)){
+        a<-get(method[i])
+        #name(a)<-i
+        b<-output$raw$comm
+        c<-a(b)
+        output[[method[i]]]$comm<-c
+
+
+    output
+}
+
 # needs work!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #' extract and summarize PERMANOVA r-squared values
 #' @param x output object from BENCHMARK.MM or run.analysis2
