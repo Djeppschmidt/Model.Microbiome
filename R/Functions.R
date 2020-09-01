@@ -495,11 +495,22 @@ run.analysis3<-function(commonN, groupN, singleN, D, V, method){
 
     output
 }
-
-#' Run Permanova, make PERMANVOA ratios
-#' @param x output object from BENCHMARK.MM or run.analysis2
+#' Run LII
+#' @param input output object from simulate.MM or run.analysis2
 #' @param item list of items to run PERMANOVA on; must include c("reference", "raw", ... 'other methods')
-#' @param ... names of r ratios to extract. can be one of: "CategoryRratio", "F1Rratio", "F2Rratio","F3Rratio", "F4Rratio", "F5Rratio"
+#' @keywords reference community model microbiome
+#' @export
+#' @examples depricated?
+#' run.LII()
+run.LII<-function(input, item){
+  output<-input
+  for (i in 1:length(item)){
+  output[[item[i]]]$LII<-LII(output$reference$comm, output[[item[i]]]$comm)}
+  output
+  }
+#' Run Permanova, make PERMANVOA ratios
+#' @param input output object from simulate.MM or run.analysis3
+#' @param item list of items to run PERMANOVA on; must include c("reference", "raw", ... 'other methods')
 #' @keywords reference community model microbiome
 #' @export
 #' @examples depricated?
