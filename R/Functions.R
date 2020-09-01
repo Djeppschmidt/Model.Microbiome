@@ -508,6 +508,22 @@ run.LII<-function(input, item){
   output[[item[i]]]$LII<-LII(output$reference$comm, output[[item[i]]]$comm)}
   output
   }
+  #' Run rarecurve
+  #' @param input output object from simulate.MM or run.analysis2
+  #' @param item list of items to run PERMANOVA on; must include c("reference", "raw", ... 'other methods')
+  #' @keywords reference community model microbiome
+  #' @export
+  #' @examples depricated?
+  #' run.rarecurve()
+run.rarecurve<-function(input, item){
+  require(phyloseq)
+  output<-input
+  for (i in 1:length(item)){
+  output[[item[i]]]$rarecurve<-ggrare(output[[item[i]]]$comm, 50, color="Factor")}
+  }
+  output
+}
+
 #' Run Permanova, make PERMANVOA ratios
 #' @param input output object from simulate.MM or run.analysis3
 #' @param item list of items to run PERMANOVA on; must include c("reference", "raw", ... 'other methods')
