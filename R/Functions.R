@@ -288,7 +288,11 @@ run.analysis2<-function(commonN, groupN, singleN, D, V, method){
     output
 }
 
+<<<<<<< HEAD
 #' shell script for benchmarking
+=======
+#' shell script for creating the simulation
+>>>>>>> run.PERMANOVA
 #' @param reps number of replicate communities
 #' @param commonN number of common species
 #' @param groupN number of unique taxa to groups
@@ -411,6 +415,7 @@ run.analysis3<-function(commonN, groupN, singleN, D, V, method){
       rownames(Factors)<-Sites
       colnames(Factors)<-c("F1","F2","F3","F4","F5")
 
+<<<<<<< HEAD
       output<-list("model"=NULL, "spplist"=NULL, "raw"=NULL)
 
       output$spplist<-rando.spp
@@ -433,11 +438,36 @@ run.analysis3<-function(commonN, groupN, singleN, D, V, method){
       sample_data(output$model$comm)$DensityF<-sample_sums(output$model$comm)/mean(sample_sums(output$model$comm))
       sample_data(output$model$comm)$Factor<-as.factor(c(rep("one",5),rep("two",5),rep("three",5),rep("four",5),rep("five",5),rep("six",5)))
       sample_data(output$model$comm)$Factor2<-as.factor(c(rep(1,5),rep(2,5),rep(3,5),rep(4,5),rep(5,5),rep(6,5)))
+=======
+      output<-list("reference"=NULL, "spplist"=NULL, "raw"=NULL)
+
+      output$spplist<-rando.spp
+
+      output$reference$comm<-make.refcomm(rando.spp, Factors) # output a phyloseq object... will make a list of phyloseq objects
+      output$reference$comm<-filter_taxa(output$reference$comm, function(x) sum(x)>0, TRUE)
+      output$reference$EV<-transform_sample_counts(output$reference$comm, function(x) x / sum(x) )
+      output$metrics<-NULL
+      output$metrics$stats<-NULL
+      output$metrics$Richness<-NULL
+      Rich<-estimate_richness(output$reference$comm, measures="Observed")
+      output$metrics$Richness<-Rich
+      output$metrics$skewness<-median(apply(X = otu_table(output$reference$comm), MARGIN=2,FUN = function(x){skewness(x)}))
+
+      sample<-set.seqDepth(D,V)
+      output$raw$comm<-reference.rarefy(output$reference$comm, sample, D, V)
+
+      print("spp selection complete")
+      sample_data(output$reference$comm)$Density<-sample_sums(output$reference$comm)# add sample sums
+      sample_data(output$reference$comm)$DensityF<-sample_sums(output$reference$comm)/mean(sample_sums(output$reference$comm))
+      sample_data(output$reference$comm)$Factor<-as.factor(c(rep("one",5),rep("two",5),rep("three",5),rep("four",5),rep("five",5),rep("six",5)))
+      sample_data(output$reference$comm)$Factor2<-as.factor(c(rep(1,5),rep(2,5),rep(3,5),rep(4,5),rep(5,5),rep(6,5)))
+>>>>>>> run.PERMANOVA
       # remove taxa that have zero abundance in "raw" sequencing run
       tax.filt<-filter_taxa(output$raw$comm, function(x)sum(x)>0)
       output$metrics$tax.lost<-tax.filt
         output$raw$comm<-filter_taxa(output$raw$comm, function(x)sum(x)>0, TRUE)
         # remove taxa that are not kept from sequencing so that they don't penalize downstream methods
+<<<<<<< HEAD
         output$model$comm<-prune_taxa(tax.filt, output$model$comm)
         output$model$EV<-prune_taxa(tax.filt, output$model$EV)
 
@@ -446,6 +476,16 @@ run.analysis3<-function(commonN, groupN, singleN, D, V, method){
           prevalence=apply(X = otu_table(output$model$comm), MARGIN=1,FUN = function(x){sum(x > 0)})
       # for each species: measure relative abundance (proportion of total counts?
           p.abund<-transform_sample_counts(output$model$comm, function(x) x/sum(x) )
+=======
+        output$reference$comm<-prune_taxa(tax.filt, output$reference$comm)
+        output$reference$EV<-prune_taxa(tax.filt, output$reference$EV)
+
+
+      # for each species: measure prevalence
+          prevalence=apply(X = otu_table(output$reference$comm), MARGIN=1,FUN = function(x){sum(x > 0)})
+      # for each species: measure relative abundance (proportion of total counts?
+          p.abund<-transform_sample_counts(output$reference$comm, function(x) x/sum(x) )
+>>>>>>> run.PERMANOVA
 
           mean_abundance<-apply(X = otu_table(p.abund), MARGIN=1,FUN = function(x){mean(x)})
 
@@ -453,6 +493,7 @@ run.analysis3<-function(commonN, groupN, singleN, D, V, method){
       # create a tax table for whole dataset ...
           tab<-data.frame(prevalence, mean_abundance, sd_abundance)
           tab$names<-rownames(tab)
+<<<<<<< HEAD
           output$model$SpeciesMeta<-tab
 
           #output$model$R<-lm.test(output$model$comm)
@@ -460,12 +501,22 @@ run.analysis3<-function(commonN, groupN, singleN, D, V, method){
           #output$raw$networkStat<-ConnStat(output$raw$comm, num=250)
           #if(output$model$networkStat$taxcor$Var1==output$raw$networkStat$taxcor$Var1 & output$model$networkStat$taxcor$Var2==output$raw$networkStat$taxcor$Var2){
           #tab<-output$model$networkStat$taxcor
+=======
+          output$reference$SpeciesMeta<-tab
+
+          #output$reference$R<-lm.test(output$reference$comm)
+          #output$reference$networkStat<-ConnStat(output$reference$comm, num=250)
+          #output$raw$networkStat<-ConnStat(output$raw$comm, num=250)
+          #if(output$reference$networkStat$taxcor$Var1==output$raw$networkStat$taxcor$Var1 & output$reference$networkStat$taxcor$Var2==output$raw$networkStat$taxcor$Var2){
+          #tab<-output$reference$networkStat$taxcor
+>>>>>>> run.PERMANOVA
           #tab$value[tab$value==0]<-min(tab$value[tab$value>0])/10 # 1 orders of magnitude lower than lowest; but not zero!!
           #tab$value<-output$raw$networkStat$taxcor$value/tab$value
           #tab$value[is.na(tab$value)]<-0 # not sure how to deal with this ... ?
           #output$raw$taxCor.Ratio<-tab}
       # make expected value
           s<-sample_sums(output$raw$comm)
+<<<<<<< HEAD
           s2<-as.data.frame(as.matrix(otu_table(output$model$EV)))
           s2<-for (i in 1:ncol(s2)) {s2[,i]<-s2[,i]*s[i]}
           otu_table(output$model$EV)<-otu_table(output$model$EV, taxa_are_rows=TRUE)
@@ -481,6 +532,23 @@ run.analysis3<-function(commonN, groupN, singleN, D, V, method){
           sample_data(output$raw$comm)<-sample_data(output$model$comm)
           #output$model$PERMANOVA<-make.PERMANOVA(output$model$comm)
           #output$model$rarecurve<-ggrare(output$model$comm, 50, color="Factor")
+=======
+          s2<-as.data.frame(as.matrix(otu_table(output$reference$EV)))
+          s2<-for (i in 1:ncol(s2)) {s2[,i]<-s2[,i]*s[i]}
+          otu_table(output$reference$EV)<-otu_table(output$reference$EV, taxa_are_rows=TRUE)
+          M.Eval<-apply(X = otu_table(output$reference$EV), MARGIN=1,FUN = function(x){mean(x[x>0])})
+
+
+      #output$reference$SpeciesMeta$USI<-output$reference$SpeciesMeta$
+      # create a tax table for whole dataset ...
+          tab<-data.frame(prevalence, mean_abundance, sd_abundance, M.Eval)
+          tab$names<-rownames(tab)
+          output$reference$SpeciesMeta<-tab
+          output$reference$R<-lm.test(output$reference$comm)
+          sample_data(output$raw$comm)<-sample_data(output$reference$comm)
+          #output$reference$PERMANOVA<-make.PERMANOVA(output$reference$comm)
+          #output$reference$rarecurve<-ggrare(output$reference$comm, 50, color="Factor")
+>>>>>>> run.PERMANOVA
 
   print("metadata complete")
 
@@ -496,7 +564,42 @@ run.analysis3<-function(commonN, groupN, singleN, D, V, method){
     output
 }
 
+<<<<<<< HEAD
 # needs work!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+=======
+#' Run Permanova, make PERMANVOA ratios
+#' @param x output object from BENCHMARK.MM or run.analysis2
+#' @param item list of items to run PERMANOVA on; must include c("reference", "raw", ... 'other methods')
+#' @param ... names of r ratios to extract. can be one of: "CategoryRratio", "F1Rratio", "F2Rratio","F3Rratio", "F4Rratio", "F5Rratio"
+#' @keywords reference community model microbiome
+#' @export
+#' @examples depricated?
+#' run.PERMANOVA()
+run.PERMANOVA<-function(input, item){
+  output<-input
+  for (i in 1:length(item)){
+    output[[item[i]]]$PERMANOVA<-make.PERMANOVA(item[i])}
+  for (i in 2:length(item)){
+    output[[item[i]]]$PERMANOVA$CategoryRratio<-output[[item[i]]]$PERMANOVA$Category$aov.tab$R2/output$reference$PERMANOVA$Category$aov.tab$R2
+    output[[item[i]]]$PERMANOVA$F1Rratio<-output[[item[i]]]$PERMANOVA$F1$aov.tab$R2/output$reference$PERMANOVA$F1$aov.tab$R2
+    output[[item[i]]]$PERMANOVA$F2Rratio<-output[[item[i]]]$PERMANOVA$F2$aov.tab$R2/output$reference$PERMANOVA$F2$aov.tab$R2
+    output[[item[i]]]$PERMANOVA$F3Rratio<-output[[item[i]]]$PERMANOVA$F3$aov.tab$R2/output$reference$PERMANOVA$F3$aov.tab$R2
+    output[[item[i]]]$PERMANOVA$F4Rratio<-output[[item[i]]]$PERMANOVA$F4$aov.tab$R2/output$reference$PERMANOVA$F4$aov.tab$R2
+    output[[item[i]]]$PERMANOVA$F5Rratio<-output[[item[i]]]$PERMANOVA$F5$aov.tab$R2/output$reference$PERMANOVA$F5$aov.tab$R2
+
+    names(output[[method[i]]]$PERMANOVA$CategoryRratio)<-c("R ratio", "Residual ratio", "total")
+    names(output[[method[i]]]$PERMANOVA$F1Rratio)<-c("R ratio", "Residual ratio", "total")
+    names(output[[method[i]]]$PERMANOVA$F2Rratio)<-c("R ratio", "Residual ratio", "total")
+    names(output[[method[i]]]$PERMANOVA$F3Rratio)<-c("R ratio", "Residual ratio", "total")
+    names(output[[method[i]]]$PERMANOVA$F4Rratio)<-c("R ratio", "Residual ratio", "total")
+    names(output[[method[i]]]$PERMANOVA$F5Rratio)<-c("R ratio", "Residual ratio", "total")
+
+  }
+output
+}
+
+
+>>>>>>> run.PERMANOVA
 #' extract and summarize PERMANOVA r-squared values
 #' @param x output object from BENCHMARK.MM or run.analysis2
 #' @param method list of methods applied
