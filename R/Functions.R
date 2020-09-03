@@ -41,7 +41,8 @@ run.analysis2<-function(commonN, groupN, singleN, D, V, method){
       AllSpp<-lapply(AllSpp, get) # connect function to name
       AllSpp<-unlist(AllSpp)  # format to be read by downstream functions
       names(AllSpp)<-c(paste0("spp", c(1:700)))
-
+      spike<-c("spike1", "spike2", "spike3")
+      
       # Define list of 5 species w/ global distribution
       global.spp<-names(sample(AllSpp, commonN, replace=F))
 
@@ -288,7 +289,6 @@ run.analysis2<-function(commonN, groupN, singleN, D, V, method){
     output
 }
 
-<<<<<<< HEAD
 #' shell script for creating the simulation
 #' @param reps number of replicate communities
 #' @param commonN number of common species
@@ -556,9 +556,6 @@ output
 }
 
 
-=======
-# needs work!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
->>>>>>> spike1-3
 #' extract and summarize PERMANOVA r-squared values
 #' @param x output object from BENCHMARK.MM or run.analysis2
 #' @param method list of methods applied
