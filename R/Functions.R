@@ -41,8 +41,7 @@ run.analysis2<-function(commonN, groupN, singleN, D, V, method){
       AllSpp<-lapply(AllSpp, get) # connect function to name
       AllSpp<-unlist(AllSpp)  # format to be read by downstream functions
       names(AllSpp)<-c(paste0("spp", c(1:700)))
-      spike<-c("spike1", "spike2", "spike3")
-      
+
       # Define list of 5 species w/ global distribution
       global.spp<-names(sample(AllSpp, commonN, replace=F))
 
@@ -320,15 +319,21 @@ simulate.MM<-function(reps, commonN, groupN, singleN, D, V, method){
 #' @export
 #' @examples
 #' run.analysis3()
-run.analysis3<-function(commonN, groupN, singleN, D, V, method){
+run.analysis3<-function(commonN, groupN, singleN, D, V, method, spike=F){
       AllSpp<-c(paste0("spp", c(1:700), sep="")) # make a quick list of all species functions
       AllSpp<-lapply(AllSpp, get) # connect function to name
       AllSpp<-unlist(AllSpp)  # format to be read by downstream functions
       names(AllSpp)<-c(paste0("spp", c(1:700)))
-
+if(spike==T){
+      spike<-c("spike1", "spike2", "spike3")
+      spike<-lapply(spike, get)
+      spike<-unlist(spike)
+      names(spike)<-c("spike1", "spike2", "spike3")
       # Define list of 5 species w/ global distribution
+      global.spp<-c(names(spike), names(sample(AllSpp, commonN, replace=F))
+    } else{
       global.spp<-names(sample(AllSpp, commonN, replace=F))
-
+}
   # define list of species w/ regional distribution
       group.spp<-NULL
       group.spp$group1<-names(sample(AllSpp, groupN, replace=F))
