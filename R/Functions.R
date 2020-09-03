@@ -288,6 +288,7 @@ run.analysis2<-function(commonN, groupN, singleN, D, V, method){
     output
 }
 
+<<<<<<< HEAD
 #' shell script for creating the simulation
 #' @param reps number of replicate communities
 #' @param commonN number of common species
@@ -555,6 +556,9 @@ output
 }
 
 
+=======
+# needs work!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+>>>>>>> spike1-3
 #' extract and summarize PERMANOVA r-squared values
 #' @param x output object from BENCHMARK.MM or run.analysis2
 #' @param method list of methods applied
@@ -1805,7 +1809,45 @@ make.table2<-function(comm, r){
     data_sum <- rename(data_sum, c("median" = varname))
    return(data_sum)
   }
-
+  #' function for spike in species 1
+  #' @param a environmental parameter
+  #' @param b environmental parameter
+  #' @param c environmental parameter
+  #' @param d environmental parameter
+  #' @param e environmental parameter
+  #' @keywords species function
+  #' @export
+  #' @examples
+  #' spike1()
+  spike1<-function(a,b,c,d,e) {
+    10+(0*(a+b+c+d+e))
+  }
+  #' function for spike in species 2
+  #' @param a environmental parameter
+  #' @param b environmental parameter
+  #' @param c environmental parameter
+  #' @param d environmental parameter
+  #' @param e environmental parameter
+  #' @keywords species function
+  #' @export
+  #' @examples
+  #' spike2()
+  spike2<-function(a,b,c,d,e) {
+    100+(0*(a+b+c+d+e))
+  }
+  #' function for spike in species 3
+  #' @param a environmental parameter
+  #' @param b environmental parameter
+  #' @param c environmental parameter
+  #' @param d environmental parameter
+  #' @param e environmental parameter
+  #' @keywords species function
+  #' @export
+  #' @examples
+  #' spike3()
+  spike3<-function(a,b,c,d,e) {
+    1000+(0*(a+b+c+d+e))
+  }
 #' species function
 #' @param a environmental parameter
 #' @param b environmental parameter
