@@ -434,7 +434,7 @@ run.analysis3<-function(commonN, groupN, singleN, D, V, method, Spike=F){
       output$metrics$skewness<-median(apply(X = otu_table(output$reference$comm), MARGIN=2,FUN = function(x){skewness(x)}))
 
       sample<-set.seqDepth(D,V)
-      output$raw$comm<-reference.rarefy(output$reference$comm, sample, D, V)
+      output$raw$comm<-model.rarefy(output$reference$comm, sample, D, V)
 
       print("spp selection complete")
       sample_data(output$reference$comm)$Density<-sample_sums(output$reference$comm)# add sample sums
