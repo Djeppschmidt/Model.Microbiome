@@ -296,11 +296,12 @@ run.analysis2<-function(commonN, groupN, singleN, D, V, method){
 #' @param D average sampling depth
 #' @param V variation in sampling depth
 #' @param method list of function names to be used in analysis
+#' @param Spike whether or not to use the spike in functions. If spike==T, then any normalization function that does not include using the spike in, should filter the spikein before doing other normalization steps.
 #' @keywords benchmark
 #' @export
 #' @examples test.script<-benchmark.MM(reps=3, commonN=20, groupN=10, singleN=10, D=2000, V=1000)
 #'benchmark.MM()
-simulate.MM<-function(reps, commonN, groupN, singleN, D, V, method){
+simulate.MM<-function(reps, commonN, groupN, singleN, D, V, method, Spike=T){
   require(phyloseq)
   array<-c(rep(commonN, reps))
   names(array)<-c(paste0("rep", 1:reps, sep=""))
@@ -314,27 +315,27 @@ simulate.MM<-function(reps, commonN, groupN, singleN, D, V, method){
 #' @param singleN number of unique taxa to samples
 #' @param D average sampling depth
 #' @param V variation in sampling depth
-#' @param spike whether or not to use the spike in functions. If spike==T, then any normalization function that does not include using the spike in, should filter the spikein before doing other normalization steps.
+#' @param Spike whether or not to use the spike in functions. If spike==T, then any normalization function that does not include using the spike in, should filter the spikein before doing other normalization steps.
 #' @param method list of function names to be applied as normalization
 #' @keywords benchmark
 #' @export
 #' @examples
 #' run.analysis3()
-run.analysis3<-function(commonN, groupN, singleN, D, V, method, spike=F){
+run.analysis3<-function(commonN, groupN, singleN, D, V, method, Spike=F){
       AllSpp<-c(paste0("spp", c(1:700), sep="")) # make a quick list of all species functions
       AllSpp<-lapply(AllSpp, get) # connect function to name
       AllSpp<-unlist(AllSpp)  # format to be read by downstream functions
       names(AllSpp)<-c(paste0("spp", c(1:700)))
-if(spike==T){
+      if(Spike==TRUE){
       spike<-c("spike1", "spike2", "spike3")
       spike<-lapply(spike, get)
       spike<-unlist(spike)
       names(spike)<-c("spike1", "spike2", "spike3")
       # Define list of 5 species w/ global distribution
-      global.spp<-c(names(spike), names(sample(AllSpp, commonN, replace=F))
-    } else{
+      global.spp<-c(names(spike), names(sample(AllSpp, commonN, replace=F)))
+      } else {
       global.spp<-names(sample(AllSpp, commonN, replace=F))
-}
+      }
   # define list of species w/ regional distribution
       group.spp<-NULL
       group.spp$group1<-names(sample(AllSpp, groupN, replace=F))
@@ -462,15 +463,6 @@ if(spike==T){
           tab$names<-rownames(tab)
           output$reference$SpeciesMeta<-tab
 
-          #output$reference$R<-lm.test(output$reference$comm)
-          #output$reference$networkStat<-ConnStat(output$reference$comm, num=250)
-          #output$raw$networkStat<-ConnStat(output$raw$comm, num=250)
-          #if(output$reference$networkStat$taxcor$Var1==output$raw$networkStat$taxcor$Var1 & output$reference$networkStat$taxcor$Var2==output$raw$networkStat$taxcor$Var2){
-          #tab<-output$reference$networkStat$taxcor
-          #tab$value[tab$value==0]<-min(tab$value[tab$value>0])/10 # 1 orders of magnitude lower than lowest; but not zero!!
-          #tab$value<-output$raw$networkStat$taxcor$value/tab$value
-          #tab$value[is.na(tab$value)]<-0 # not sure how to deal with this ... ?
-          #output$raw$taxCor.Ratio<-tab}
       # make expected value
           s<-sample_sums(output$raw$comm)
           s2<-as.data.frame(as.matrix(otu_table(output$reference$EV)))
@@ -478,16 +470,13 @@ if(spike==T){
           otu_table(output$reference$EV)<-otu_table(output$reference$EV, taxa_are_rows=TRUE)
           M.Eval<-apply(X = otu_table(output$reference$EV), MARGIN=1,FUN = function(x){mean(x[x>0])})
 
-
-      #output$reference$SpeciesMeta$USI<-output$reference$SpeciesMeta$
       # create a tax table for whole dataset ...
           tab<-data.frame(prevalence, mean_abundance, sd_abundance, M.Eval)
           tab$names<-rownames(tab)
           output$reference$SpeciesMeta<-tab
           output$reference$R<-lm.test(output$reference$comm)
           sample_data(output$raw$comm)<-sample_data(output$reference$comm)
-          #output$reference$PERMANOVA<-make.PERMANOVA(output$reference$comm)
-          #output$reference$rarecurve<-ggrare(output$reference$comm, 50, color="Factor")
+
 
   print("metadata complete")
 
@@ -499,8 +488,8 @@ if(spike==T){
         c<-a(b)
         output[[method[i]]]$comm<-c
 
-
-    output
+      }
+      output
 }
 #' Run LII
 #' @param input output object from simulate.MM or run.analysis2
