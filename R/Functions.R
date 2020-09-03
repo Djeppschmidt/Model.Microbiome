@@ -314,6 +314,7 @@ simulate.MM<-function(reps, commonN, groupN, singleN, D, V, method){
 #' @param singleN number of unique taxa to samples
 #' @param D average sampling depth
 #' @param V variation in sampling depth
+#' @param spike whether or not to use the spike in functions. If spike==T, then any normalization function that does not include using the spike in, should filter the spikein before doing other normalization steps.
 #' @param method list of function names to be applied as normalization
 #' @keywords benchmark
 #' @export
