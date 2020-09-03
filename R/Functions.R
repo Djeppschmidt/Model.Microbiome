@@ -1539,7 +1539,7 @@ make.table2<-function(comm, r){
     data_sum <- rename(data_sum, c("median" = varname))
    return(data_sum)
   }
-  #' species function
+  #' function for spike in species 1
   #' @param a environmental parameter
   #' @param b environmental parameter
   #' @param c environmental parameter
@@ -1549,7 +1549,35 @@ make.table2<-function(comm, r){
   #' @export
   #' @examples
   #' spike1()
-  spike1<-function(a,b,c,d,e) {(0*(a+b+c+d+e))}
+  spike1<-function(a,b,c,d,e) {
+    10+(0*(a+b+c+d+e))
+  }
+  #' function for spike in species 2
+  #' @param a environmental parameter
+  #' @param b environmental parameter
+  #' @param c environmental parameter
+  #' @param d environmental parameter
+  #' @param e environmental parameter
+  #' @keywords species function
+  #' @export
+  #' @examples
+  #' spike2()
+  spike2<-function(a,b,c,d,e) {
+    100+(0*(a+b+c+d+e))
+  }
+  #' function for spike in species 3
+  #' @param a environmental parameter
+  #' @param b environmental parameter
+  #' @param c environmental parameter
+  #' @param d environmental parameter
+  #' @param e environmental parameter
+  #' @keywords species function
+  #' @export
+  #' @examples
+  #' spike3()
+  spike3<-function(a,b,c,d,e) {
+    1000+(0*(a+b+c+d+e))
+  }
 #' species function
 #' @param a environmental parameter
 #' @param b environmental parameter
