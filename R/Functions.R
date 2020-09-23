@@ -1092,6 +1092,21 @@ compete<-function(otu, gtab){
   # let's first test this functionality then work on merging back to phyloseq?
   out
 }
+#' wrapper for running adjustment for species interactions / core function
+#' @param ps phylosq object to pull the otu table from
+#' @param gtab table of taxa as rows + guilds + keyestone species
+#' @keywords species interactions guilds groups
+#' @export
+#' @examples
+#' run.compete()
+run.compete<-function(ps, gtab){
+  require(phyloseq)
+  ps2<-ps
+  otu<-as.data.frame(as.matrix(otu_table(ps)))
+  otu<-run.compete(otu, gtab)
+  otu_table(ps2)<-otu_table(otu, taxa_are_rows = T)
+  ps2
+}
 
 #' geometric mean function for deseq functions
 #' @param x data table of community values
