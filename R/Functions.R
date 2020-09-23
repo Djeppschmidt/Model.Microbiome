@@ -1061,6 +1061,37 @@ make.guildtab<-function(ps){
   df<-data.frame(Tax, Guild, Keyestone)
   df
 }
+#' run adjustment for species interactions / core function
+#' @param ps phyloseq object
+#' @param gtab table of taxa + guilds + keyestone species
+#' @keywords species interactions guilds groups
+#' @export
+#' @examples
+#' compete()
+compete<-function(otu, gtab){
+  require(phyloseq)
+  if(!identical(rownames(otu), rownames(gtab))){stop("species names do not match. Check df orientation")}
+  # make df of transformation vectors
+  newdf<-otu
+  for(i in 1:ncol(otu)){
+    if(length(gtab$Guild[otu[[i]]>0 & gtab$Keyestone>0])!=0){
+      dom<-getmode(gtab$Guild[otu[[i]]>0 & gtab$Keyestone>0])
+      newdf[[i]][gtab$Guild==dom]<-1.8
+      newdf[[i]][gtab$Guild!=dom]<-0.1
+    } else {
+    dom<-getmode(gtab$Guild[otu[[i]]>0])
+    newdf[[i]][gtab$Guild==dom]<-1
+    newdf[[i]][gtab$Guild!=dom]<-1
+    }
+  }
+
+  out<-otu*newdf  # multiply dataframes
+  out<-round(out) # round out low values
+
+  # merge back into phyloseq object
+  # let's first test this functionality then work on merging back to phyloseq?
+  out
+}
 
 #' geometric mean function for deseq functions
 #' @param x data table of community values
