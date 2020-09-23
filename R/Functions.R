@@ -1062,8 +1062,8 @@ make.guildtab<-function(ps){
   df
 }
 #' run adjustment for species interactions / core function
-#' @param ps phyloseq object
-#' @param gtab table of taxa + guilds + keyestone species
+#' @param otu otu table with taxa as rows
+#' @param gtab table of taxa as rows + guilds + keyestone species
 #' @keywords species interactions guilds groups
 #' @export
 #' @examples
