@@ -1047,6 +1047,20 @@ set.seqDepth<-function(b, c){
   depth
 }
 
+#' make guild and keyestone species table for the interaction functions;10% are keystone spp, all get a randomly assigned guild
+#' @param ps phyloseq object
+#' @keywords species interactions guilds groups
+#' @export
+#' @examples
+#' make.guildtab()
+make.guildtab<-function(ps){
+  require(phyloseq)
+  Tax<-tax_names(ps)
+  Guild<-sample(c(1:6), length(tax), replace=TRUE)
+  Keyestone<-sample(c(1, rep(0, 9)), length(tax))
+  df<-data.frame(Tax, Guild, Keyestone)
+  df
+}
 
 #' geometric mean function for deseq functions
 #' @param x data table of community values
