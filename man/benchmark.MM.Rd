@@ -4,7 +4,7 @@
 \alias{BENCHMARK.MM}
 \title{shell script for benchmarking}
 \usage{
-BENCHMARK.MM(reps, commonN, groupN, singleN, D, V, method)
+BENCHMARK.MM(reps, commonN, groupN, singleN, D, V, method, interact)
 }
 \arguments{
 \item{reps}{number of replicate communities}
