@@ -1052,7 +1052,7 @@ set.seqDepth<-function(b, c){
   depth
 }
 
-#' make guild and keyestone species table for the interaction functions;10% are keystone spp, all get a randomly assigned guild
+#' make guild and keyestone species table for the interaction functions;
 #' @param ps phyloseq object
 #' @keywords species interactions guilds groups
 #' @export

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Functions.R
 \name{make.guildtab}
 \alias{make.guildtab}
-\title{make guild and keyestone species table for the interaction functions;10% are keystone spp, all get a randomly assigned guild}
+\title{make guild and keyestone species table for the interaction functions;}
 \usage{
 make.guildtab(ps)
 }
@@ -10,7 +10,7 @@ make.guildtab(ps)
 \item{ps}{phyloseq object}
 }
 \description{
-make guild and keyestone species table for the interaction functions;10% are keystone spp, all get a randomly assigned guild
+make guild and keyestone species table for the interaction functions;
 }
 \examples{
 make.guildtab()
