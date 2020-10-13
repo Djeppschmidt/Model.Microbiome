@@ -1065,6 +1065,7 @@ make.guildtab<-function(ps){
   Keyestone<-sample(c(1, rep(0, 9)), length(Tax), replace=TRUE)
   df<-data.frame(Tax, Guild, Keyestone)
   rownames(df)<-df$Tax
+  subset(df, df$Tax!="spike1"|df$Tax!="spike2"|df$Tax!="spike3")
   df
 }
 #' run adjustment for species interactions / core function
@@ -1082,11 +1083,11 @@ compete<-function(otu, gtab){
   for(i in 1:ncol(otu)){
     if(length(gtab$Guild[otu[[i]]>0 & gtab$Keyestone>0])!=0){
       dom<-getmode(gtab$Guild[otu[[i]]>0 & gtab$Keyestone>0])
-      newdf[[i]][gtab$Guild==dom]<-1.8
+      newdf[[i]][gtab$Guild==dom]<-10
       newdf[[i]][gtab$Guild!=dom]<-0.1
     } else {
     dom<-getmode(gtab$Guild[otu[[i]]>0])
-    newdf[[i]][gtab$Guild==dom]<-1.8
+    newdf[[i]][gtab$Guild==dom]<-10
     newdf[[i]][gtab$Guild!=dom]<-0.1
     }
   }
@@ -1117,11 +1118,13 @@ getmode <- function(v) {
 #' run.compete()
 run.compete<-function(ps, gtab){
   require(phyloseq)
-  ps2<-ps
-  otu<-as.data.frame(as.matrix(otu_table(ps)))
-  otu<-compete(otu, gtab)
+  ps2<-filter_taxa(taxa_names(ps)!="spike1"|taxa_names(ps)!="spike2"|taxa_names(ps)!="spike3",ps)
+  otu<-as.data.frame(as.matrix(otu_table(ps2)))
+  otu<-compete(otu2, gtab)
   otu_table(ps2)<-otu_table(otu, taxa_are_rows = T)
-  ps2
+  ps3<-filter_taxa(taxa_names(ps)=="spike1"|taxa_names(ps)=="spike2"|taxa_names(ps)=="spike3",ps)
+  out<-merge_phyloseq(ps2, ps3)
+  out # test this!!
 }
 
 #' geometric mean function for deseq functions
