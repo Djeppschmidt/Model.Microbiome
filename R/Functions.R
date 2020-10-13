@@ -306,7 +306,7 @@ simulate.MM<-function(reps, commonN, groupN, singleN, D, V, method, Spike=T, Int
   require(phyloseq)
   array<-c(rep(commonN, reps))
   names(array)<-c(paste0("rep", 1:reps, sep=""))
-  array<-sapply(array, run.analysis3, simplify=F, USE.NAMES = T, groupN, singleN, D, V, method, Spike)
+  array<-sapply(array, run.analysis3, simplify=F, USE.NAMES = T, groupN, singleN, D, V, method, Spike, Interact)
   array
 }
 
