@@ -429,7 +429,7 @@ run.analysis3<-function(commonN, groupN, singleN, D, V, method, Spike, Interact)
       output$reference$comm<-filter_taxa(output$reference$comm, function(x) sum(x)>0, TRUE)
       if(Interact==T){
         output$reference$GuildID<-make.guildtab(output$reference$comm)
-        output$reference$comm<-compete(output$reference$comm, output$reference$GuildID)
+        output$reference$comm<-run.compete(output$reference$comm, output$reference$GuildID)
       }
       output$reference$EV<-transform_sample_counts(output$reference$comm, function(x) x / sum(x) )
       output$metrics<-NULL
