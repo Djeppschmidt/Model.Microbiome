@@ -4,7 +4,7 @@
 \alias{simulate.MM}
 \title{shell script for creating the simulation}
 \usage{
-\method{simulate}{MM}(reps, commonN, groupN, singleN, D, V, method)
+\method{simulate}{MM}(reps, commonN, groupN, singleN, D, V, method, Spike = T, Interact = T)
 }
 \arguments{
 \item{reps}{number of replicate communities}
@@ -20,6 +20,10 @@
 \item{V}{variation in sampling depth}
 
 \item{method}{list of function names to be used in analysis}
+
+\item{Spike}{whether or not to use the spike in functions. If spike==T, then any normalization function that does not include using the spike in, should filter the spikein before doing other normalization steps.}
+
+\item{interact}{whether or not have taxa interact}
 }
 \description{
 shell script for creating the simulation

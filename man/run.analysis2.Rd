@@ -4,7 +4,7 @@
 \alias{run.analysis2}
 \title{workhorse function for BENCHMARK.MM}
 \usage{
-run.analysis2(commonN, groupN, singleN, D, V, method)
+run.analysis2(commonN, groupN, singleN, D, V, method, interact)
 }
 \arguments{
 \item{commonN}{number of common species}

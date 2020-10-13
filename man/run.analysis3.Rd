@@ -4,7 +4,7 @@
 \alias{run.analysis3}
 \title{workhorse function for simulate.MM}
 \usage{
-run.analysis3(commonN, groupN, singleN, D, V, method)
+run.analysis3(commonN, groupN, singleN, D, V, method, Spike, Interact)
 }
 \arguments{
 \item{commonN}{number of common species}
@@ -19,24 +19,14 @@ run.analysis3(commonN, groupN, singleN, D, V, method)
 
 \item{method}{list of function names to be applied as normalization}
 
-\item{input}{output object from simulate.MM or run.analysis2}
+\item{Spike}{whether or not to use the spike in functions. If spike==T, then any normalization function that does not include using the spike in, should filter the spikein before doing other normalization steps.}
 
-\item{item}{list of items to run PERMANOVA on; must include c("reference", "raw", ... 'other methods')}
+\item{Interact}{logical should species interact}
 }
 \description{
 workhorse function for simulate.MM
 }
 \examples{
 run.analysis3()
-Run LII
-depricated?
-run.LII()
-Run rarecurve
-depricated?
-run.rarecurve()
 }
 \keyword{benchmark}
-\keyword{community}
-\keyword{microbiome}
-\keyword{model}
-\keyword{reference}
