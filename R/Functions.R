@@ -1119,7 +1119,7 @@ run.compete<-function(ps, gtab){
   require(phyloseq)
   ps2<-ps
   otu<-as.data.frame(as.matrix(otu_table(ps)))
-  otu<-run.compete(otu, gtab)
+  otu<-compete(otu, gtab)
   otu_table(ps2)<-otu_table(otu, taxa_are_rows = T)
   ps2
 }
