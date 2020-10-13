@@ -428,7 +428,7 @@ run.analysis3<-function(commonN, groupN, singleN, D, V, method, Spike, Interact)
       output$reference$comm<-make.refcomm(rando.spp, Factors) # output a phyloseq object... will make a list of phyloseq objects
       output$reference$comm<-filter_taxa(output$reference$comm, function(x) sum(x)>0, TRUE)
       if(Interact==T){
-        output$reference$GuildID<-make.Guildtab(output$reference$comm)
+        output$reference$GuildID<-make.guildtab(output$reference$comm)
         output$reference$comm<-compete(output$reference$comm, output$reference$GuildID)
       }
       output$reference$EV<-transform_sample_counts(output$reference$comm, function(x) x / sum(x) )
@@ -1068,15 +1068,19 @@ make.guildtab<-function(ps){
   df
 }
 #' run adjustment for species interactions / core function
-#' @param otu otu table with taxa as rows
+#' @param ps otu table with taxa as rows
 #' @param gtab table of taxa as rows + guilds + keyestone species
 #' @keywords species interactions guilds groups
 #' @export
 #' @examples
 #' compete()
-compete<-function(otu, gtab){
+compete<-function(ps, gtab){
   require(phyloseq)
-  if(!identical(rownames(otu), rownames(gtab))){stop("species names do not match. Check df orientation")}
+  otu<-as.data.frame(as.matrix(otu_table(ps)))
+  if(!identical(rownames(otu), rownames(gtab))){
+    otu<-t(as.data.frame(as.matrix(otu_table(ps))))
+  }
+  if(!identical(rownames(otu), rownames(gtab))){stop("taxa names do not match")}
   # make df of transformation vectors
   newdf<-otu
   for(i in 1:ncol(otu)){
@@ -1093,10 +1097,10 @@ compete<-function(otu, gtab){
 
   out<-otu*newdf  # multiply dataframes
   out<-round(out) # round out low values
-
-  # merge back into phyloseq object
+  out1<-ps
+  otu_table(out1)<-otu_table(out, taxa_are_rows=T)# merge back into phyloseq object
   # let's first test this functionality then work on merging back to phyloseq?
-  out
+  out1
 }
 #' wrapper for running adjustment for species interactions / core function
 #' @param ps phylosq object to pull the otu table from
