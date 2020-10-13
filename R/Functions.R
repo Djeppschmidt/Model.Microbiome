@@ -1061,10 +1061,11 @@ set.seqDepth<-function(b, c){
 #' make.guildtab()
 make.guildtab<-function(ps){
   require(phyloseq)
-  Tax<-tax_names(ps)
-  Guild<-sample(c(1:6), length(tax), replace=TRUE)
-  Keyestone<-sample(c(1, rep(0, 9)), length(tax))
+  Tax<-taxa_names(ps)
+  Guild<-sample(c(1:6), length(Tax), replace=TRUE)
+  Keyestone<-sample(c(1, rep(0, 9)), length(Tax), replace=TRUE)
   df<-data.frame(Tax, Guild, Keyestone)
+  rownames(df)<-df$Tax
   df
 }
 #' run adjustment for species interactions / core function
@@ -1074,12 +1075,8 @@ make.guildtab<-function(ps){
 #' @export
 #' @examples
 #' compete()
-compete<-function(ps, gtab){
+compete<-function(otu, gtab){
   require(phyloseq)
-  otu<-as.data.frame(as.matrix(otu_table(ps)))
-  if(!identical(rownames(otu), rownames(gtab))){
-    otu<-t(as.data.frame(as.matrix(otu_table(ps))))
-  }
   if(!identical(rownames(otu), rownames(gtab))){stop("taxa names do not match")}
   # make df of transformation vectors
   newdf<-otu
@@ -1097,11 +1094,21 @@ compete<-function(ps, gtab){
 
   out<-otu*newdf  # multiply dataframes
   out<-round(out) # round out low values
-  out1<-ps
-  otu_table(out1)<-otu_table(out, taxa_are_rows=T)# merge back into phyloseq object
+  # merge back into phyloseq object
   # let's first test this functionality then work on merging back to phyloseq?
-  out1
+  out
 }
+#' mode function
+#' @param v vector to get mode from
+#' @keywords species interactions guilds groups
+#' @export
+#' @examples
+#' getmode()
+getmode <- function(v) {
+  uniqv <- unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
 #' wrapper for running adjustment for species interactions / core function
 #' @param ps phylosq object to pull the otu table from
 #' @param gtab table of taxa as rows + guilds + keyestone species
