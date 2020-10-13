@@ -12,7 +12,7 @@
 #' @export
 #' @examples test.script<-benchmark.MM(reps=3, commonN=20, groupN=10, singleN=10, D=2000, V=1000)
 #'benchmark.MM()
-BENCHMARK.MM<-function(reps, commonN, groupN, singleN, D, V, method){
+BENCHMARK.MM<-function(reps, commonN, groupN, singleN, D, V, method, interact){
   require(phyloseq)
   #require(ModelMicrobiome)
   require(limma)
@@ -36,7 +36,7 @@ BENCHMARK.MM<-function(reps, commonN, groupN, singleN, D, V, method){
 #' @export
 #' @examples
 #' run.analysis2()
-run.analysis2<-function(commonN, groupN, singleN, D, V, method){
+run.analysis2<-function(commonN, groupN, singleN, D, V, method, interact){
       AllSpp<-c(paste0("spp", c(1:700), sep="")) # make a quick list of all species functions
       AllSpp<-lapply(AllSpp, get) # connect function to name
       AllSpp<-unlist(AllSpp)  # format to be read by downstream functions
@@ -297,11 +297,12 @@ run.analysis2<-function(commonN, groupN, singleN, D, V, method){
 #' @param V variation in sampling depth
 #' @param method list of function names to be used in analysis
 #' @param Spike whether or not to use the spike in functions. If spike==T, then any normalization function that does not include using the spike in, should filter the spikein before doing other normalization steps.
+#' @param interact whether or not have taxa interact
 #' @keywords benchmark
 #' @export
 #' @examples test.script<-benchmark.MM(reps=3, commonN=20, groupN=10, singleN=10, D=2000, V=1000)
 #'benchmark.MM()
-simulate.MM<-function(reps, commonN, groupN, singleN, D, V, method, Spike=T){
+simulate.MM<-function(reps, commonN, groupN, singleN, D, V, method, Spike=T, Interact=T){
   require(phyloseq)
   array<-c(rep(commonN, reps))
   names(array)<-c(paste0("rep", 1:reps, sep=""))
@@ -317,11 +318,12 @@ simulate.MM<-function(reps, commonN, groupN, singleN, D, V, method, Spike=T){
 #' @param V variation in sampling depth
 #' @param Spike whether or not to use the spike in functions. If spike==T, then any normalization function that does not include using the spike in, should filter the spikein before doing other normalization steps.
 #' @param method list of function names to be applied as normalization
+#' @param Interact logical should species interact
 #' @keywords benchmark
 #' @export
 #' @examples
 #' run.analysis3()
-run.analysis3<-function(commonN, groupN, singleN, D, V, method, Spike=F){
+run.analysis3<-function(commonN, groupN, singleN, D, V, method, Spike, Interact){
       AllSpp<-c(paste0("spp", c(1:700), sep="")) # make a quick list of all species functions
       AllSpp<-lapply(AllSpp, get) # connect function to name
       AllSpp<-unlist(AllSpp)  # format to be read by downstream functions
@@ -425,6 +427,10 @@ run.analysis3<-function(commonN, groupN, singleN, D, V, method, Spike=F){
 
       output$reference$comm<-make.refcomm(rando.spp, Factors) # output a phyloseq object... will make a list of phyloseq objects
       output$reference$comm<-filter_taxa(output$reference$comm, function(x) sum(x)>0, TRUE)
+      if(Interact==T){
+        output$reference$GuildID<-make.Guildtab(output$reference$comm)
+        output$reference$comm<-compete(output$reference$comm, output$reference$GuildID)
+      }
       output$reference$EV<-transform_sample_counts(output$reference$comm, function(x) x / sum(x) )
       output$metrics<-NULL
       output$metrics$stats<-NULL
