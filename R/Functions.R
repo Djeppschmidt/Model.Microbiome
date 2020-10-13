@@ -522,7 +522,6 @@ run.rarecurve<-function(input, item){
   output<-input
   for (i in 1:length(item)){
   output[[item[i]]]$rarecurve<-ggrare(output[[item[i]]]$comm, 50, color="Factor")}
-  }
   output
 }
 
@@ -1087,8 +1086,8 @@ compete<-function(otu, gtab){
       newdf[[i]][gtab$Guild!=dom]<-0.1
     } else {
     dom<-getmode(gtab$Guild[otu[[i]]>0])
-    newdf[[i]][gtab$Guild==dom]<-1
-    newdf[[i]][gtab$Guild!=dom]<-1
+    newdf[[i]][gtab$Guild==dom]<-1.8
+    newdf[[i]][gtab$Guild!=dom]<-0.1
     }
   }
 
