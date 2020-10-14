@@ -1065,7 +1065,7 @@ make.guildtab<-function(ps){
   Keyestone<-sample(c(1, rep(0, 9)), length(Tax), replace=TRUE)
   df<-data.frame(Tax, Guild, Keyestone)
   rownames(df)<-df$Tax
-  df<-subset(df, df$Tax!="spike1"|df$Tax!="spike2"|df$Tax!="spike3")
+  df<-subset(df, df$Tax!="spike1"&df$Tax!="spike2"&df$Tax!="spike3")
   df
 }
 #' run adjustment for species interactions / core function
