@@ -834,6 +834,7 @@ for(i in 1:length(Comm1)) {
       }
 }
 }
+
 #' subsample community
 #' @param comm1 phyloseq object
 #' @param sample vector of arbitrary sampling depth set by set.seqDepth()
