@@ -1077,7 +1077,7 @@ make.guildtab<-function(ps){
 #' compete()
 compete<-function(otu, gtab){
   require(phyloseq)
-  if(!identical(rownames(otu), rownames(gtab))){stop("taxa names do not match")}
+  if(!identical(rownames(otu), rownames(gtab))){stop("taxa names do not match", setdiff(rownames(otu), rownames(gtab)))}
   # make df of transformation vectors
   newdf<-otu
   for(i in 1:ncol(otu)){
