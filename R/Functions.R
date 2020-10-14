@@ -873,10 +873,10 @@ make.table<-function(comm1, sample){
       comm3<-merge_phyloseq(comm1, comm2)
       m2<-as.data.frame(as.matrix(otu_table(comm3)))
       m2<-m2[order(rownames(m2)),]
-      if(colnames(m2)!=colnames(otu)){
+      if(!identical(colnames(m2),colnames(otu))){
         stop("error: colnames do not match in rarefaction")
       }
-      if(rownames(m2)!=rownames(otu)){
+      if(!identical(rownames(m2), rownames(otu))){
         stop("error: rownames do not match in rarefaction")
       }
       otu_table(comm3)<-otu_table(m2, taxa_are_rows=T)
