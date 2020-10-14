@@ -1118,7 +1118,7 @@ getmode <- function(v) {
 #' run.compete()
 run.compete<-function(ps, gtab){
   require(phyloseq)
-  ps2<-filter_taxa(taxa_names(ps)!="spike1"|taxa_names(ps)!="spike2"|taxa_names(ps)!="spike3",ps)
+  ps2<-filter_taxa(taxa_names(ps)!="spike1"&taxa_names(ps)!="spike2"&taxa_names(ps)!="spike3",ps)
   otu<-as.data.frame(as.matrix(otu_table(ps2)))
   otu<-compete(otu2, gtab)
   otu_table(ps2)<-otu_table(otu, taxa_are_rows = T)
