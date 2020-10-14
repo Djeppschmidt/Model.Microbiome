@@ -846,6 +846,7 @@ make.table<-function(comm1, sample){
   comm2<-comm1
   otu<-as.data.frame(as.matrix(otu_table(comm1)))
   otu[]<-0
+  otu<-otu[order(rownames(otu)),]
   otu_table(comm2)<-otu_table(otu, taxa_are_rows=TRUE)
   comm<-as.data.frame(as.matrix(otu_table(comm1)))
   m<-as.data.frame(t(table(sample(rownames(comm), sample[1], replace=T, prob=comm[,1]/sum(comm[,1])))))
