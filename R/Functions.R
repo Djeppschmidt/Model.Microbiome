@@ -897,8 +897,8 @@ make.table<-function(comm1, sample){
 #' @export
 #' @examples
 #' model.rarefy()
-model.rarefy<-function(comm1, bias, sample, b, c){
-  comm2<-run.bias(comm1, bias)
+model.rarefy<-function(comm1, bias, is.bias, sample, b, c){
+  comm2<-run.bias(comm1, bias, is.bias)
   if(any(sample_sums(comm2)>sample)){
    while(any(sample_sums(comm2)<sample)){
     sample<-set.seqDepth(b,c)
@@ -912,12 +912,15 @@ model.rarefy<-function(comm1, bias, sample, b, c){
  #' implement sequencing bias
  #' @param ps phyloseq object
  #' @param bias vector specifying taxon specific count bias
+ #' @param is.bias logical whether to run bias routine
  #' @keywords reference community model microbiome
  #' @export
  #' @examples
  #' run.bias()
- run.bias<-function(ps, bias){
-
+ run.bias<-function(ps, bias, is.bias){
+   require(phyloseq)
+   ps<-transform_sample_counts(ps, function(x) round(x*bias))
+   ps
  }
  #' implement sequencing bias
  #' @param ps phyloseq object
