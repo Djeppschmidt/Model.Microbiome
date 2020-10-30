@@ -908,14 +908,24 @@ model.rarefy<-function(comm1, sample, b, c){
  }
 
  #' implement sequencing bias
- #' @param comm1 phyloseq object
- #' @param sample vector specifying taxon specific count bias
+ #' @param ps phyloseq object
+ #' @param bias vector specifying taxon specific count bias
  #' @keywords reference community model microbiome
  #' @export
  #' @examples
- #' model.rarefy()
- make.bias<-function(){
+ #' run.bias()
+ run.bias<-function(ps, bias){
+
  }
+ #' implement sequencing bias
+ #' @param ps phyloseq object
+ #' @param bias vector specifying taxon specific count bias
+ #' @keywords reference community model microbiome
+ #' @export
+ #' @examples
+ #' bias()
+ bias<-function(){}
+   
 #' subsample community
 #' @param x phyloseq object
 #' @param level single value or vector specifying sampling depth
