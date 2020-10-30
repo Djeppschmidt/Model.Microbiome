@@ -431,6 +431,7 @@ run.analysis3<-function(commonN, groupN, singleN, D, V, method, Spike, Interact)
         output$reference$GuildID<-make.guildtab(output$reference$comm)
         output$reference$comm<-run.compete(output$reference$comm, output$reference$GuildID)
       }
+      phy_tree(output$reference$comm)<-tree(output$reference$comm)
       output$reference$EV<-transform_sample_counts(output$reference$comm, function(x) x / sum(x) )
       output$metrics<-NULL
       output$metrics$stats<-NULL
@@ -1293,20 +1294,18 @@ out<-list("raw"=c(rep(NA, length(tst))), "RA"=c(rep(NA, length(tst))),"scaled"=c
   out1
 }
 
-#' make a seqence table
+#' make a random tree object for simulation
 #' @param ps phyloseq object
-#' @param num number of edges for static analysis
 #' @keywords LII lost information index extract r squared
 #' @export
 #' @examples
-#' seqtab()
-seqtab<-function(ps){
+#' tree()
+tree<-function(ps){
   require(ape)
   names<-taxa_names(ps)
   tree<-rtree(n=length(names)) # need to figure out how to model env based on phylogeny
-  
-
-
+  tree$tip.label<-names
+  tree
 }
 #' generate network analysis and network stats
 #' @param ps phyloseq object
