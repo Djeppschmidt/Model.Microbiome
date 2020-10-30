@@ -319,11 +319,12 @@ simulate.MM<-function(reps, commonN, groupN, singleN, D, V, method, Spike=T, Int
 #' @param Spike whether or not to use the spike in functions. If spike==T, then any normalization function that does not include using the spike in, should filter the spikein before doing other normalization steps.
 #' @param method list of function names to be applied as normalization
 #' @param Interact logical should species interact
+#' @param is.bias logical should seq bias be modeled? default is false
 #' @keywords benchmark
 #' @export
 #' @examples
 #' run.analysis3()
-run.analysis3<-function(commonN, groupN, singleN, D, V, method, Spike, Interact){
+run.analysis3<-function(commonN, groupN, singleN, D, V, method, Spike, Interact, is.bias=F){
       AllSpp<-c(paste0("spp", c(1:700), sep="")) # make a quick list of all species functions
       AllSpp<-lapply(AllSpp, get) # connect function to name
       AllSpp<-unlist(AllSpp)  # format to be read by downstream functions
@@ -439,7 +440,7 @@ run.analysis3<-function(commonN, groupN, singleN, D, V, method, Spike, Interact)
       Rich<-estimate_richness(output$reference$comm, measures="Observed")
       output$metrics$Richness<-Rich
       output$metrics$skewness<-median(apply(X = otu_table(output$reference$comm), MARGIN=2,FUN = function(x){skewness(x)}))
-      Seq.bias<-bias(output$reference$comm) # creates vector of bias coefficients. Can be found below in species meta table
+      Seq.bias<-bias(output$reference$comm, is.bias) # creates vector of bias coefficients. Can be found below in species meta table
       sample<-set.seqDepth(D,V)
       output$raw$comm<-model.rarefy(output$reference$comm, sample, D, V) # simulating sequencing
 
@@ -897,7 +898,7 @@ make.table<-function(comm1, sample){
 #' @export
 #' @examples
 #' model.rarefy()
-model.rarefy<-function(comm1, bias, is.bias, sample, b, c){
+model.rarefy<-function(comm1, bias, sample, b, c){
   comm2<-run.bias(comm1, bias, is.bias)
   if(any(sample_sums(comm2)>sample)){
    while(any(sample_sums(comm2)<sample)){
@@ -912,16 +913,16 @@ model.rarefy<-function(comm1, bias, is.bias, sample, b, c){
  #' implement sequencing bias
  #' @param ps phyloseq object
  #' @param bias vector specifying taxon specific count bias
- #' @param is.bias logical whether to run bias routine
  #' @keywords reference community model microbiome
  #' @export
  #' @examples
  #' run.bias()
- run.bias<-function(ps, bias, is.bias){
+ run.bias<-function(ps, bias){
    require(phyloseq)
    ps<-transform_sample_counts(ps, function(x) round(x*bias))
    ps
  }
+
  #' implement sequencing bias
  #' @param ps phyloseq object
  #' @param bias vector specifying taxon specific count bias
