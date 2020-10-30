@@ -1293,6 +1293,21 @@ out<-list("raw"=c(rep(NA, length(tst))), "RA"=c(rep(NA, length(tst))),"scaled"=c
   out1
 }
 
+#' make a seqence table
+#' @param ps phyloseq object
+#' @param num number of edges for static analysis
+#' @keywords LII lost information index extract r squared
+#' @export
+#' @examples
+#' seqtab()
+seqtab<-function(ps){
+  names<-taxa_names(ps)
+  for(i in 1:length(names)){
+  names[i]<-paste(sample(c("a","c","t","g"), 10, replace=T), collapse="")
+  }
+  names<-paste(names, rep(paste(sample(c("a","c","t","g"), 10, replace=T), collapse=""), length(names)))
+  
+}
 #' generate network analysis and network stats
 #' @param ps phyloseq object
 #' @param num number of edges for static analysis
