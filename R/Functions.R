@@ -924,8 +924,12 @@ model.rarefy<-function(comm1, sample, b, c){
  #' @export
  #' @examples
  #' bias()
- bias<-function(){}
-   
+ bias<-function(ps){
+   require(phyloseq)
+   v<-rnorm(length(ntaxa(ps)),0.5, 0.2)
+   v
+ }
+
 #' subsample community
 #' @param x phyloseq object
 #' @param level single value or vector specifying sampling depth
