@@ -926,9 +926,10 @@ model.rarefy<-function(comm1, bias, sample, b, c){
  #' @export
  #' @examples
  #' bias()
- bias<-function(ps){
+ bias<-function(ps, is.bias=F){
    require(phyloseq)
-   v<-rnorm(length(ntaxa(ps)),1, 0.3)
+   if(is.bias==F){v<-rep(1,length(ntaxa(ps)))}
+   if(is.bias==T){v<-rnorm(length(ntaxa(ps)),1, 0.3)}
    v
  }
 
