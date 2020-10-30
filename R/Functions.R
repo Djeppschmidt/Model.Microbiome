@@ -1303,13 +1303,10 @@ out<-list("raw"=c(rep(NA, length(tst))), "RA"=c(rep(NA, length(tst))),"scaled"=c
 seqtab<-function(ps){
   require(ape)
   names<-taxa_names(ps)
-  for(i in 1:length(names)){
-  names[i]<-paste(sample(c("a","c","t","g"), 10, replace=T), collapse="")
-  }
-  names<-paste(names, sample(c(paste(sample(c("a","c","t","g"), 5, replace=T), collapse = ""),paste(sample(c("a","c","t","g"), 5, replace=T), collapse = ""),paste(sample(c("a","c","t","g"), 5, replace=T), collapse = ""),paste(sample(c("a","c","t","g"), 5, replace=T), collapse = ""),paste(sample(c("a","c","t","g"), 5, replace=T), collapse = "")), length(names), prob=c(0.4, 0.2, 0.2, 0.1, 0.1),replace=T),rep(paste(sample(c("a","c","t","g"), 5, replace=T), collapse=""), length(names)))
-  names(names)<-taxa_names(ps)
-
+  tree<-rtree(n=length(names)) # need to figure out how to model env based on phylogeny
   
+
+
 }
 #' generate network analysis and network stats
 #' @param ps phyloseq object
