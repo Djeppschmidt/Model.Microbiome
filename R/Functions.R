@@ -439,7 +439,7 @@ run.analysis3<-function(commonN, groupN, singleN, D, V, method, Spike, Interact)
       Rich<-estimate_richness(output$reference$comm, measures="Observed")
       output$metrics$Richness<-Rich
       output$metrics$skewness<-median(apply(X = otu_table(output$reference$comm), MARGIN=2,FUN = function(x){skewness(x)}))
-
+      Seq.bias<-bias(output$reference$comm) # creates vector of bias coefficients. Can be found below in species meta table
       sample<-set.seqDepth(D,V)
       output$raw$comm<-model.rarefy(output$reference$comm, sample, D, V) # simulating sequencing
 
@@ -466,7 +466,7 @@ run.analysis3<-function(commonN, groupN, singleN, D, V, method, Spike, Interact)
 
           sd_abundance<-apply(X = otu_table(p.abund), MARGIN=1,FUN = function(x){sd(x)})
       # create a tax table for whole dataset ...
-          tab<-data.frame(prevalence, mean_abundance, sd_abundance)
+          tab<-data.frame(prevalence, mean_abundance, sd_abundance, Seq.bias)
           tab$names<-rownames(tab)
           output$reference$SpeciesMeta<-tab
 
@@ -889,6 +889,7 @@ make.table<-function(comm1, sample){
 
 #' subsample community
 #' @param comm1 phyloseq object
+#' @param bias vector of bias values to adjust sequencing distribution
 #' @param sample vector specifying sampling depth
 #' @param b depth
 #' @param v variation
@@ -896,14 +897,15 @@ make.table<-function(comm1, sample){
 #' @export
 #' @examples
 #' model.rarefy()
-model.rarefy<-function(comm1, sample, b, c){
-  if(any(sample_sums(comm1)>sample)){
-   while(any(sample_sums(comm1)<sample)){
+model.rarefy<-function(comm1, bias, sample, b, c){
+  comm2<-run.bias(comm1, bias)
+  if(any(sample_sums(comm2)>sample)){
+   while(any(sample_sums(comm2)<sample)){
     sample<-set.seqDepth(b,c)
     sample
   }}
   #print(sample)
-  a<-make.table(comm1, sample)
+  a<-make.table(comm2, sample)
   a
  }
 
