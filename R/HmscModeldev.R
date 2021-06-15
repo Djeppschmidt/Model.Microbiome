@@ -1,6 +1,5 @@
 # test species interaction in principle
 
-
 library(Model.Microbiome)
 
 # load an environmental dataset
